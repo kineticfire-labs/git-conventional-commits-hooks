@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-rootProject.name = 'git-conventional-commit-hooks'
+rootProject.name = 'git-conventional-commits-hooks'
