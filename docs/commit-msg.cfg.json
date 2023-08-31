@@ -1,0 +1,33 @@
+{
+   "enabled": true,
+   "scopesEnabled": true,
+   "length": {
+      "firstLine": {
+         "min": 20,
+         "max": 52
+      },
+      "bodyLine": {
+         "min": 2,
+         "max": 72
+      }
+   },
+   "types": [
+      "feat",
+      "revert",
+      "fix",
+      "refactor",
+      "perf",
+      "style",
+      "test",
+      "docs",
+      "build",
+      "vendor",
+      "ci",
+      "ops",
+      "chore"
+   ],
+   "scopes": [
+      "app",
+      "lib"
+   ]
+}
