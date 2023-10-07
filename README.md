@@ -11,7 +11,7 @@ Server-side and client-side hooks to format and enforce [Conventional Commit rul
 **Type Description**
 
 | Type | Typical Scope Applicability | Description |
-| --- | --- | --- | --- |
+| --- | --- | --- |
 | revert | project | Reverts to a previous commit version |
 | feat | code | Adds a new feature |
 | fix | code | Fixes bug |
