@@ -20,22 +20,27 @@ todo a change for testing git commit hook
 
 **Type Description**
 
-| Type | Typical Scope Applicability | Description |
-| --- | --- | --- |
-| revert | project | Revert to a previous commit version |
-| feat | code | Add a new feature |
-| fix | code | Fix a defect (e.g., bug) |
-| refactor | code | Rewrite and/or restructure code without changing behavior |
-| perf | code | Improve performance, as a special case of refactor |
-| style | code | Does not affect the meaning or behavior |
-| test | code | Add or correct tests |
-| docs | project, document (e.g., README), etc. | Affect documentation |
-| build | project, code | Affect build components like the build tool |
-| vendor | project, code | Update version for dependencies and packages |
-| ci | project | Affect CI pipeline |
-| ops | project, code | Affect operational components like infrastructure, deployment, backup, recovery, etc. |
-| chore | project | Miscellaneous commits, such as updating .gitignore |
+| Type | Typical Scope Applicability | Description | Triggers Build ? | Minor or Patch<sup>1</sup> |
+| --- | --- | --- | --- | --- |
+| revert | project | Revert to a previous commit version | yes | minor |
+| feat | code | Add a new feature | yes | minor |
+| change | code | Changes implementation of existing feature | yes | patch |
+| remove | code | Removes a feature | yes | minor |
+| deprecate | code | Deprecate | yes | patch |
+| fix | code | Fix a defect (e.g., bug) | yes | patch |
+| refactor | code | Rewrite and/or restructure code without changing behavior | no | patch |
+| perf | code | Improve performance, as a special case of refactor | yes | minor |
+| security | code | Improve security aspect | yes | minor |
+| style | code | Does not affect the meaning or behavior | no | patch | patch |
+| test | code | Add or correct tests | no | patch |
+| docs | project, document (e.g., README), etc. | Affect documentation | no | patch |
+| build | project, code | Affect build components like the build tool | no | patch |
+| vendor | project, code | Update version for dependencies and packages | yes | patch |
+| ci | project, ci | Affect CI pipeline | no | patch |
+| ops | project, code | Affect operational components like infrastructure, deployment, backup, recovery, etc. | yes | patch |
+| chore | project | Miscellaneous commits, such as updating .gitignore | no | patch |
 
+*1 - Unless indicated as a breaking change, then is 'major'*
 
 
 # License
