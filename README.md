@@ -8,24 +8,30 @@ Server-side and client-side hooks to format and enforce [Conventional Commit rul
 
 # Description
 
+**Generic Scopes**
+
+| Generic Scope | Description |
+| --- | --- |
+| project | Applies to entire project |
+| code | Application, library, container image, Ansible playbooks (infrastructure), etc. |
+| document | README, user guide, developer guide, etc. |
+
 **Type Description**
 
 | Type | Typical Scope Applicability | Description |
 | --- | --- | --- |
-| revert | project | Reverts to a previous commit version |
-| feat | code | Adds a new feature |
-| fix | code | Fixes bug |
-| refactor | code | Rewrites and/or restructures code, but doesn't change behavior |
-| perf | code | Improves performance, as a special case of refactor |
+| revert | project | Revert to a previous commit version |
+| feat | code | Add a new feature |
+| fix | code | Fix a defect (e.g., bug) |
+| refactor | code | Rewrite and/or restructure code without changing behavior |
+| perf | code | Improve performance, as a special case of refactor |
 | style | code | Does not affect the meaning or behavior |
-| test | code | Adds or corrects tests |
-| docs | readme, etc. | Affects documentation |
-| docsInternal | internal code docs | Affects internal documentation internal |
-| docsExternal | external code docs | Affects external documentation |
-| build | project, code | Affects build components like the build tool |
+| test | code | Add or correct tests |
+| docs | project, document (e.g., README), etc. | Affect documentation |
+| build | project, code | Affect build components like the build tool |
 | vendor | project, code | Update version for dependencies and packages |
-| ci | project | Affects CI pipeline |
-| ops | project, code | Affects operational components like infrastructure, deployment, backup, recovery, etc. |
+| ci | project | Affect CI pipeline |
+| ops | project, code | Affect operational components like infrastructure, deployment, backup, recovery, etc. |
 | chore | project | Miscellaneous commits, such as updating .gitignore |
 
 
