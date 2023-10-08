@@ -331,6 +331,9 @@ do
 		# check that the first line doesn't exceed max chars
 		if is_string_max_char_compliant "$line" "$firstLineLengthMax"; then
 
+			# make a copy to use later (if needed), because regex clobbers it
+			line2=$line
+
 			# regex for:  type (required), scope (required), and exclamation mark (optional).  1 or more characters necessary for type and scope, but otherwise doesn't check number of characters
 			regexp="^([a-zA-Z]+)(\(([a-zA-Z0-9]+)\))?([\!])?: [a-z]"
 
@@ -345,14 +348,27 @@ do
 
 
 
-			echo "The scope is $scope" # todo
-
-
 			# scope must be found from regex
 			if [ -z "$scope" ]; then
-				display_error "Bad form of title line.  Could not determine 'scope'." "$1" 1
 
-				# todo put in a regex to test if first line of comcment is lowercase, for some feedback
+				errMsg=''
+
+				# test if first line of comcment is lowercase, for some feedback
+				regexp2="^([a-zA-Z]+)(\(([a-zA-Z0-9]+)\))?([\!])?: [A-Z]"
+
+				if [[ $line2 =~ $regexp2 ]]; then
+					scope=${BASH_REMATCH[3]}
+				else
+					scope=''
+				fi
+
+				if [ ! -z "$scope" ]; then
+					errMsg="The first letter of the subject shouldn't be capitalized.  "
+				fi
+
+				errMsg="$errMsg""Bad form of title line.  Could not determine 'scope'."
+
+				display_error "$errMsg" "$1" 1
 
 				exit 1
 			fi
