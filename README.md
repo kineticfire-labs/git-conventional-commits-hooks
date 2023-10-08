@@ -8,6 +8,8 @@ Server-side and client-side hooks to format and enforce [Conventional Commit rul
 
 # Description
 
+todo a change for testing git commit hook
+
 **Generic Scopes**
 
 | Generic Scope | Description |

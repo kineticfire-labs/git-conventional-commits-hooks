@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 # (c) Copyright 2023 KineticFire. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,7 @@
 #  - First line must be a valid subject
 #    - At least length.firstLine.min characters (from config file) in length
 #    - No more than length.firstLine.max characters (from config file) in length
-#    - '<type>(<scope>)!: <subject>' where 'type' and 'scope' are defined in the config file, scope is required , and '!' optionally indicates a breaking change.  The subject must begin with a lowercase letter.
+#    - '<type>(<scope>)!: <subject>' where 'type' and 'scope' are defined in the config file, scope is optional based on 'scopeEnabled' (from config file), and '!' optionally indicates a breaking change.  The subject must begin with a lowercase letter.
 #    - Examples with type of 'feat' and scope of 'app': 
 #      - No scope and no breaking change
 #        - feat: add this feature
@@ -206,6 +206,12 @@ if [[ "$enabled" = false ]]; then
 	exit 0
 fi
 
+readonly scopesEnabled=$(jq -r '.scopesEnabled' $config)
+if [ "$scopesEnabled" = "null" ]; then
+	display_error "Could not find property 'scopesEnabled' in configuration file $config" "$1"
+	exit 1
+fi
+
 readonly firstLineLengthMin=$(jq -r '.length.firstLine.min' $config)
 if [ "$firstLineLengthMin" = "null" ]; then
 	display_error "Could find property 'length.firstLine.min' in configuration file $config" "$1"
@@ -230,15 +236,22 @@ if [ "$bodyLineLengthMax" = "null" ]; then
 	exit 1
 fi
 
+typesTest=$(jq -r '.types' $config)
+if [ "$typesTest" = "null" ]; then
+	display_error "Could not find property 'types' in configuration file $config" "$1"
+	exit 1
+else
+	unset typesTest
+	mapfile -t types < <(jq -r '.types[]' $config)
+fi
+
 scopesTest=$(jq -r '.scopes' $config)
 if [ "$scopesTest" = "null" ]; then
 	display_error "Could not find property 'scopes' in configuration file $config" "$1"
 	exit 1
 else
 	unset scopesTest
-	readonly scopesString=$(jq -r '.scopes[] | .name' $config)
-	# convert string to array.  do not use quote marks.
-	readonly scopes=($scopesString)
+	mapfile -t scopes < <(jq -r '.scopes[]' $config)
 fi
 
 
@@ -319,7 +332,7 @@ fi
 while IFS= read -r line
 do
 
-	# Check that hte first line is non-empty.  This is in compliance with the format, and will be prevent script errors if the git message is aborted.
+	# Check that hte first line is non-empty.  This is in compliance with thef ormat, and will be prevent script errors if the git message is aborted.
 	if [[ -z "$line" ]]; then
 		display_error 'First line cannot be empty'
 		exit 1
@@ -331,7 +344,7 @@ do
 		# check that the first line doesn't exceed max chars
 		if is_string_max_char_compliant "$line" "$firstLineLengthMax"; then
 
-			# regex for:  type (required), scope (required), and exclamation mark (optional).  1 or more characters necessary for type and scope, but otherwise doesn't check number of characters
+			# regex for:  type (required), scope (optional), and exclamation mark (optional).  1 or more characters necessary for type and scope, but otherwise doesn't check number of characters
 			regexp="^([a-zA-Z]+)(\(([a-zA-Z0-9]+)\))?([\!])?: [a-z]"
 
 			if [[ $line =~ $regexp ]]; then
@@ -343,46 +356,9 @@ do
 			fi
 			# if needed later, the exclamation mark can be captured with ${BASH_REMATCH[4]}
 
-
-
-			echo "The scope is $scope" # todo
-
-
-			# scope must be found from regex
-			if [ -z "$scope" ]; then
-				display_error "Bad form of title line.  Could not determine 'scope'." "$1" 1
-
-				# todo put in a regex to test if first line of comcment is lowercase, for some feedback
-
-				exit 1
-			fi
-
-			# check if scope defined in the config file
-			scopeFound='no'
-			for value in "${scopes[@]}"
-			do
-				if [[ "$scope" = "$value" ]]; then
-					scopeFound='yes'
-					break
-				fi
-			done
-
-			# error ir scope wasn't defined in config file
-			if [[ ! "$scopeFound" = "yes" ]]; then
-				display_error "Scope '$scope' is not a valid scope per configuration file '$config'." "$1" 1
-				exit 1
-			fi
-
-			#todo for testing
-			echo "break"
-			exit 1
-
-
-			# todo check that type defined for the scope
-
 			# type must be found from regex
 			if [ -z "$theType" ]; then
-				display_error "Bad form of title line.  Could not determine 'type'." "$1" 1
+				display_error "Bad forma of title line.  Could not determine 'type'." "$1" 1
 				exit 1
 			fi
 
@@ -400,6 +376,26 @@ do
 			if [[ ! "$typeFound" = "yes" ]]; then
 				display_error "Type '$theType' is not a valid type per configuration file '$config'." "$1" 1
 				exit 1
+			fi
+
+			# if the scope is found from the regex
+			if [ -n "$scope" ]; then
+
+				# scope must be defined in the config file
+				scopeFound='no'
+				for value in "${scopes[@]}"
+				do
+					if [[ "$scope" = "$value" ]]; then
+						scopeFound='yes'
+						break
+					fi
+				done
+
+				# error ir scope wasn't defined in config file
+				if [[ ! "$scopeFound" = "yes" ]]; then
+					display_error "Scope '$scope' is not a valid scope per configuration file '$config'." "$1" 1
+					exit 1
+				fi
 			fi
 
 		else
