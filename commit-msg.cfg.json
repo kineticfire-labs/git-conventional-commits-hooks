@@ -1,0 +1,77 @@
+{
+   "enabled": true,
+   "length": {
+      "titleLine": {
+         "min": 20,
+         "max": 52
+      },
+      "bodyLine": {
+         "min": 2,
+         "max": 72
+      }
+   },
+   "scopes": [
+      {
+         "name": "project",
+         "types": [
+            "revert",
+            "security",
+            "build",
+            "vendor",
+            "ci",
+            "docs",
+            "chore"
+         ]
+      },
+      {
+         "name": "c-cmt",
+         "types": [
+            "feat",
+            "more",
+            "change",
+            "fix",
+            "deprecate",
+            "remove",
+            "less",
+            "refactor",
+            "perf",
+            "security",
+            "style",
+            "test",
+            "docs",
+            "build",
+            "vendor",
+            "ci",
+            "chore"
+         ]
+      },
+      {
+         "name": "s-cmt",
+         "types": [
+            "feat",
+            "more",
+            "change",
+            "fix",
+            "deprecate",
+            "remove",
+            "less",
+            "refactor",
+            "perf",
+            "security",
+            "style",
+            "test",
+            "docs",
+            "build",
+            "vendor",
+            "ci",
+            "chore"
+         ]
+      },
+      {
+         "name": "readme",
+         "types": [
+            "docs"
+         ]
+      }
+   ]
+}
