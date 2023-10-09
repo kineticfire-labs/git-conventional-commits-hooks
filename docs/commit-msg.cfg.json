@@ -28,9 +28,12 @@
          "name": "app",
          "types": [
             "feat",
-            "remove",
+            "more",
             "change",
             "fix",
+            "deprecate",
+            "remove",
+            "less",
             "refactor",
             "perf",
             "security",
@@ -41,7 +44,6 @@
             "vendor",
             "ci",
             "ops",
-            "docs",
             "chore"
          ]
       },
