@@ -1,10 +1,15 @@
-# git-conventional-commit-hooks
+# git-conventional-commits-hooks
 [![Powered by KineticFire Labs](https://img.shields.io/badge/Powered_by-KineticFire_Labs-CDA519?link=https%3A%2F%2Flabs.kineticfire.com%2F)](https://labs.kineticfire.com/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 <p></p>
-Git hooks to format and enforce Conventional Commit rules for git commit messages
 
-Server-side and client-side hooks to format and enforce [Conventional Commit rules](https://www.conventionalcommits.org/en/v1.0.0/) for git messages and support [Semantic Versioning](https://semver.org/) in a Continuous Integration & Continuous Delivery/Deployment pipeline.
+Git hooks to format and enforce standardized git commit messages per [Conventional Commit rules](https://www.conventionalcommits.org/en/v1.0.0/) and enable automated semantic versioning, specifically [SemVer](https://semver.org/), in a Continuous Integration & Continuous Delivery/Deployment pipeline.  Server-side and client-side hooks are available.
+
+# Purpose
+
+git-conventional-commits-hooks aims to help developers produce standardized git commit messages.  
+
+Standardized commit messages not only help a human better understand the changes introduced across commits but also removes the subjectivity of version number changes (e.g., "is the change a patch, minor, or major version number increment?").  The same standardized commit messages can be processed by automated tools, which can produce a new build with an automated version number to help accelerate the CI/CD pipeline.
 
 # Description
 
@@ -46,4 +51,4 @@ todo a change for testing git commit hook
 
 
 # License
-The java-util project is released under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+The git-conventional-commits-hooks project is released under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
