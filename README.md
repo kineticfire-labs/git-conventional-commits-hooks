@@ -24,10 +24,10 @@ todo a change for testing git commit hook
 | --- | --- | --- | --- | --- |
 | revert | Revert to a previous commit version | project | yes | minor |
 | feat | Add a new feature | code | yes | minor |
-| more | Add code for a future feature (later inidicated as complete with 'feat').  Supports branch abstraction and feature flags in Trunk-Based Development (TBD). | code | yes | minor |
+| more | Add code for a future feature (later inidicated as complete with 'feat').  Support branch abstraction in Trunk-Based Development (TBD). | code | yes | minor |
 | change | Change implementation of existing feature | code | yes | patch |
 | remove | Remove a feature | code | yes | minor |
-| less | Remove code for a feature (already indicated as removed with 'remove').  Supports branch abstraction and feature flags in Trunk-Based Development (TBD). | code | yes | minor |
+| less | Remove code for a feature (already indicated as removed with 'remove').  Support branch abstraction in Trunk-Based Development (TBD). | code | yes | minor |
 | deprecate | Indicate some code is deprecated | code | yes | patch |
 | fix | Fix a defect (e.g., bug) | code | yes | patch |
 | refactor | Rewrite and/or restructure code without changing behavior | code | no | patch |
