@@ -24,8 +24,10 @@ todo a change for testing git commit hook
 | --- | --- | --- | --- | --- |
 | revert | Revert to a previous commit version | project | yes | minor |
 | feat | Add a new feature | code | yes | minor |
-| change | Changes implementation of existing feature | code | yes | patch |
-| remove | Removes a feature | code | yes | minor |
+| more | Add code for a future feature (later inidicated as complete with 'feat').  Supports branch abstraction and feature flags in Trunk-Based Development (TBD). | code | yes | minor |
+| change | Change implementation of existing feature | code | yes | patch |
+| remove | Remove a feature | code | yes | minor |
+| less | Remove code for a feature (already indicated as removed with 'remove').  Supports branch abstraction and feature flags in Trunk-Based Development (TBD). | code | yes | minor |
 | deprecate | Deprecate | code | yes | patch |
 | fix | Fix a defect (e.g., bug) | code | yes | patch |
 | refactor | Rewrite and/or restructure code without changing behavior | code | no | patch |
@@ -33,7 +35,7 @@ todo a change for testing git commit hook
 | security | Improve security aspect | code | yes | minor |
 | style | Does not affect the meaning or behavior | code | no | patch | patch |
 | test | Add or correct tests | code | no | patch |
-| docs | project, code, document (e.g., README), etc. | Affect documentation | no | patch |
+| docs | Affect documentation | project, code, document (e.g., README), etc. | no | patch |
 | build | Affect build components like the build tool | project, code | no | patch |
 | vendor | Update version for dependencies and packages | project, code, yes | patch |
 | ci | Affect CI pipeline | project, code | no | patch |
