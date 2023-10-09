@@ -3,13 +3,72 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 <p></p>
 
-Git hooks to format and enforce standardized git commit messages per [Conventional Commit rules](https://www.conventionalcommits.org/en/v1.0.0/) and enable automated semantic versioning, specifically [SemVer](https://semver.org/), in a Continuous Integration & Continuous Delivery/Deployment pipeline.  Server-side and client-side hooks are available.
+Git hooks to format and enforce standardized git commit messages per [Conventional Commits specification](https://www.conventionalcommits.org/) and enable automated semantic versioning, specifically [SemVer](https://semver.org/), in a Continuous Integration & Continuous Delivery/Deployment pipeline.  Server-side and client-side hooks are available.
 
 # Purpose
 
-git-conventional-commits-hooks aims to help developers produce standardized git commit messages.  
+git-conventional-commits-hooks aims to help developers produce standardized git commit messages and, through that, enable automated versioning and accelerate continuous delivery/deployment.
 
 Standardized commit messages not only help a human better understand the changes introduced across commits but also removes the subjectivity of version number changes (e.g., "is the change a patch, minor, or major version number increment?").  The same standardized commit messages can be processed by automated tools, which can produce a new build with an automated version number to help accelerate the CI/CD pipeline.
+
+# Approach
+
+git-conventional-commits-hooks adopts the [Conventional Commits specification](https://www.conventionalcommits.org/) to achieve **standardized commit messages**.  The specification defines the format and content for a commit message.
+
+The first line, the title line, is required and includes a *type*, *scope*, and *description*.
+- *type*: An enumerated value that indicates the intent of the commit, e.g. a feature, bug fix, etc.  Required.
+- *scope*: An enumerated value that indicates what is affected by the commit.  Required, although Conventional Commits says optional.
+- *description*: Succintly describes the commit.  Required.
+
+The body is optional.
+- If no body, then the title line represents the entirety of the commit
+- If a body is provided, then an empty line must separate the title line from the body
+
+A breaking change is indicated by either an exclamation point after the closing parenthesis after the scope and before the colon e.g. `(<scope>)!: <description>`, by putting `BREAKING CHANGE: <description>` into the body, or both.
+
+The general format of a commit message, following the rules described above, is:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+```
+
+Example 1 - title line only (no body) without breaking change:
+```
+docs(project): correct misspellings and typos in README
+```
+
+
+Example 2 - title line only (no body) with breaking change:
+```
+feat(api)!: must include API token in all API queries
+```
+
+
+Example 3 - body without breaking change:
+```
+feat(app): allow users to register multiple contact email addresses
+
+A user may register more than email address.  Once verified, an email
+address may be indicated as 'primary' for the user to login and to
+receive email communications.
+```
+
+
+Example 4 - body with breaking change:
+```
+feat(app)!: <description>
+
+<body>
+
+BREAKING CHANGE: <description>
+```
+
+
+**Semantic versioning** follows
+
+
 
 # Description
 
