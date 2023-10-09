@@ -20,25 +20,25 @@ todo a change for testing git commit hook
 
 **Type Description**
 
-| Type | Typical Scope Applicability | Description | Triggers Build ? | Minor or Patch<sup>1</sup> |
+| Type | Description | Typical Scope | Triggers Build | Minor or Patch<sup>1</sup> |
 | --- | --- | --- | --- | --- |
-| revert | project | Revert to a previous commit version | yes | minor |
-| feat | code | Add a new feature | yes | minor |
-| change | code | Changes implementation of existing feature | yes | patch |
-| remove | code | Removes a feature | yes | minor |
-| deprecate | code | Deprecate | yes | patch |
-| fix | code | Fix a defect (e.g., bug) | yes | patch |
-| refactor | code | Rewrite and/or restructure code without changing behavior | no | patch |
-| perf | code | Improve performance, as a special case of refactor | yes | minor |
-| security | code | Improve security aspect | yes | minor |
-| style | code | Does not affect the meaning or behavior | no | patch | patch |
-| test | code | Add or correct tests | no | patch |
-| docs | project, document (e.g., README), etc. | Affect documentation | no | patch |
-| build | project, code | Affect build components like the build tool | no | patch |
-| vendor | project, code | Update version for dependencies and packages | yes | patch |
-| ci | project, ci | Affect CI pipeline | no | patch |
-| ops | project, code | Affect operational components like infrastructure, deployment, backup, recovery, etc. | yes | patch |
-| chore | project | Miscellaneous commits, such as updating .gitignore | no | patch |
+| revert | Revert to a previous commit version | project | yes | minor |
+| feat | Add a new feature | code | yes | minor |
+| change | Changes implementation of existing feature | code | yes | patch |
+| remove | Removes a feature | code | yes | minor |
+| deprecate | Deprecate | code | yes | patch |
+| fix | Fix a defect (e.g., bug) | code | yes | patch |
+| refactor | Rewrite and/or restructure code without changing behavior | code | no | patch |
+| perf | Improve performance, as a special case of refactor | code | yes | minor |
+| security | Improve security aspect | code | yes | minor |
+| style | Does not affect the meaning or behavior | code | no | patch | patch |
+| test | Add or correct tests | code | no | patch |
+| docs | project, code, document (e.g., README), etc. | Affect documentation | no | patch |
+| build | Affect build components like the build tool | project, code | no | patch |
+| vendor | Update version for dependencies and packages | project, code, yes | patch |
+| ci | Affect CI pipeline | project, code | no | patch |
+| ops | Affect operational components like infrastructure, deployment, backup, recovery, etc. | project, code | yes | patch |
+| chore | Miscellaneous commits, such as updating .gitignore | project, code | no | patch |
 
 *1 - Unless indicated as a breaking change, then is 'major'*
 

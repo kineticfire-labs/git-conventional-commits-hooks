@@ -1,8 +1,7 @@
 {
    "enabled": true,
-   "scopesEnabled": true,
    "length": {
-      "firstLine": {
+      "titleLine": {
          "min": 20,
          "max": 52
       },
@@ -11,23 +10,46 @@
          "max": 72
       }
    },
-   "types": [
-      "feat",
-      "revert",
-      "fix",
-      "refactor",
-      "perf",
-      "style",
-      "test",
-      "docs",
-      "build",
-      "vendor",
-      "ci",
-      "ops",
-      "chore"
-   ],
    "scopes": [
-      "app",
-      "lib"
+      {
+         "name": "project",
+         "types": [
+            "revert",
+            "security",
+            "build",
+            "vendor",
+            "ci",
+            "docs",
+            "ops",
+            "chore"
+         ]
+      },
+      {
+         "name": "app",
+         "types": [
+            "feat",
+            "remove",
+            "change",
+            "fix",
+            "refactor",
+            "perf",
+            "security",
+            "style",
+            "test",
+            "docs",
+            "build",
+            "vendor",
+            "ci",
+            "ops",
+            "docs",
+            "chore"
+         ]
+      },
+      {
+         "name": "readme",
+         "types": [
+            "docs"
+         ]
+      }
    ]
 }

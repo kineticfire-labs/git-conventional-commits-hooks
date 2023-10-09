@@ -14,6 +14,34 @@
 # limitations under the License.
 
 
+# KineticFire Labs
+#	  Project site:  https://github.com/kineticfire-labs/git-conventional-commits-hooks
+
+
+##########################################################################
+##########################################################################
+##########################################################################
+# Setup & Usage
+# 
+# Setup
+#    - Add this script to <git repository>/.git/hooks/commit-msg'
+#	  - Make this script executable with 'chmod +x <path to script>' 
+#    - Set the default editor for git ('vim' in the example below)
+#         - git config --global core.editor vim
+#
+# Usage
+#    - This script will be invoked by git during commits.  Run the command 'git commit'.
+#
+# Limitations
+#    - This is a client-side script, which is enforcing the conventions at the client only and not the server.
+
+
+
+##########################################################################
+##########################################################################
+##########################################################################
+# Detailed Description
+#
 # If '.enabled' in the config file is 'false', then this script will exit and return 0 (allowing the commit) without reformatting or validation described below.
 #
 # This script will exit and return 1 (rejecting the commit) if one of the following are true, else this script will return 0 (accepting the commit):
@@ -21,25 +49,29 @@
 #  - a property of the configuration file cannot be found
 #  - the validation of the commit message fails
 #
-# The commit message reformatting and validation follows the Conventional Commits specification (https://www.conventionalcommits.org/en/v1.0.0/).  A commit message consists of at least one line.  If additional lines are given, then the body is separated from the subject line by exactly one newline. So a commit message may take the following two general forms.  In both cases:  the 'scope' and '!' are optional.  See the Conentional Commits specification for more detail, and consult your project's specific configuration for valid git commit messages.
+# The commit message reformatting and validation follows the Conventional Commits specification (https://www.conventionalcommits.org/en/v1.0.0/).  A commit message consists of at least one line.  If additional lines are given, then the body is separated from the subject line by exactly one newline. So a commit message may take the following two general forms.  This script requires a 'type' and 'scope'; the '!' is optional.  See the Conventional Commits specification for more detail, and consult your project's specific configuration for valid git commit messages.
 #
 # (1)
+#   --- start ---
 #   <type>(<scope>)!: <subject>
+#   ---- end ----
 #
 # (2)
+#   --- start ---
 #   <type>(<scope>)!: <subject>
 #
 #   <body>
+#   ---- end ----
 #
 # The commit message is re-formatted prior to validation as follows:
 #  - Remove all lines with comments
 #  - Replace a line containing only spaces (e.g. 1 or more spaces and newline) with a newline only
 #  - Replace two or more empty lines (e.g. newlines that may contain 0 or more spaces) with a single empty line
 #  - Remove trailing newlines
-#  - For the subject line (e.g. the first line):
+#  - For the title line (e.g. the first line):
 #    - Remove extra spaces before and after the 'type'
-#    - Remove extra spaces before and after the opening and closing parenthesis for the optional 'scope'
-#    - Remove extra spaces before and after the optional exclamation mark following the 'type' and optional 'scope' and prior to the colon
+#    - Remove extra spaces before and after the opening and closing parenthesis for the 'scope'
+#    - Remove extra spaces before and after the optional exclamation mark following the 'type' and 'scope' and prior to the colon
 #    - Remove extra spaces before and after the colon
 #  - For the body:
 #    - converts the following to 'BREAKING CHANGE: '
@@ -49,19 +81,17 @@
 #      - multiple spaces before or after the colon
 #
 # The commit message is valid if, after reformatting, the following are all true:
-#  - First line must be a valid subject
-#    - At least length.firstLine.min characters (from config file) in length
-#    - No more than length.firstLine.max characters (from config file) in length
-#    - '<type>(<scope>)!: <subject>' where 'type' and 'scope' are defined in the config file, scope is required , and '!' optionally indicates a breaking change.  The subject must begin with a lowercase letter.
+#  - Title line must be a valid subject
+#    - At least length.titleLine.min characters (from config file) in length
+#    - No more than length.titleLine.max characters (from config file) in length
+#    - '<type>(<scope>)!: <subject>' where 'type' and 'scope' are defined in the config file, type and scope are required , and '!' optionally indicates a breaking change.  The subject must begin with a lowercase letter.
 #    - Examples with type of 'feat' and scope of 'app': 
-#      - No scope and no breaking change
-#        - feat: add this feature
-#      - No scope and with a breaking change:
-#        - feat!: add this feature
-#      - Scope and breaking change:
+#      - Non-breaking change:
+#        - feat(app): add this feature
+#      - Breaking change:
 #        - feat(app)!: add this feature
-#  - After the first line:
-#    - Option 1: subject line only, no body
+#  - After the title line:
+#    - Option 1: title line only, no body
 #      - end of file
 #    - Option 2: with body
 #      - one newline
@@ -77,11 +107,10 @@
 #  - tail
 #  - head
 
-
 ######################################################
 # Define settings
 
-version=1
+version=1.0.0
 
 # set configuration file
 config=commit-msg.cfg.json
@@ -200,21 +229,18 @@ fi
 # early exit if script isn't enabled
 if [[ "$enabled" = false ]]; then
 	display_warning_proceed "commit-msg script disabled."
-	# todo
-	echo "todo for testing, exiting"
-	exit 1
 	exit 0
 fi
 
-readonly firstLineLengthMin=$(jq -r '.length.firstLine.min' $config)
-if [ "$firstLineLengthMin" = "null" ]; then
-	display_error "Could find property 'length.firstLine.min' in configuration file $config" "$1"
+readonly titleLineLengthMin=$(jq -r '.length.titleLine.min' $config)
+if [ "$titleLineLengthMin" = "null" ]; then
+	display_error "Could find property 'length.titleLine.min' in configuration file $config" "$1"
 	exit 1
 fi
 
-readonly firstLineLengthMax=$(jq -r '.length.firstLine.max' $config)
-if [ "$firstLineLengthMax" = "null" ]; then
-	display_error "Could find property 'length.firstLine.max' in configuration file $config" "$1"
+readonly titleLineLengthMax=$(jq -r '.length.titleLine.max' $config)
+if [ "$titleLineLengthMax" = "null" ]; then
+	display_error "Could find property 'length.titleLine.max' in configuration file $config" "$1"
 	exit 1
 fi
 
@@ -258,7 +284,7 @@ sed -i '/^$/N;/^\n$/D' "$1"
 # remove one or more newlines to EOF
 sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$1"
 
-# In the first line:
+# In the title line (first line):
 
 	# remove extra spaces at the start of the line 
 	sed -i '1 s/^[ ]*//' "$1"
@@ -315,21 +341,21 @@ if [ -n "$lineNum" ]; then
 fi
 
 
-# eval first line
+# eval title line (first line)
 while IFS= read -r line
 do
 
-	# Check that hte first line is non-empty.  This is in compliance with the format, and will be prevent script errors if the git message is aborted.
+	# Check that the title line is non-empty.  This is in compliance with the format, and will be prevent script errors if the git message is aborted.
 	if [[ -z "$line" ]]; then
-		display_error 'First line cannot be empty'
+		display_error 'Title line (first line) cannot be empty'
 		exit 1
 	fi
 
-	# check that the first line has at least min chars
-	if is_string_min_char_compliant "$line" "$firstLineLengthMin"; then
+	# check that the title line has at least min chars
+	if is_string_min_char_compliant "$line" "$titleLineLengthMin"; then
 
-		# check that the first line doesn't exceed max chars
-		if is_string_max_char_compliant "$line" "$firstLineLengthMax"; then
+		# check that the title line doesn't exceed max chars
+		if is_string_max_char_compliant "$line" "$titleLineLengthMax"; then
 
 			# make a copy to use later (if needed), because regex clobbers it
 			line2=$line
@@ -353,7 +379,7 @@ do
 
 				errMsg=''
 
-				# test if first line of comcment is lowercase, for some feedback
+				# test if title line of the first letter of the subject is uppercase, for some feedback
 				regexp2="^([a-zA-Z]+)(\(([a-zA-Z0-9]+)\))?([\!])?: [A-Z]"
 
 				if [[ $line2 =~ $regexp2 ]]; then
@@ -389,12 +415,6 @@ do
 				exit 1
 			fi
 
-			#todo for testing
-			echo "break"
-			exit 1
-
-
-			# todo check that type defined for the scope
 
 			# type must be found from regex
 			if [ -z "$theType" ]; then
@@ -402,7 +422,12 @@ do
 				exit 1
 			fi
 
-			# type must be a type defined in config file
+			# retrieve the types from the defined scope
+			readonly typesString=$(jq -r --arg scope "$scope" '.scopes[] | select(.name==$scope) | .types[]' $config)
+			# convert string to array.  do not use quote marks.
+			readonly types=($typesString)
+
+			# check if type defined in config file
 			typeFound='no'
 			for value in "${types[@]}"
 			do
@@ -414,17 +439,17 @@ do
 
 			# error if type wasn't defined in config file
 			if [[ ! "$typeFound" = "yes" ]]; then
-				display_error "Type '$theType' is not a valid type per configuration file '$config'." "$1" 1
+				display_error "Type '$theType' is not a valid type for the scope '$scope' per configuration file '$config'." "$1" 1
 				exit 1
 			fi
 
 		else
-			display_error "First line must not contain more than $firstLineLengthMax characters as defined in the configuration file '$config'." "$1" "$count"
+			display_error "Title line (first line) must not contain more than $titleLineLengthMax characters as defined in the configuration file '$config'." "$1" "$count"
 			exit 1
 		fi
 
 	else
-			display_error "First line must contain at least $firstLineLengthMin characters as defined in the configuration file '$config'." "$1" "$count"
+		display_error "Title line (first line) must contain at least $titleLineLengthMin characters as defined in the configuration file '$config'." "$1" "$count"
 		exit 1
 	fi
 
@@ -495,8 +520,3 @@ fi
 
 
 # note that not checking tokens in footer, and specifically that they contain a '-'
-
-
-display_error "Always error out for testing" "$1"
-exit 1
-
