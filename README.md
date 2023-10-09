@@ -28,7 +28,7 @@ todo a change for testing git commit hook
 | change | Change implementation of existing feature | code | yes | patch |
 | remove | Remove a feature | code | yes | minor |
 | less | Remove code for a feature (already indicated as removed with 'remove').  Supports branch abstraction and feature flags in Trunk-Based Development (TBD). | code | yes | minor |
-| deprecate | Deprecate | code | yes | patch |
+| deprecate | Indicate some code is deprecated | code | yes | patch |
 | fix | Fix a defect (e.g., bug) | code | yes | patch |
 | refactor | Rewrite and/or restructure code without changing behavior | code | no | patch |
 | perf | Improve performance, as a special case of refactor | code | yes | minor |
