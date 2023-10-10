@@ -11,7 +11,10 @@ Git hooks to format and enforce standardized git commit messages per [Convention
    1. [Standardized Commit Messages](#standardized-commit-messages)
    2. [Semantic Versioning](#semantic-versioning)
 3. [Implementing](#implementing)
-4. [License](#license)
+   1. [Install Hooks](#install-hooks)
+   2. [Define Types and Scopes](#define-types-and-scopes)
+   3. [Create Config](#create-config)
+5. [License](#license)
 
 # Purpose
 
@@ -103,7 +106,7 @@ git-conventional-commits-hooks considers [semantic versioning with SemVer](https
 | Generic Scope | Description |
 | --- | --- |
 | project | Applies to entire project |
-| code | Application, library, container image, Ansible playbooks (infrastructure), etc. |
+| code | Application, library, API, container image, Ansible playbooks (infrastructure), etc. |
 | document | README, user guide, developer guide, etc. |
 
 **Type Description**
