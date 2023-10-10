@@ -85,10 +85,15 @@ The scripts provided by git-conventional-commits-hooks can help format and enfor
 
 ## Semantic Versioning
 
-Semantic versioning and Conventional Commits complement each other well.  Automated tools can process standardized commit messages and determine the appropriate change to the version number. [SemVer](https://semver.org/) defines a set of rules and requirements that determines how a version number is incremented.
+Semantic versioning and Conventional Commits complement each other well.  Automated tools can process standardized commit messages and determine the appropriate change to the version number. [SemVer](https://semver.org/) defines a set of rules and requirements that determines how a version number is incremented, which helps clearly indicate the nature and potential impact (e.g., a backwards incompatible change) in a new artifact version.
 
-For example for a current version of 1.2.3:
-- a *style* commit will NOT trigger a build itself; once built, the new version would be 1.2.4
+A semantic version takes the form major ```<major version>.<minor version>.<patch version>``` and increments the
+- *major version* for backwards incompatible (e.g. breaking) changes
+- *minor version* for added features that are backwards compatible
+- *patch version* for backwards compatible bug fixes
+
+Considering Conventional Commits and for a current version of 1.2.3:
+- a *style* commit will NOT trigger a build itself; once built (perhaps an automated nightly build), the new version would be 1.2.4
 - a *fix* commit will trigger a build and result in a new version of 1.2.4
 - a *feat* commit will trigger a build and result in a new version of 1.3.0
 - a *BREAKING CHANGE* commit will trigger a build and result in a new version of 2.0.0
@@ -105,8 +110,8 @@ git-conventional-commits-hooks considers [semantic versioning with SemVer](https
 
 | Generic Scope | Description |
 | --- | --- |
-| project | Applies to entire project |
-| code | Application, library, API, container image, Ansible playbooks (infrastructure), etc. |
+| proj | Applies to entire project |
+| code | Application (app), library (lib), API (api), container image, Ansible playbooks (infrastructure), etc. |
 | document | README, user guide, developer guide, etc. |
 
 **Type Description**
