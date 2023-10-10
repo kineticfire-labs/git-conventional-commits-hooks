@@ -3,7 +3,14 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 <p></p>
 
-Git hooks to format and enforce standardized git commit messages per [Conventional Commits specification](https://www.conventionalcommits.org/) and enable automated semantic versioning, specifically [SemVer](https://semver.org/), in a Continuous Integration & Continuous Delivery/Deployment pipeline.  Server-side and client-side hooks are available.
+Git hooks to format and enforce standardized git commit messages per [Conventional Commits specification](https://www.conventionalcommits.org/) and enable automated [semantic versioning (e.g., SemVer)](https://semver.org/) in a Continuous Integration & Continuous Delivery/Deployment pipeline.  Client-side hooks are available; server-side hooks are coming soon.
+
+# Table of Contents
+1. [Purpose](#purpose)
+2. [Approach](#approach)
+  1. [Standardized Commit Messages](#standardized-commit-messages)
+  2. [Semantic Versioning](#semantic-versioning)
+3. [License](#license)
 
 # Purpose
 
@@ -13,16 +20,18 @@ Standardized commit messages not only help a human better understand the changes
 
 # Approach
 
+## Standardized Commit Messages
+
 git-conventional-commits-hooks adopts the [Conventional Commits specification](https://www.conventionalcommits.org/) to achieve **standardized commit messages**.  The specification defines the format and content for a commit message.
 
 The first line, the title line, is required and includes a *type*, *scope*, and *description*.
-- *type*: An enumerated value that indicates the intent of the commit, e.g. a feature, bug fix, etc.  Required.
-- *scope*: An enumerated value that indicates what is affected by the commit.  Required, although Conventional Commits says optional.
+- *type*: The type of the commit, where *type* is an enumerated value that indicates the intent of the commit, e.g. a feature, bug fix, etc.  Required.
+- *scope*: The scope of the commit, where *scope* is an enumerated value that indicates what is affected by the commit.  Required, although Conventional Commits says optional.
 - *description*: Succintly describes the commit.  Required.
 
-The body is optional.
-- If no body, then the title line represents the entirety of the commit
-- If a body is provided, then an empty line must separate the title line from the body
+The optional body provides additional detail about the commit.
+- If no body is provided, then the title line represents the entirety of the commit
+- If a body is present, then an empty line must separate the title line from the body
 
 A breaking change is indicated by either an exclamation point after the closing parenthesis after the scope and before the colon e.g. `(<scope>)!: <description>`, by putting `BREAKING CHANGE: <description>` into the body, or both.
 
@@ -50,7 +59,7 @@ Example 3 - body without breaking change:
 ```
 feat(app): allow users to register multiple contact email addresses
 
-A user may register more than email address.  Once verified, an email
+User may register more than email address.  Once verified, an email
 address may be indicated as 'primary' for the user to login and to
 receive email communications.
 ```
@@ -58,17 +67,29 @@ receive email communications.
 
 Example 4 - body with breaking change:
 ```
-feat(app)!: <description>
+feat(app)!: user login requires username and not email address
 
-<body>
+User login identifies the user by configurable username and no
+longer accepts an email address to identify the user
 
-BREAKING CHANGE: <description>
+BREAKING CHANGE: user login requires username, and does not accept
+email address
 ```
 
+The scripts provided by git-conventional-commits-hooks can help format and enforce standardized git commit messages.
 
-**Semantic versioning** follows
 
+## Semantic Versioning
 
+Semantic versioning and Conventional Commits complement each other well.  Automated tools can process standardized commit messages and determine the appropriate change to the version number. [SemVer](https://semver.org/) defines a set of rules and requirements that determines how a version number is incremented.
+
+For example for a current version of 1.2.3:
+- a *style* commit will NOT trigger a build itself; once built, the new version would be 1.2.4
+- a *fix* commit will trigger a build and result in a new version of 1.2.4
+- a *feat* commit will trigger a build and result in a new version of 1.3.0
+- a *BREAKING CHANGE* commit will trigger a build and result in a new version of 2.0.0
+
+git-conventional-commits-hooks considers [semantic versioning with SemVer](https://semver.org/) in the definition, formatting, and enforcement of git commit messages.
 
 # Description
 
@@ -101,7 +122,7 @@ todo a change for testing git commit hook
 | test | Add or correct tests | code | no | patch |
 | docs | Affect documentation | project, code, document (e.g., README), etc. | no | patch |
 | build | Affect build components like the build tool | project, code | no | patch |
-| vendor | Update version for dependencies and packages | project, code, yes | patch |
+| vendor | Update version for dependencies and packages | project, code, etc. | yes | patch |
 | ci | Affect CI pipeline | project, code | no | patch |
 | ops | Affect operational components like infrastructure, deployment, backup, recovery, etc. | project, code | yes | patch |
 | chore | Miscellaneous commits, such as updating .gitignore | project, code | no | patch |
