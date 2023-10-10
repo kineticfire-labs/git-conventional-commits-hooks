@@ -8,8 +8,8 @@ Git hooks to format and enforce standardized git commit messages per [Convention
 # Table of Contents
 1. [Purpose](#purpose)
 2. [Approach](#approach)
-  1. [Standardized Commit Messages](#standardized-commit-messages)
-  2. [Semantic Versioning](#semantic-versioning)
+   1. [Standardized Commit Messages](#standardized-commit-messages)
+   2. [Semantic Versioning](#semantic-versioning)
 3. [License](#license)
 
 # Purpose
