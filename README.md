@@ -158,7 +158,7 @@ git-conventional-commits-hooks considers [semantic versioning with SemVer](https
    },
    "scopes": [
       {
-         "name": "project",
+         "name": "proj",
          "types": [
             "revert",
             "security",
