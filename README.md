@@ -8,9 +8,10 @@ Git hooks to format and enforce standardized git commit messages per [Convention
 # Table of Contents
 1. [Purpose](#purpose)
 2. [Approach](#approach)
-  1. [Standardized Commit Messages](#standardized-commit-messages)
-  2. [Semantic Versioning](#semantic-versioning)
-3. [License](#license)
+   1. [Standardized Commit Messages](#standardized-commit-messages)
+   2. [Semantic Versioning](#semantic-versioning)
+3. [Implementing](#implementing)
+4. [License](#license)
 
 # Purpose
 
@@ -91,9 +92,11 @@ For example for a current version of 1.2.3:
 
 git-conventional-commits-hooks considers [semantic versioning with SemVer](https://semver.org/) in the definition, formatting, and enforcement of git commit messages.
 
-# Description
+# Implementing
 
-todo a change for testing git commit hook
+## Install Hooks
+
+## Define Types and Scopes
 
 **Generic Scopes**
 
@@ -129,6 +132,68 @@ todo a change for testing git commit hook
 
 *1 - Unless indicated as a breaking change, then is 'major'*
 
+
+## Create Config
+
+```
+{
+   "enabled": true,
+   "length": {
+      "titleLine": {
+         "min": 20,
+         "max": 52
+      },
+      "bodyLine": {
+         "min": 2,
+         "max": 72
+      }
+   },
+   "scopes": [
+      {
+         "name": "project",
+         "types": [
+            "revert",
+            "security",
+            "build",
+            "vendor",
+            "ci",
+            "docs",
+            "ops",
+            "chore"
+         ]
+      },
+      {
+         "name": "app",
+         "types": [
+            "feat",
+            "more",
+            "change",
+            "fix",
+            "deprecate",
+            "remove",
+            "less",
+            "refactor",
+            "perf",
+            "security",
+            "style",
+            "test",
+            "docs",
+            "build",
+            "vendor",
+            "ci",
+            "ops",
+            "chore"
+         ]
+      },
+      {
+         "name": "readme",
+         "types": [
+            "docs"
+         ]
+      }
+   ]
+}
+```
 
 # License
 The git-conventional-commits-hooks project is released under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
