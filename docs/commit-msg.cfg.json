@@ -3,7 +3,7 @@
    "length": {
       "titleLine": {
          "min": 20,
-         "max": 52
+         "max": 50
       },
       "bodyLine": {
          "min": 2,
