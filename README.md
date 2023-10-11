@@ -252,7 +252,7 @@ Coming soon
 
 #### commit-msg
 
-- copy the commit-msg hook script from ```client-side-hooks/src/main/bash/commit-msg``` to the client's local ```<git repository>/<.git>/hooks```
+- copy the commit-msg hook script from ```client-side-hooks/src/main/bash/commit-msg``` to the client's local ```<git repository>/.git/hooks```
 - make the script executable with ```chmod +x commit-msg```
 
 
