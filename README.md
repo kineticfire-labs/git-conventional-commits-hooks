@@ -9,11 +9,15 @@ Git hooks to format and enforce standardized git commit messages per [Convention
 1. [Purpose](#purpose)
 2. [Approach](#approach)
    1. [Standardized Commit Messages](#standardized-commit-messages)
-   2. [Semantic Versioning](#semantic-versioning)
+   2. [Write Good Commit Messages](#write-good-commit-messages)
+   3. [Semantic Versioning](#semantic-versioning)
 3. [Implementing](#implementing)
-   1. [Install Hooks](#install-hooks)
-   2. [Define Types and Scopes](#define-types-and-scopes)
-   3. [Create Config](#create-config)
+   1. [Identify Scopes and Types](#define-scopes-and-types)
+   2. [Create and Install Config](#create-and-install-config)
+   3. [Install Hooks](#install-hooks)
+      1. [Server-side Hooks](#server-side-hooks)
+      2. [Client-side Hooks](#client-side-hooks)
+         1. [commit-msg](#commit-msg) 
 5. [License](#license)
 
 # Purpose
@@ -83,6 +87,17 @@ email address
 The scripts provided by git-conventional-commits-hooks can help format and enforce standardized git commit messages.
 
 
+## Write Good Commit Messages
+
+Writing good commit messages not only helps developers understand the changes made (especially when tracking down regressions), but also supports the automatic generation of changelogs and release notes.  A good commit message:
+- is **atomic**.  Good Commits align to the Single Responsibility Principle where, in this case, a unit of work covered by the commit should concern itself with one task.  This approach helps simplify the process of tracing regressions and corrective actions like reverting.  While atomic commits may introduce some drag with requiring work to be planned and split into smaller chunks, it can improve the overall quality and simplify debugging and corrections related to the repository.
+- uses **imperative mood** in the subject line, as if in the tone of giving a command or order, e.g. "Add fix for user active state."
+- addresses the **why** and **how** a change was made.
+- has a description in the title line (first line) as if **answering "This change will <description>."**
+- has a body that covers the **motivation for the change and contrasts with previous behavior**.
+- uses lowercase and no punctuation in the subject.
+- limits the first line to 50 characters and body lines to 72 characters each
+
 ## Semantic Versioning
 
 Semantic versioning and Conventional Commits complement each other well.  Automated tools can process standardized commit messages and determine the appropriate change to the version number. [SemVer](https://semver.org/) defines a set of rules and requirements that determines how a version number is incremented, which helps clearly indicate the nature and potential impact (e.g., a backwards incompatible change) in a new artifact version.
@@ -102,21 +117,34 @@ git-conventional-commits-hooks considers [semantic versioning with SemVer](https
 
 # Implementing
 
-## Install Hooks
+1. [Define Scopes and Types](#define-scopes-and-types)
+2. [Create and Install Config](#create-and-install-config)
+3. [Install Hooks](#install-hooks)
 
-## Define Types and Scopes
+## Define Scopes and Types
 
-**Generic Scopes**
+Identify the scopes and types to be used for the project.
 
-| Generic Scope | Description |
+Beginning with scopes, consider:
+- What artifacts are produced?
+- What needs to be individually versioned?
+
+A *project* scope, shortened *proj*, can be used to apply to the entire project.  This scope is equivalent to no scope, which is permissiable under Conventional Commits.  git-conventional-commits-hooks requires a scope, even for project-level scope, so that commits to that level are explicitly considered.
+
+Scope examples appear in Table 1.
+
+Table 1 -- Generic Scope Examples
+| Generic Scope | Description with Specific Scope Examples |
 | --- | --- |
-| proj | Applies to entire project |
-| code | Application (app), library (lib), API (api), container image, Ansible playbooks (infrastructure), etc. |
-| document | README, user guide, developer guide, etc. |
+| project | Applies to entire project (proj) |
+| code | Application (app), library (lib), API (api), container image (img), Ansible playbooks (infra), etc. |
+| document | README (readme), user guide, developer guide, etc. |
 
-**Type Description**
+Next consider types for each scope.  Not every type will apply for all scopes.
 
-| Type | Description | Typical Scope | Triggers Build | Minor or Patch<sup>1</sup> |
+Table 2 -- Type Examples
+
+| Type | Description | Generic Scope | Triggers Build | Minor or Patch<sup>1</sup> |
 | --- | --- | --- | --- | --- |
 | revert | Revert to a previous commit version | project | yes | minor |
 | feat | Add a new feature | code | yes | minor |
@@ -141,7 +169,16 @@ git-conventional-commits-hooks considers [semantic versioning with SemVer](https
 *1 - Unless indicated as a breaking change, then is 'major'*
 
 
-## Create Config
+## Create and Install Config
+
+Using the scopes and types identified above, create a configuration file named ```commit-msg.cfg.json``` and commit it to the top-level of your repository.  The configuration file should follow the format shown below, although *scopes* and *types* will vary.
+
+Table 3 -- Descripton of Select 'commit-msg.cfg.json' Properties
+| Property | Description |
+| --- | --- |
+| enabled | *true* to enable the hook enforcing commit message standard and *false* to disable; server-side hooks may be configured to always enforce the commit message standard regardless of this setting |
+| length.titleLine | Sets the minimum (*.min*) and maximum (*.max*) number of characters for the title line (first line) of the commit message |
+| length.bodyLine | Sets the minimum (*.min*) and maximum (*.max*) number of characters for a line in the body of the commit message |
 
 ```
 {
@@ -149,7 +186,7 @@ git-conventional-commits-hooks considers [semantic versioning with SemVer](https
    "length": {
       "titleLine": {
          "min": 20,
-         "max": 52
+         "max": 50
       },
       "bodyLine": {
          "min": 2,
@@ -202,6 +239,22 @@ git-conventional-commits-hooks considers [semantic versioning with SemVer](https
    ]
 }
 ```
+
+## Install Hooks
+
+Ideally, both server-side and client-side hooks would be used.  Server-side hooks ensure enforcement of the commit message standard and are difficult to bypass, however these hooks require admin or root control of the server hosting the git repository, which may not always be possible.  Client-side hooks do not require admin/root control of the git server, but it's easy for users to bypass these hooks.
+
+### Server-side Hooks
+
+Coming soon
+
+### Client-side Hooks
+
+#### commit-msg
+
+- copy the commit-msg hook script from ```client-side-hooks/src/main/bash/commit-msg``` to the client's local ```<git repository>/<.git>/hooks```
+- make the script executable with ```chmod +x commit-msg```
+
 
 # License
 The git-conventional-commits-hooks project is released under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
