@@ -159,7 +159,8 @@ Table 2 -- Type Examples
 | security | Improve security aspect | code | yes | minor |
 | style | Does not affect the meaning or behavior | code | no | patch | patch |
 | test | Add or correct tests | code | no | patch |
-| docs | Affect documentation | project, code, document (e.g., README), etc. | no | patch |
+| docs | Affect documentation.  Scope may affect meaning.  When applied to 'code', affects API documentation (such as documentation for public and protected methods and classes with javadocs) | project, code, document (e.g., README), etc. | no | patch |
+| idocs | Affect internal documentation that wouldn't appear in API documentation (such as comments and documentation for private methods with javadocs)  | code | no | patch |
 | build | Affect build components like the build tool | project, code | no | patch |
 | vendor | Update version for dependencies and packages | project, code, etc. | yes | patch |
 | ci | Affect CI pipeline | project, code | no | patch |
