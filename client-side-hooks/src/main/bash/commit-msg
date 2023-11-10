@@ -110,7 +110,9 @@
 ######################################################
 # Define settings
 
-version=1.0.0
+#todo
+# 'version' will be replaced by CI pipeline
+#version=@filter-token.client-side-hooks-commit-message.version@
 
 # set configuration file
 config=commit-msg.cfg.json
@@ -262,11 +264,105 @@ if [ "$scopesTest" = "null" ]; then
 	exit 1
 else
 	unset scopesTest
-	readonly scopesString=$(jq -r '.scopes[] | .name' $config)
+	#readonly scopesString=$(jq -r '.scopes[] | .name' $config)
 	# convert string to array.  do not use quote marks.
-	readonly scopes=($scopesString)
+	#readonly scopes=($scopesString)
 fi
+# the function above is unchanged as experimention is done below
+#   - once done, the test for presences of the .scopes in json should be kept,
+#   - then the 'scopes' array should be replace with that below
 
+
+# todo testing
+# append: myArray+=( "newElement1" "newElement2" )
+
+
+
+# $1 is the scope string extracted from the commit message
+# $2 is the config file
+# $3 is the commit message
+#
+# return: a scope path, dot separated, fully expanded (including 'proj') and replacing alias with names; or empty string if invalid
+function resolve_scope_string {
+
+	if [[ ! -z "$1" ]]; then
+		echo "not empty"
+	else
+		echo "empty"
+	fi
+
+	exit 1
+
+	scopesTest=$(jq -r '.scopes' $1)
+	if [ "$scopesTest" = "null" ]; then
+		display_error "Could not find top-level property 'scopes' in configuration file $1" "$2"
+		exit 1
+	else
+		unset scopesTest
+		# retrieve top-level scopes, which should only be 1 e.g. 'project', 'proj', etc.
+		readonly scopesAllString=$(jq -r '.scopes[] | .name' $1)
+		# convert string to array.  do not use quote marks.
+		readonly scopesAll=($scopesString)
+	fi
+
+
+	# display error message and exit if more than top-level scope defined
+	if [ "${#scopesAll[@]}" -ne 1 ]; then
+		display_error "Configuration file $1 has more than one top-level scope defined" "$2"
+		exit 1
+	fi
+
+	# scopesAll
+	# currentScopes ... done with it
+	currentPath=${scopesAll[0]}
+
+}
+
+
+scopesAll=()
+currentScopes=()
+currentPath=""
+
+resolve_scope_string "proj.client"
+
+#unset currentScopes
+#unset currentPath
+
+
+#echo $scopesAll
+
+#echo "next"
+#echo $(jq -r '.scopes[] | .scopes[] | .name' $config)
+#echo "end"
+
+
+# input
+#
+#   p
+#   proj
+#
+#   client
+#   proj.client
+#
+#   client.blah
+#   proj.client.blah
+
+
+# convert aliases to names
+#
+# produce 'scopes':
+#    proj
+#    proj.client
+#    proj.client.blah
+#    proj.client.yada
+#    proj.server
+#    proj.ex-cfg
+#    proj.readme
+
+
+echo "***********************"
+echo "Testing exit"
+exit 1
 
 ######################################################
 # Re-format commit message
@@ -409,7 +505,7 @@ do
 				fi
 			done
 
-			# error ir scope wasn't defined in config file
+			# error if scope wasn't defined in config file
 			if [[ ! "$scopeFound" = "yes" ]]; then
 				display_error "Scope '$scope' is not a valid scope per configuration file '$config'." "$1" 1
 				exit 1

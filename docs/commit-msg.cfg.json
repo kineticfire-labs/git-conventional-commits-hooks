@@ -13,6 +13,7 @@
    "scopes": [
       {
          "name": "proj",
+         "description": "The project (description is optional)",
          "types": [
             "revert",
             "security",
@@ -22,35 +23,39 @@
             "docs",
             "ops",
             "chore"
-         ]
-      },
-      {
-         "name": "app",
-         "types": [
-            "feat",
-            "more",
-            "change",
-            "fix",
-            "deprecate",
-            "remove",
-            "less",
-            "refactor",
-            "perf",
-            "security",
-            "style",
-            "test",
-            "docs",
-            "build",
-            "vendor",
-            "ci",
-            "ops",
-            "chore"
-         ]
-      },
-      {
-         "name": "readme",
-         "types": [
-            "docs"
+         ],
+         "scopes": [
+            {
+               "name": "app",
+               "description": "The app (description is optional)",
+               "types": [
+                  "feat",
+                  "more",
+                  "change",
+                  "fix",
+                  "deprecate",
+                  "remove",
+                  "less",
+                  "refactor",
+                  "perf",
+                  "security",
+                  "style",
+                  "test",
+                  "docs",
+                  "build",
+                  "vendor",
+                  "ci",
+                  "ops",
+                  "chore"
+               ]
+            },
+            {
+               "name": "readme",
+               "description": "The app (description is optional)",
+               "types": [
+                  "docs"
+               ]
+            }
          ]
       }
    ]

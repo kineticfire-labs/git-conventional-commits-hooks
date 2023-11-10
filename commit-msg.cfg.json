@@ -13,6 +13,7 @@
    "scopes": [
       {
          "name": "proj",
+         "alias": "p",
          "types": [
             "revert",
             "security",
@@ -21,57 +22,124 @@
             "ci",
             "docs",
             "chore"
-         ]
-      },
-      {
-         "name": "c-cmt",
-         "types": [
-            "feat",
-            "more",
-            "change",
-            "fix",
-            "deprecate",
-            "remove",
-            "less",
-            "refactor",
-            "perf",
-            "security",
-            "style",
-            "test",
-            "docs",
-            "build",
-            "vendor",
-            "ci",
-            "chore"
-         ]
-      },
-      {
-         "name": "s-cmt",
-         "types": [
-            "feat",
-            "more",
-            "change",
-            "fix",
-            "deprecate",
-            "remove",
-            "less",
-            "refactor",
-            "perf",
-            "security",
-            "style",
-            "test",
-            "docs",
-            "build",
-            "vendor",
-            "ci",
-            "chore"
-         ]
-      },
-      {
-         "name": "readme",
-         "types": [
-            "docs"
+         ],
+         "scopes": [
+            {
+               "name": "client",
+               "alias": "c",
+               "description": "Client-side hooks",
+               "types": [
+                  "feat",
+                  "more",
+                  "change",
+                  "fix",
+                  "deprecate",
+                  "remove",
+                  "less",
+                  "refactor",
+                  "perf",
+                  "security",
+                  "style",
+                  "test",
+                  "docs",
+                  "build",
+                  "vendor",
+                  "ci",
+                  "chore"
+               ],
+               "scopes": [
+                  {
+                     "name": "blah",
+                     "alias": "b",
+                     "description": "Client blah",
+                     "types": [
+                        "feat",
+                        "more",
+                        "change",
+                        "fix",
+                        "deprecate",
+                        "remove",
+                        "less",
+                        "refactor",
+                        "perf",
+                        "security",
+                        "style",
+                        "test",
+                        "docs",
+                        "build",
+                        "vendor",
+                        "ci",
+                        "chore"
+                     ]
+                  },
+                  {
+                     "name": "yada",
+                     "alias": "y",
+                     "description": "Client yada",
+                     "types": [
+                        "feat",
+                        "more",
+                        "change",
+                        "fix",
+                        "deprecate",
+                        "remove",
+                        "less",
+                        "refactor",
+                        "perf",
+                        "security",
+                        "style",
+                        "test",
+                        "docs",
+                        "build",
+                        "vendor",
+                        "ci",
+                        "chore"
+                     ]
+                  }
+               ]
+            },
+            {
+               "name": "server",
+               "alias": "s",
+               "description": "Server-side hooks",
+               "types": [
+                  "feat",
+                  "more",
+                  "change",
+                  "fix",
+                  "deprecate",
+                  "remove",
+                  "less",
+                  "refactor",
+                  "perf",
+                  "security",
+                  "style",
+                  "test",
+                  "docs",
+                  "build",
+                  "vendor",
+                  "ci",
+                  "chore"
+               ]
+            },
+            {
+               "name": "ex-cfg",
+               "alias": "g",
+               "description": "The example commit message JSON file at docs/commit-msg.cfg.json",
+               "types": [
+                  "docs"
+               ]
+            },
+            {
+               "name": "readme",
+               "alias": "r",
+               "types": [
+                  "docs"
+               ]
+            }
          ]
       }
    ]
 }
+
+
