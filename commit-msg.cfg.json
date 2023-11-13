@@ -70,6 +70,32 @@
                         "vendor",
                         "ci",
                         "chore"
+                     ],
+                  "scopes": [
+                        {
+                           "name": "zulu",
+                           "alias": "z",
+                           "description": "Client blah zulu",
+                           "types": [
+                              "feat",
+                              "more",
+                              "change",
+                              "fix",
+                              "deprecate",
+                              "remove",
+                              "less",
+                              "refactor",
+                              "perf",
+                              "security",
+                              "style",
+                              "test",
+                              "docs",
+                              "build",
+                              "vendor",
+                              "ci",
+                              "chore"
+                           ]
+                        }
                      ]
                   },
                   {

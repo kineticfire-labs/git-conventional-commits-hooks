@@ -118,44 +118,64 @@
 config=commit-msg.cfg.json
 
 
+
+
+
+######################################################
+# Define globals
+
+commitMsg="$1"
+
+
+
 ######################################################
 # Define functions
 
 
 # $1 is String error message
 function display_error_message {
+
+	local errMsg="$1"
+
 	echo -e "\e[1m\e[31m[COMMIT REJECTED (local)]"
-	echo -e "\e[0m\e[1mCommit failed: $1"
+	echo -e "\e[0m\e[1mCommit failed: $errMsg"
 }
 
 
 # $1 is String warning message
 function display_warning_proceed {
-	echo -e "\e[34mWARNING (local): $1  Commit proceeding.\033[0m\e[0m"
+
+	local warningMsg="$1"
+
+	echo -e "\e[34mWARNING (local): $warningMsg  Commit proceeding.\033[0m\e[0m"
 }
 
 
 # $1 is String warning message
 # $2 is optional integer line number to highlight in red
 function display_commit_message {
+
+	local warningMsg="$1"
+	local lineNumber="$2"
+
 	echo -e "\e[34m**********************************************"
 	echo 'BEGIN - COMMIT MESSAGE ***********************'
-	if [[ -n "$2" ]]; then
-		echo "   (offending line # $2 in red) **************"
+	if [[ -n "$lineNumber" ]]; then
+		echo "   (offending line # $lineNumber in red) **************"
 	fi
 	echo -e "**********************************************\033[0m\e[0m"
 
-	count=0
+	local count=0
 
 	while IFS= read -r line
 	do
 		(( "count++" ))
-		if [[ -n "$2" ]] && [ "$count" -eq "$2" ]; then
+		if [[ -n "$lineNumber" ]] && [ "$count" -eq "$lineNumber" ]; then
 			echo -e "\e[1m\e[31m$line\033[0m\e[0m"
 		else
 			echo "$line"
 		fi
-	done < "$1"
+	done < "$warningMsg"
 
    echo -e "\e[34m**********************************************"
 	echo 'END - COMMIT MESSAGE *************************'
@@ -164,13 +184,18 @@ function display_commit_message {
 
 
 # $1 is String warning message
-# $2 is the commit message file
+# $2 is the commit message
 # $3 is optional integer line number to highlight in red
 function display_error {
+
+	local warningMsg="$1"
+	local commitMsg="$2"
+	local lineNumber="$3"
+
 	echo -e "\n"
-	display_error_message "$1"
+	display_error_message "$warningMsg"
 	echo -e "\n"
-	display_commit_message "$2" "$3"
+	display_commit_message "$commitMsg" "$lineNumber"
 	echo -e "\n"
 }
 
@@ -185,9 +210,12 @@ function display_info {
 # return: 0 is compliant, 1 is not compliant
 function is_string_min_char_compliant {
 
-	ok=0
+	local data="$1"
+	local minChars="$2"
 
-	if [ "${#1}" -lt "$2" ]; then
+	local ok=0
+
+	if [ "${#data}" -lt "$minChars" ]; then
 		ok=1
 	fi
 
@@ -200,9 +228,12 @@ function is_string_min_char_compliant {
 # return: 0 is compliant, 1 is not compliant
 function is_string_max_char_compliant {
 
-	ok=0
+	local data="$1"
+	local maxChars="$2"
 
-	if [ "${#1}" -gt "$2" ]; then
+	local ok=0
+
+	if [ "${#data}" -gt "$maxChars" ]; then
 		ok=1
 	fi
 
@@ -217,14 +248,14 @@ function is_string_max_char_compliant {
 
 
 if [ ! -f "$config" ]; then
-	display_error "Could not read configuration file $config" "$1"
+	display_error "Could not read configuration file $config" "$commitMsg"
 	exit 1
 fi
 
 
 readonly enabled=$(jq -r '.enabled' $config)
 if [ "$enabled" = "null" ]; then
-	display_error "Could not find property 'enabled' in configuration file $config" "$1"
+	display_error "Could not find property 'enabled' in configuration file $config" "$commitMsg"
 	exit 1
 fi
 
@@ -236,31 +267,31 @@ fi
 
 readonly titleLineLengthMin=$(jq -r '.length.titleLine.min' $config)
 if [ "$titleLineLengthMin" = "null" ]; then
-	display_error "Could find property 'length.titleLine.min' in configuration file $config" "$1"
+	display_error "Could find property 'length.titleLine.min' in configuration file $config" "$commitMsg"
 	exit 1
 fi
 
 readonly titleLineLengthMax=$(jq -r '.length.titleLine.max' $config)
 if [ "$titleLineLengthMax" = "null" ]; then
-	display_error "Could find property 'length.titleLine.max' in configuration file $config" "$1"
+	display_error "Could find property 'length.titleLine.max' in configuration file $config" "$commitMsg"
 	exit 1
 fi
 
 readonly bodyLineLengthMin=$(jq -r '.length.bodyLine.min' $config)
 if [ "$bodyLineLengthMin" = "null" ]; then
-	display_error "Could find property 'length.bodyLine.min' in configuration file $config" "$1"
+	display_error "Could find property 'length.bodyLine.min' in configuration file $config" "$commitMsg"
 	exit 1
 fi
 
 readonly bodyLineLengthMax=$(jq -r '.length.bodyLine.max' $config)
 if [ "$bodyLineLengthMax" = "null" ]; then
-	display_error "Could find property 'length.bodyLine.max' in configuration file $config" "$1"
+	display_error "Could find property 'length.bodyLine.max' in configuration file $config" "$commitMsg"
 	exit 1
 fi
 
 scopesTest=$(jq -r '.scopes' $config)
 if [ "$scopesTest" = "null" ]; then
-	display_error "Could not find property 'scopes' in configuration file $config" "$1"
+	display_error "Could not find property 'scopes' in configuration file $config" "$commitMsg"
 	exit 1
 else
 	unset scopesTest
@@ -282,48 +313,180 @@ fi
 # $2 is the config file
 # $3 is the commit message
 #
-# return: a scope path, dot separated, fully expanded (including 'proj') and replacing alias with names; or empty string if invalid
-function resolve_scope_string {
+# return: a global scopesArray as an array of fully-qualified scopes including the top-level project, replacing aliases with names
+function resolve_scope {
 
-	if [[ ! -z "$1" ]]; then
-		echo "not empty"
-	else
-		echo "empty"
+	local scopesUser="$1"
+	local configFile="$2"
+	local commitMsg="$3"
+
+	if [[ -z "$1" ]]; then
+		display_error "The 'scope' cannot be empty" "$commitMsg"
+		exit 1
 	fi
 
-	exit 1
+	# valid characters for scope
+	local regexp_scope="^[a-zA-Z0-9._-]+$"
 
-	scopesTest=$(jq -r '.scopes' $1)
-	if [ "$scopesTest" = "null" ]; then
-		display_error "Could not find top-level property 'scopes' in configuration file $1" "$2"
+	if [[ ! $1 =~ $regexp_scope ]]; then
+		display_error "Invalid characters in 'scope'" "$commitMsg"
+		exit 1
+	fi
+
+	local -a scopesUserArray
+	IFS='.' read -r -a scopesUserArray <<< "$scopesUser"
+
+	#echo ${scopesUserArray[*]}
+
+
+	# ####################################################
+	# setup
+	local currentScopeString=""
+	local -a currentScopesArray
+	local currentAliasString
+	local reg
+
+
+	# ####################################################
+	# first level:
+	#     - could have explicit name or alias of top-level project, or could be  implicit such that using the name/alias of a sub-project
+
+	currentScopesString=$(jq -r '.scopes[] | .name' $config)
+	if [ "$currentScopesString" = "null" ]; then
+		display_error "Could not find 'name' property for top-level 'scopes' in configuration file $configFile" "$commitMsg"
 		exit 1
 	else
-		unset scopesTest
-		# retrieve top-level scopes, which should only be 1 e.g. 'project', 'proj', etc.
-		readonly scopesAllString=$(jq -r '.scopes[] | .name' $1)
 		# convert string to array.  do not use quote marks.
-		readonly scopesAll=($scopesString)
+		currentScopesArray=($currentScopesString)
 	fi
+
+
+	echo "Finding by name for ${scopesUserArray[0]}"
+
+
+	reg="^${scopesUserArray[0]}$"
+
+	# check if name used
+	if [[ ${currentScopesArray[@]} =~ $reg ]]; then
+		echo "Found by name"
+		# name found
+		scopesArray+=( "${currentScopesArray[0]}" )
+	else
+		echo "Not found by name"
+		echo "Finding by alias"
+
+		# name not found; check if alias used
+
+		currentAliasString=$(jq -r '.scopes[] | .alias' $config)
+		if [ ! "$currentAliasString" = "null" ]; then
+
+			if [[ $currentAliasString =~ $reg ]]; then
+				# alias found
+				echo "Found by alias"
+				scopesArray+=( "${currentScopesArray[0]}" )
+			else
+				echo "Not found by alias"
+			fi
+
+		else
+			echo "Not found by alias, no alias set"
+
+		fi
+
+	fi
+
+
+
+	# set start index in the scopesUserArray is 1, assuming the first element was found as the top-level project
+	local startIndex=1
+
+
+	if [[ ${#scopesArray[@]} -eq 0 ]]; then
+
+		echo "Didn't find scope, adding name"
+		scopesArray+=( "${currentScopesArray[0]}" )
+
+		# first element was not top-level project, so set index to 0
+		startIndex=0
+	fi
+
+
+	# ####################################################
+	# second level and after:
+	#     - either the first scopesUserArray element was:
+	#        - a top-level project was specified by name/alias, then: scopesArray has one element and continue at scopesUserArray index = 1
+	#        - a sub-project, so not found, then: scopesArray is empty and continue at scopesUserArray index = 0 
+
+
+	# get length of an array
+	local length=${#scopesUserArray[@]}
+
+
+
+   currentScopesString=$(jq -r --arg scope "$scope" '.scopes[] | select(.name==$scope) | .scopes[] | .name' $config)
+
+	echo "***************************"
+	echo "startIndex: $startIndex"
+
+	echo "scopesArray: ${scopesArray[*]}"
+	echo "***************************"
+	echo " "
+
+
+	 
+	# use C style for loop syntax to read all values and indexes
+	for (( j="$startIndex"; j<length; j++ ));
+	do
+		echo "---------------------------"
+		printf "Current index %d with value %s\n" $j "${scopesUserArray[$j]}"
+		echo "---------------------------"
+	done
+
+
+	echo " "
+	echo "***************************"
+
+
+
+
+
+
+	#scopesTest=$(jq -r '.scopes' $1)
+	#if [ "$scopesTest" = "null" ]; then
+	#	display_error "Could not find top-level property 'scopes' in configuration file $configFile" "$commitMsg"
+	#	exit 1
+	#else
+	#	unset scopesTest
+		# retrieve top-level scopes, which should only be 1 e.g. 'project', 'proj', etc.
+	#	readonly scopesAllString=$(jq -r '.scopes[] | .name' $1)
+		# convert string to array.  do not use quote marks.
+	#	readonly scopesAll=($scopesString)
+	#fi
 
 
 	# display error message and exit if more than top-level scope defined
-	if [ "${#scopesAll[@]}" -ne 1 ]; then
-		display_error "Configuration file $1 has more than one top-level scope defined" "$2"
-		exit 1
-	fi
+	#if [ "${#scopesAll[@]}" -ne 1 ]; then
+	#	display_error "Configuration file $configFile has more than one top-level scope defined" "$commitMsg"
+	#	exit 1
+	#fi
 
 	# scopesAll
 	# currentScopes ... done with it
-	currentPath=${scopesAll[0]}
+	#currentPath=${scopesAll[0]}
 
 }
 
 
-scopesAll=()
-currentScopes=()
-currentPath=""
+testScope="proj.client"
 
-resolve_scope_string "proj.client"
+declare -a scopesArray
+
+resolve_scope "$testScope"
+
+echo "testScope= $testScope"
+echo "global scopesArray= ${scopesArray[*]}"
+
+
 
 #unset currentScopes
 #unset currentPath
@@ -336,12 +499,13 @@ resolve_scope_string "proj.client"
 #echo "end"
 
 
-# input
+# input: 'scope' string from regex
 #
-#   p
 #   proj
+#   p
 #
 #   client
+#   c
 #   proj.client
 #
 #   client.blah
@@ -350,7 +514,7 @@ resolve_scope_string "proj.client"
 
 # convert aliases to names
 #
-# produce 'scopes':
+# produce global 'scopeFullyQualified' string:
 #    proj
 #    proj.client
 #    proj.client.blah
