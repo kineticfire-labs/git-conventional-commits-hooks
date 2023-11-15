@@ -336,12 +336,12 @@ function resolve_scope {
 	local -a scopesUserArray
 	IFS='.' read -r -a scopesUserArray <<< "$scopesUser"
 
-	#echo ${scopesUserArray[*]}
 
 
 	# ####################################################
 	# setup
-	local currentScopeString=""
+	local currentScopesString=""
+	local currentScopesQueryString=""
 	local -a currentScopesArray
 	local currentAliasString
 	local reg
@@ -400,14 +400,17 @@ function resolve_scope {
 	# set start index in the scopesUserArray is 1, assuming the first element was found as the top-level project
 	local startIndex=1
 
-
 	if [[ ${#scopesArray[@]} -eq 0 ]]; then
 
 		echo "Didn't find scope, adding name"
-		scopesArray+=( "${currentScopesArray[0]}" )
 
-		# first element was not top-level project, so set index to 0
+		# first element in the scopesUserArray was not a top-level project, so
+		#   - add the project name to the scopesArray
+		#   - set the startIndex to 0 for the scopesUserArray
+
+		scopesArray+=( "${currentScopesArray[0]}" )
 		startIndex=0
+
 	fi
 
 
@@ -418,28 +421,84 @@ function resolve_scope {
 	#        - a sub-project, so not found, then: scopesArray is empty and continue at scopesUserArray index = 0 
 
 
-	# get length of an array
-	local length=${#scopesUserArray[@]}
 
 
-
-   currentScopesString=$(jq -r --arg scope "$scope" '.scopes[] | select(.name==$scope) | .scopes[] | .name' $config)
 
 	echo "***************************"
 	echo "startIndex: $startIndex"
-
+	echo "scopesUserArray: ${scopesUserArray[*]}"
 	echo "scopesArray: ${scopesArray[*]}"
 	echo "***************************"
 	echo " "
 
+	echo "Testing pre stop"
+	exit 1
 
+
+   #currentScopesQueryString=$(jq -r --arg scope "${scopesUserArray[0]}" '.scopes[] | select(.name==$scope) | .scopes[] | .name' $config)
+	#local nextScopesPartialQueryString="| .scopes[] | .name"
+
+	currentScopesString=$(jq -r --arg scope "${scopesArray[0]}" '.scopes[] | select(.name==$scope) | .scopes[] | .name' $config)
+
+	local length=${#scopesUserArray[@]}
 	 
 	# use C style for loop syntax to read all values and indexes
-	for (( j="$startIndex"; j<length; j++ ));
-	do
+	for (( j="$startIndex"; j<length; j++ )); do
+
+		scope=${scopesUserArray[$j]}
+
 		echo "---------------------------"
-		printf "Current index %d with value %s\n" $j "${scopesUserArray[$j]}"
+		printf "Current index %d with value %s\n" "$j" "$scope"
 		echo "---------------------------"
+
+
+		if [ "$currentScopesString" = "null" ]; then
+			display_error "Could not find additional sub-project scopes to match scope $scope in config file $configFile" "$commitMsg"
+			exit 1
+		else
+			# convert string to array.  do not use quote marks.
+			currentScopesArray=($currentScopesString)
+		fi
+
+
+		echo "Finding by name for ${scope}"
+
+
+		reg="^$scope$"
+
+		# check if name used
+		if [[ ${currentScopesArray[@]} =~ $reg ]]; then
+			echo "Found by name"
+			# name found
+			scopesArray+=( "${currentScopesArray[0]}" )
+		else
+			echo "Not found by name"
+			echo "Finding by alias"
+
+			# name not found; check if alias used
+
+			currentAliasString=$(jq -r '.scopes[] | .alias' $config)
+			if [ ! "$currentAliasString" = "null" ]; then
+
+				if [[ $currentAliasString =~ $reg ]]; then
+					# alias found
+					echo "Found by alias"
+					scopesArray+=( "${currentScopesArray[$j]}" )
+				else
+					echo "Not found by alias"
+				fi
+
+			else
+				echo "Not found by alias, no alias set"
+
+			fi
+
+		fi
+
+		# if not found, then error
+
+		# build scopes query string for next run
+
 	done
 
 
@@ -477,7 +536,7 @@ function resolve_scope {
 }
 
 
-testScope="proj.client"
+testScope="proj.client.blah.zulu"
 
 declare -a scopesArray
 

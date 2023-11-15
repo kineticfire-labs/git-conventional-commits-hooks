@@ -5,6 +5,8 @@
 
 Git hooks to format and enforce standardized git commit messages per [Conventional Commits specification](https://www.conventionalcommits.org/) and enable automated [semantic versioning (e.g., SemVer)](https://semver.org/) in a Continuous Integration & Continuous Delivery/Deployment pipeline.  Client-side hooks are available; server-side hooks are coming soon.
 
+a
+
 # Table of Contents
 1. [Purpose](#purpose)
 2. [Approach](#approach)
