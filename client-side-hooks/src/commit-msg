@@ -6,8 +6,6 @@
             [babashka.process  :refer [shell process exec]]))
 
 
-;;(prn *command-line-args*)
-
 
 (defn display-with-shell
   "Displays 'lines' using the 'shell' command, which supports color coding.  Argument 'lines' may be a string or a vector of strings."
@@ -39,21 +37,61 @@
   (display-with-shell (str "\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\033[0m\\e[0m")))
 
 
-(defn display-commit-msg
-  "Displays the commit message string 'msg' and, if the optional int 'line-num' is set, notes the line number in error and highlights that line in the commit message.  Uses color-coding from the shell."
-  [msg line-num]
-  (display-with-shell 
-   ["\\e[34m**********************************************"
-    "BEGIN - COMMIT MESSAGE ***********************"]))
 ;;todo finish
+(defn display-err-commit-msg
+  "Displays the commit message string 'msg' and, if the optional int 'line-num' is set, notes the line number in error and highlights that line in the commit message.  Uses color-coding from the shell."
+  ([msg]
+   (display-commit-msg msg -1))
+  ([msg line-num]
+   (let [lines
+         ["\\e[34m**********************************************"
+          "BEGIN - COMMIT MESSAGE ***********************"
+          "**********************************************\\033[0m\\e[0m"
+          "\\e[34m**********************************************"
+          "END - COMMIT MESSAGE *************************"
+          "**********************************************\\033[0m\\e[0m"]])
+   (println line-num)))
+
+
+(defn exit
+  [value]
+  (System/exit value))
+
+
+(defn handle-err-exit
+  ([err-msg]
+   (println "err" err-msg))
+  ([err-msg commit-msg]
+   (println "commit" err-msg commit-msg))
+  ([err-msg commit-msg line-num]
+   (println "commit line" err-msg commit-msg line-num)))
+
+
+(defn handle-warn-proceed
+  [warn-msg]
+  (display-warn-msg warn-msg))
+
+
+(defn get-commit-msg
+  [filename]
+  (slurp filename))
+
+
+;; start
+;;todo
+(let [args *command-line-args*]
+  (if (= (count args) 1)
+    (dostuff (first args))
+    (err and exit)))
 
 
 ;;(let [commit-msg-cfg "commit-msg.cfg.json"])
+;;(".git/COMMIT_EDITMSG")
 
 (display-err-msg "err!")
 (display-with-shell-newline)
 (display-with-shell-newline 3)
 (display-warn-msg "warned!")
 
-
-;;(System/exit 1)
+;;to do
+(println (get-commit-msg))
