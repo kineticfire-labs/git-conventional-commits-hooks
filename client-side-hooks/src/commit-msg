@@ -10,26 +10,38 @@
 
 
 (defn display-with-shell
+  "Displays 'lines' using the 'shell' command, which supports color coding.  Argument 'lines' may be a string or a vector of strings."
   [lines]
-  (dorun (map shell (map #(str "echo -e " %) lines))))
+  (if (= (.getSimpleName (type lines)) "String")
+    (display-with-shell [lines])
+    (dorun (map shell (map #(str "echo -e " %) lines)))))
 
 
-(defn display-err
-  "Displays an error message, using color-coding from the shell"
+(defn display-with-shell-newline
+  "Displays newlines.  Displays one newline without arguments or int 'num' newlines."
+  ([]
+  (display-with-shell-newline 1))
+  ([num]
+  (display-with-shell (vec (repeat num "\n")))))
+
+
+(defn display-err-msg
+  "Displays the error message string 'err-msg', using color-coding from the shell"
   [err-msg]
   (display-with-shell
    ["\\e[1m\\e[31m[COMMIT REJECTED (local)]"
     "\\e[0m\\e[1mCommit failed: " err-msg]))
 
 
-(defn display-warn-proceed
-  "Displays the warning message and notes that the commit is proceeding.  Uses color-coding from the shell."
+(defn display-warn-msg
+  "Displays the warning message string 'warn-msg' and notes that the commit is proceeding.  Uses color-coding from the shell."
   [warn-msg]
-  (display-with-shell ["\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\033[0m\\e[0m"]))
+  (display-with-shell (str "\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\033[0m\\e[0m")))
 
 
 (defn display-commit-msg
-  [warn-msg line-num]
+  "Displays the commit message string 'msg' and, if the optional int 'line-num' is set, notes the line number in error and highlights that line in the commit message.  Uses color-coding from the shell."
+  [msg line-num]
   (display-with-shell 
    ["\\e[34m**********************************************"
     "BEGIN - COMMIT MESSAGE ***********************"]))
@@ -38,8 +50,10 @@
 
 ;;(let [commit-msg-cfg "commit-msg.cfg.json"])
 
-(display-err "err!")
-(display-warn-proceed "warned!")
+(display-err-msg "err!")
+(display-with-shell-newline)
+(display-with-shell-newline 3)
+(display-warn-msg "warned!")
 
 
 ;;(System/exit 1)
