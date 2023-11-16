@@ -1,0 +1,45 @@
+#!/usr/bin/env bb
+
+(ns commit-msg.main
+  (:require [clojure.data.json :as json]
+            [babashka.cli      :as cli]
+            [babashka.process  :refer [shell process exec]]))
+
+
+;;(prn *command-line-args*)
+
+
+(defn display-with-shell
+  [lines]
+  (dorun (map shell (map #(str "echo -e " %) lines))))
+
+
+(defn display-err
+  "Displays an error message, using color-coding from the shell"
+  [err-msg]
+  (display-with-shell
+   ["\\e[1m\\e[31m[COMMIT REJECTED (local)]"
+    "\\e[0m\\e[1mCommit failed: " err-msg]))
+
+
+(defn display-warn-proceed
+  "Displays the warning message and notes that the commit is proceeding.  Uses color-coding from the shell."
+  [warn-msg]
+  (display-with-shell ["\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\033[0m\\e[0m"]))
+
+
+(defn display-commit-msg
+  [warn-msg line-num]
+  (display-with-shell 
+   ["\\e[34m**********************************************"
+    "BEGIN - COMMIT MESSAGE ***********************"]))
+;;todo finish
+
+
+;;(let [commit-msg-cfg "commit-msg.cfg.json"])
+
+(display-err "err!")
+(display-warn-proceed "warned!")
+
+
+;;(System/exit 1)
