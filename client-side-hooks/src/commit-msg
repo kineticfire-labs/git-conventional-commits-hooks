@@ -7,12 +7,20 @@
 
 
 
+(defn run-shell-command
+  "Runs commands in 'lines', as either a string or vector of strings, by using 'shell'."
+  [lines]
+  (if (= (.getSimpleName (type lines)) "String")
+    (run-shell-command [lines])
+    (dorun (map shell lines))))
+
+
 (defn display-with-shell
   "Displays 'lines' using the 'shell' command, which supports color coding.  Argument 'lines' may be a string or a vector of strings."
   [lines]
   (if (= (.getSimpleName (type lines)) "String")
     (display-with-shell [lines])
-    (dorun (map shell (map #(str "echo -e " %) lines)))))
+    (run-shell-command (map #(str "echo -e " %) lines))))
 
 
 (defn display-with-shell-newline
@@ -23,22 +31,28 @@
   (display-with-shell (vec (repeat num "\n")))))
 
 
-(defn display-err-msg
-  "Displays the error message string 'err-msg', using color-coding from the shell"
+(defn display-commit-warn-msg
+  "Displays the warning message string 'warn-msg', using color-coding from the shell."
+  [warn-msg]
+  (display-with-shell (str "\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\033[0m\\e[0m")))
+
+
+(defn display-commit-err-msg
+  "Displays the error message string 'err-msg', using color-coding from the shell."
   [err-msg]
   (display-with-shell
    ["\\e[1m\\e[31m[COMMIT REJECTED (local)]"
     "\\e[0m\\e[1mCommit failed: " err-msg]))
 
 
-(defn display-warn-msg
-  "Displays the warning message string 'warn-msg' and notes that the commit is proceeding.  Uses color-coding from the shell."
-  [warn-msg]
-  (display-with-shell (str "\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\033[0m\\e[0m")))
-
+(defn ^:private display-commit-msg-offending-line
+  [lines line-num]
+  (if (< line-num 0)
+    (lines)
+    (conj lines (str "   (offending line # " line-num " in red) **************"))))
 
 ;;todo finish
-(defn display-err-commit-msg
+(defn display-commit-msg
   "Displays the commit message string 'msg' and, if the optional int 'line-num' is set, notes the line number in error and highlights that line in the commit message.  Uses color-coding from the shell."
   ([msg]
    (display-commit-msg msg -1))
@@ -49,8 +63,8 @@
           "**********************************************\\033[0m\\e[0m"
           "\\e[34m**********************************************"
           "END - COMMIT MESSAGE *************************"
-          "**********************************************\\033[0m\\e[0m"]])
-   (println line-num)))
+          "**********************************************\\033[0m\\e[0m"]]
+     (display-with-shell (display-commit-msg-offending-line lines line-num)))))
 
 
 (defn exit
@@ -60,38 +74,43 @@
 
 (defn handle-err-exit
   ([err-msg]
-   (println "err" err-msg))
+   (display-commit-err-msg err-msg)
+   (exit 1))
   ([err-msg commit-msg]
-   (println "commit" err-msg commit-msg))
+   (display-commit-err-msg err-msg)
+   (display-commit-msg commit-msg)
+   (exit 1))
   ([err-msg commit-msg line-num]
-   (println "commit line" err-msg commit-msg line-num)))
+   (display-commit-err-msg err-msg)
+   (display-commit-msg commit-msg line-num)
+   (exit 1)))
 
-
-(defn handle-warn-proceed
-  [warn-msg]
-  (display-warn-msg warn-msg))
 
 
 (defn get-commit-msg
   [filename]
   (slurp filename))
 
+(defn dostuff
+  [args]
+  (println "hi"))
+
+(defn err
+  []
+  (println "err"))
 
 ;; start
 ;;todo
 (let [args *command-line-args*]
   (if (= (count args) 1)
     (dostuff (first args))
-    (err and exit)))
+    (err)))
 
 
 ;;(let [commit-msg-cfg "commit-msg.cfg.json"])
 ;;(".git/COMMIT_EDITMSG")
 
-(display-err-msg "err!")
-(display-with-shell-newline)
-(display-with-shell-newline 3)
-(display-warn-msg "warned!")
+(display-commit-msg "A big commit message" 5)
 
 ;;to do
-(println (get-commit-msg))
+;;(println (get-commit-msg "hi"))
