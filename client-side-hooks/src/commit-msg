@@ -6,6 +6,14 @@
             [babashka.process  :refer [shell process exec]]))
 
 
+(def ^:const shell-color-red "\\e[1m\\e[31m")
+
+(def ^:const shell-color-blue "\\e[34m")
+
+(def ^:const shell-color-white "\\e[0m\\e[1m")
+
+(def ^:const shell-color-reset "\\033[0m\\e[0m")
+
 
 (defn run-shell-command
   "Runs commands in 'lines', as either a string or vector of strings, by using 'shell'."
@@ -34,7 +42,7 @@
 (defn display-commit-warn-msg
   "Displays the warning message string 'warn-msg', using color-coding from the shell."
   [warn-msg]
-  (display-with-shell (str "\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\033[0m\\e[0m")))
+  (display-with-shell (str "\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\\033[0m\\e[0m")))
 
 
 (defn display-commit-err-msg
