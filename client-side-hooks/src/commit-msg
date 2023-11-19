@@ -42,15 +42,15 @@
 (defn display-commit-warn-msg
   "Displays the warning message string 'warn-msg', using color-coding from the shell."
   [warn-msg]
-  (display-with-shell (str "\\e[34mWARNING (local): " warn-msg "  Commit proceeding.\\033[0m\\e[0m")))
+  (display-with-shell (str shell-color-blue "WARNING (local): " warn-msg "  Commit proceeding." shell-color-reset)))
 
 
 (defn display-commit-err-msg
   "Displays the error message string 'err-msg', using color-coding from the shell."
   [err-msg]
   (display-with-shell
-   ["\\e[1m\\e[31m[COMMIT REJECTED (local)]"
-    "\\e[0m\\e[1mCommit failed: " err-msg]))
+   [(str shell-color-red "COMMIT REJECTED (local)]")
+    (str shell-color-white "Commit failed: " err-msg)]))
 
 
 (defn ^:private display-commit-msg-offending-line
@@ -66,12 +66,12 @@
    (display-commit-msg msg -1))
   ([msg line-num]
    (let [lines
-         ["\\e[34m**********************************************"
+         [(str shell-color-blue "**********************************************")
           "BEGIN - COMMIT MESSAGE ***********************"
-          "**********************************************\\033[0m\\e[0m"
-          "\\e[34m**********************************************"
+          (str "**********************************************" shell-color-reset)
+          (str shell-color-blue "**********************************************")
           "END - COMMIT MESSAGE *************************"
-          "**********************************************\\033[0m\\e[0m"]]
+          (str "**********************************************" shell-color-reset)]]
      (display-with-shell (display-commit-msg-offending-line lines line-num)))))
 
 
@@ -118,7 +118,10 @@
 ;;(let [commit-msg-cfg "commit-msg.cfg.json"])
 ;;(".git/COMMIT_EDITMSG")
 
-(display-commit-msg "A big commit message" 5)
+;;(display-commit-warn-msg "warning warning danger!")
+;;(display-commit-err-msg "a big error occured!")
+;;(display-commit-msg "A big commit message" 5)
 
-;;to do
+;;(handle-err-exit "Big error message")
+
 ;;(println (get-commit-msg "hi"))
