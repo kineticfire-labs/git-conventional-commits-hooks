@@ -49,15 +49,16 @@
   "Displays the error message string 'err-msg', using color-coding from the shell."
   [err-msg]
   (display-with-shell
-   [(str shell-color-red "COMMIT REJECTED (local)]")
+   [(str shell-color-red "[COMMIT REJECTED local]")
     (str shell-color-white "Commit failed: " err-msg)]))
 
 
-(defn ^:private display-commit-msg-offending-line
+(defn display-commit-msg-offending-line-header
   [lines line-num]
   (if (< line-num 0)
-    (lines)
+    lines
     (conj lines (str "   (offending line # " line-num " in red) **************"))))
+
 
 ;;todo finish
 (defn display-commit-msg
@@ -65,14 +66,15 @@
   ([msg]
    (display-commit-msg msg -1))
   ([msg line-num]
-   (let [lines
+   (let [start-lines
          [(str shell-color-blue "**********************************************")
           "BEGIN - COMMIT MESSAGE ***********************"
-          (str "**********************************************" shell-color-reset)
-          (str shell-color-blue "**********************************************")
+          (str "**********************************************" shell-color-reset)]
+         end-lines
+         [(str shell-color-blue "**********************************************")
           "END - COMMIT MESSAGE *************************"
           (str "**********************************************" shell-color-reset)]]
-     (display-with-shell (display-commit-msg-offending-line lines line-num)))))
+     (display-with-shell (into (display-commit-msg-offending-line-header start-lines line-num) end-lines)))))
 
 
 (defn exit
@@ -120,7 +122,7 @@
 
 ;;(display-commit-warn-msg "warning warning danger!")
 ;;(display-commit-err-msg "a big error occured!")
-;;(display-commit-msg "A big commit message" 5)
+(display-commit-msg "A big multi-line commit message.\nBigger commit msg.\nNext line." -1)
 
 ;;(handle-err-exit "Big error message")
 
