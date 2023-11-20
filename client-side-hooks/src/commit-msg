@@ -42,22 +42,22 @@
 (defn display-commit-warn-msg
   "Displays the warning message string 'warn-msg', using color-coding from the shell."
   [warn-msg]
-  (display-with-shell (str shell-color-blue "WARNING (local): " warn-msg "  Commit proceeding." shell-color-reset)))
+  (display-with-shell (str "\"" shell-color-blue "WARNING (local): " warn-msg "  Commit proceeding." shell-color-reset "\"")))
 
 
 (defn display-commit-err-msg
   "Displays the error message string 'err-msg', using color-coding from the shell."
   [err-msg]
   (display-with-shell
-   [(str shell-color-red "[COMMIT REJECTED local]")
-    (str shell-color-white "Commit failed: " err-msg)]))
+   [(str "\"" shell-color-red "[COMMIT REJECTED local]\"")
+    (str "\"" shell-color-white "Commit failed: " err-msg "\"")]))
 
 
 (defn display-commit-msg-offending-line-header
   [lines line-num]
   (if (< line-num 0)
     lines
-    (conj lines (str "   (offending line # " line-num " in red) **************"))))
+    (conj lines (str "\"   (offending line # " line-num " in red) **************\""))))
 
 
 ;;todo finish
@@ -66,15 +66,16 @@
   ([msg]
    (display-commit-msg msg -1))
   ([msg line-num]
-   (let [start-lines
-         [(str shell-color-blue "**********************************************")
-          "BEGIN - COMMIT MESSAGE ***********************"
-          (str "**********************************************" shell-color-reset)]
+   (let [start-lines-top
+         [(str "\"" shell-color-blue "**********************************************\"")
+          "\"BEGIN - COMMIT MESSAGE ***********************\""]
+         start-line-end
+         (str "\"**********************************************" shell-color-reset"\"")
          end-lines
-         [(str shell-color-blue "**********************************************")
-          "END - COMMIT MESSAGE *************************"
-          (str "**********************************************" shell-color-reset)]]
-     (display-with-shell (into (display-commit-msg-offending-line-header start-lines line-num) end-lines)))))
+         [(str "\"" shell-color-blue "**********************************************\"")
+          "\"END - COMMIT MESSAGE *************************\""
+          (str "\"**********************************************" shell-color-reset "\"")]]
+     (display-with-shell (into (conj (display-commit-msg-offending-line-header start-lines-top line-num) start-line-end) end-lines)))))
 
 
 (defn exit
@@ -122,7 +123,7 @@
 
 ;;(display-commit-warn-msg "warning warning danger!")
 ;;(display-commit-err-msg "a big error occured!")
-(display-commit-msg "A big multi-line commit message.\nBigger commit msg.\nNext line." -1)
+(display-commit-msg "A big multi-line commit message.\nBigger commit msg.\nNext line." 5)
 
 ;;(handle-err-exit "Big error message")
 
