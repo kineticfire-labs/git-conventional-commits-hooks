@@ -2,9 +2,16 @@
 
 (ns commit-msg.main
   (:require [clojure.data.json :as json]
+            [clojure.string :as str]
             [babashka.cli      :as cli]
             [babashka.process  :refer [shell process exec]]))
 
+
+
+;; version updated by CI pipeline
+(def ^:const version "@filter-token.client-side-hooks-commit-message.version@")
+
+(def ^:const config-file "commit-msg.cfg.json")
 
 (def ^:const shell-color-red "\\e[1m\\e[31m")
 
@@ -15,7 +22,7 @@
 (def ^:const shell-color-reset "\\033[0m\\e[0m")
 
 
-(defn run-shell-command
+(defn ^:impure run-shell-command
   "Runs commands in 'lines', as either a string or vector of strings, by using 'shell'."
   [lines]
   (if (= (.getSimpleName (type lines)) "String")
@@ -23,48 +30,56 @@
     (dorun (map shell lines))))
 
 
-(defn display-with-shell
-  "Displays 'lines' using the 'shell' command, which supports color coding.  Argument 'lines' may be a string or a vector of strings."
+(defn apply-display-with-shell
+  "Applies 'echo -e' to each line in 'lines', which supports display to the terminal with color coding, and returns the result.  If argument 'lines' is a string, then returns a string; if 'lines' is a vector of strings, then returns a vector of strings."
   [lines]
   (if (= (.getSimpleName (type lines)) "String")
-    (display-with-shell [lines])
-    (run-shell-command (map #(str "echo -e " %) lines))))
+    (str "echo -e " lines)
+    (map #(str "echo -e " %) lines)))
 
 
-(defn display-with-shell-newline
-  "Displays newlines.  Displays one newline without arguments or int 'num' newlines."
+(defn generate-shell-newline-characters
+  "Generates newline characters understood by the terminal and returns the string result.  Displays one newline without arguments or int 'num' newlines."
   ([]
-  (display-with-shell-newline 1))
+  (generate-shell-newline-characters 1))
   ([num]
-  (display-with-shell (vec (repeat num "\n")))))
+  (vec (repeat num "\n"))))
 
 
-(defn display-commit-warn-msg
-  "Displays the warning message string 'warn-msg', using color-coding from the shell."
+(defn generate-commit-warn-msg
+  "Generates and returns as a string a warning message including the string 'warn-msg', formatting the string for shell output with color-coding."
   [warn-msg]
-  (display-with-shell (str "\"" shell-color-blue "WARNING (local): " warn-msg "  Commit proceeding." shell-color-reset "\"")))
+  (apply-display-with-shell (str "\"" shell-color-blue "WARNING (local): " warn-msg "  Commit proceeding." shell-color-reset "\"")))
 
 
-(defn display-commit-err-msg
-  "Displays the error message string 'err-msg', using color-coding from the shell."
+(defn generate-commit-err-msg
+  "Generates and returns as a vector of strings an error message including the string 'err-msg', formatting the string for shell output with color-coding."
   [err-msg]
-  (display-with-shell
+  (apply-display-with-shell 
    [(str "\"" shell-color-red "[COMMIT REJECTED local]\"")
     (str "\"" shell-color-white "Commit failed: " err-msg "\"")]))
 
 
-(defn display-commit-msg-offending-line-header
+(defn generate-commit-msg-offending-line-header
+  "Generates a header that indicates an offending line that was in error, if 'line-num' is integer 0 or greater; 'line-num' is indexed starting at 0.  Appends the header line to the vector of strings 'lines' and returns the result or, if no header should be generated, returns 'lines' unchanged."
   [lines line-num]
   (if (< line-num 0)
     lines
-    (conj lines (str "\"   (offending line # " line-num " in red) **************\""))))
+    (conj lines (str "\"   (offending line # " (inc line-num) " in red) **************\""))))
 
 
-;;todo finish
-(defn display-commit-msg
-  "Displays the commit message string 'msg' and, if the optional int 'line-num' is set, notes the line number in error and highlights that line in the commit message.  Uses color-coding from the shell."
+(defn generate-commit-msg-offending-line-msg-highlight
+  "Adds shell color-code formatting for an offending line identified by integer 'line-num' in the vector of strings 'lines'.  Argument 'line-num' is indexed starting at 0.  If 'line-num' is negative, then 'lines' is returned unchanged."
+  [lines line-num]
+  (if (< line-num 0)
+    lines
+    (assoc lines line-num (str shell-color-red (nth lines line-num) shell-color-reset))))
+
+
+(defn generate-commit-msg
+  "Generates a formatted commit message, 'msg', with optional call-out to the offending line if the optional integer 'line-num' is non-negative; 'line-num' is indexed starting at 0.  Returns the result as a vector of strings, formatted for shell output with color-coding."
   ([msg]
-   (display-commit-msg msg -1))
+   (generate-commit-msg msg -1))
   ([msg line-num]
    (let [start-lines-top
          [(str "\"" shell-color-blue "**********************************************\"")
@@ -75,27 +90,68 @@
          [(str "\"" shell-color-blue "**********************************************\"")
           "\"END - COMMIT MESSAGE *************************\""
           (str "\"**********************************************" shell-color-reset "\"")]]
-     (display-with-shell (into (conj (display-commit-msg-offending-line-header start-lines-top line-num) start-line-end) end-lines)))))
+     (apply-display-with-shell 
+      (into (into (conj (generate-commit-msg-offending-line-header start-lines-top line-num) start-line-end) (generate-commit-msg-offending-line-msg-highlight msg line-num)) end-lines)))))
 
 
-(defn exit
+(defn ^:impure exit
   [value]
   (System/exit value))
 
 
-(defn handle-err-exit
+(defn ^:impure handle-err-exit
+  "Generates and displays to the shell an error message, including the string 'err-msg', using color-coding from the shell.  Optionally accepts vector of strings 'commit-msg' which display the original commit message; and optionally accepts the integer 'line-num', indexed at 0, which displays a message about the offending line and highlights it in the commit message.  Exits with return code 1."
   ([err-msg]
-   (display-commit-err-msg err-msg)
+   (run-shell-command (generate-commit-err-msg err-msg))
    (exit 1))
   ([err-msg commit-msg]
-   (display-commit-err-msg err-msg)
-   (display-commit-msg commit-msg)
+   (run-shell-command (generate-commit-err-msg err-msg))
+   (run-shell-command (generate-commit-msg commit-msg))
    (exit 1))
   ([err-msg commit-msg line-num]
-   (display-commit-err-msg err-msg)
-   (display-commit-msg commit-msg line-num)
+   (run-shell-command (generate-commit-err-msg err-msg))
+   (run-shell-command (generate-commit-msg commit-msg line-num))
    (exit 1)))
 
+
+(defn ^:impure handle-warn-proceed
+  "Generates and displays to the terminal a warning message, including the string 'warn-msg', using color-coding from the shell."
+  [warn-msg]
+  (run-shell-command (generate-commit-warn-msg warn-msg)))
+
+
+(defn string-to-vector
+  "Converts and returns the string 'lines' to a vector split on newlines.  A wrapper around 'clojure.string/split-lines'."
+  [line]
+  (str/split-lines line))
+
+
+(defn is-string-min-char-compliant?
+  [line min-chars]
+  (if (>= (count line) min-chars)
+    true
+    false))
+
+
+(defn is-string-max-char-compliant?
+  [line max-chars]
+  (if (<= (count line) max-chars)
+    true
+    false))
+
+
+;; get 'commit edit message' path from arg
+;; read in as a string
+;; convert to vector and display error message
+
+
+;; err if no config
+;; read config into map...
+
+
+;; ------------------------------------------------------------------
+;; ------------------------------------------------------------------
+;; ------------------------------------------------------------------
 
 
 (defn get-commit-msg
@@ -118,13 +174,10 @@
     (err)))
 
 
+(handle-err-exit "A big error occured." ["feat(client): added new feature" "A really big commit message" "would span multiple lines" "much line this one does"] 2)
+
+
 ;;(let [commit-msg-cfg "commit-msg.cfg.json"])
 ;;(".git/COMMIT_EDITMSG")
 
-;;(display-commit-warn-msg "warning warning danger!")
-;;(display-commit-err-msg "a big error occured!")
-(display-commit-msg "A big multi-line commit message.\nBigger commit msg.\nNext line." 5)
 
-;;(handle-err-exit "Big error message")
-
-;;(println (get-commit-msg "hi"))
