@@ -1,15 +1,14 @@
 #!/usr/bin/env bb
 
 (ns commit-msg.main
-  (:require [clojure.data.json :as json]
-            [clojure.string :as str]
+  (:require [clojure.string    :as str]
             [babashka.cli      :as cli]
             [babashka.process  :refer [shell process exec]]))
 
 
 
 ;; version updated by CI pipeline
-(def ^:const version "@filter-token.client-side-hooks-commit-message.version@")
+(def ^:const version "latest")
 
 (def ^:const config-file "commit-msg.cfg.json")
 
@@ -46,20 +45,6 @@
   (vec (repeat num "\n"))))
 
 
-(defn generate-commit-warn-msg
-  "Generates and returns as a string a warning message including the string 'warn-msg', formatting the string for shell output with color-coding."
-  [warn-msg]
-  (apply-display-with-shell (str "\"" shell-color-blue "WARNING (local): " warn-msg "  Commit proceeding." shell-color-reset "\"")))
-
-
-(defn generate-commit-err-msg
-  "Generates and returns as a vector of strings an error message including the string 'err-msg', formatting the string for shell output with color-coding."
-  [err-msg]
-  (apply-display-with-shell 
-   [(str "\"" shell-color-red "[COMMIT REJECTED local]\"")
-    (str "\"" shell-color-white "Commit failed: " err-msg "\"")]))
-
-
 (defn generate-commit-msg-offending-line-header
   "Generates a header that indicates an offending line that was in error, if 'line-num' is integer 0 or greater; 'line-num' is indexed starting at 0.  Appends the header line to the vector of strings 'lines' and returns the result or, if no header should be generated, returns 'lines' unchanged."
   [lines line-num]
@@ -92,6 +77,20 @@
           (str "\"**********************************************" shell-color-reset "\"")]]
      (apply-display-with-shell 
       (into (into (conj (generate-commit-msg-offending-line-header start-lines-top line-num) start-line-end) (generate-commit-msg-offending-line-msg-highlight msg line-num)) end-lines)))))
+
+
+(defn generate-commit-warn-msg
+  "Generates and returns as a string a warning message including the string 'warn-msg', formatting the string for shell output with color-coding."
+  [warn-msg]
+  (apply-display-with-shell (str "\"" shell-color-blue "WARNING (local): " warn-msg "  Commit proceeding." shell-color-reset "\"")))
+
+
+(defn generate-commit-err-msg
+  "Generates and returns as a vector of strings an error message including the string 'err-msg', formatting the string for shell output with color-coding."
+  [err-msg]
+  (apply-display-with-shell
+   [(str "\"" shell-color-red "[COMMIT REJECTED local]\"")
+    (str "\"" shell-color-white "Commit failed: " err-msg "\"")]))
 
 
 (defn ^:impure exit
@@ -127,6 +126,7 @@
 
 
 (defn is-string-min-char-compliant?
+  "Returns 'true' if 'line' has 'min-chars' characters or more and 'false' otherwise."
   [line min-chars]
   (if (>= (count line) min-chars)
     true
@@ -134,19 +134,65 @@
 
 
 (defn is-string-max-char-compliant?
+  "Returns 'true' if string 'line' has 'max-chars' characters or fewer and 'false' otherwise."
   [line max-chars]
   (if (<= (count line) max-chars)
     true
     false))
 
+;; In addition to clojure.core, the following libraries / namespaces are available in babashka.
+;; cheshire.core aliased as json: dealing with JSON
+(defn get-parse-config-file
+  []
+  )
 
-;; get 'commit edit message' path from arg
-;; read in as a string
-;; convert to vector and display error message
 
 
-;; err if no config
-;; read config into map...
+
+(defn dostuff
+  [args]
+  (println "hi"))
+
+
+
+;; start
+;;todo
+;;
+;; - get path of git editmsg from command line arg
+;;    - err w/ exit 1 if not 1 arg
+;;
+;; - parse config file json into a map
+;;    - err w/ exit 1 if can't read file
+;;    - err w/ exit 1 if can't parse json
+;;
+;; - if enabled=false, then warning and exit 0
+;;
+;; - read git editmsg from file and keep as string
+;;    - err w/ exit 1 if can't read file
+;; - reformat commit message
+;; - write commit message
+;;
+;; - validate commit message
+;;    - check if empty, then exit 1
+;;    - convert editmsg string to vector of strings split on newline
+;;    - group
+;;       - check if contains tabs, then get line num and exit 1
+;;       - check for (1) one line only or (2) line, newline, rest
+;;       - check for min/max chars (first line min/max diff from others)
+;;    - subject
+;;       - x
+;;    - body
+;;       - x
+;;
+;;
+;; ...
+;; - err w/ exit 1 if can't read/write git editmsg file
+;;
+(let [args *command-line-args*]
+  (if (= (count args) 1)
+    (dostuff (first args))
+    (handle-err-exit "Exactly one argument required.")))
+
 
 
 ;; ------------------------------------------------------------------
@@ -158,23 +204,8 @@
   [filename]
   (slurp filename))
 
-(defn dostuff
-  [args]
-  (println "hi"))
 
-(defn err
-  []
-  (println "err"))
-
-;; start
-;;todo
-(let [args *command-line-args*]
-  (if (= (count args) 1)
-    (dostuff (first args))
-    (err)))
-
-
-(handle-err-exit "A big error occured." ["feat(client): added new feature" "A really big commit message" "would span multiple lines" "much line this one does"] 2)
+;;(handle-err-exit "A big error occured." ["feat(client): added new feature" "A really big commit message" "would span multiple lines" "much line this one does"] 2)
 
 
 ;;(let [commit-msg-cfg "commit-msg.cfg.json"])
