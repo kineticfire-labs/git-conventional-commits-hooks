@@ -150,15 +150,15 @@
         result (try 
                  (json/parse-stream-strict (clojure.java.io/reader config-file) true)
                  (catch java.io.FileNotFoundException e
-                   (str "File not found." (.getMessage e)))
+                   (str "Config file '"config-file"' not found." (.getMessage e)))
                  (catch java.io.IOException e
                    ;; Babashka can't find com.fasterxml.jackson.core.JsonParseException, which is thrown for a JSON parse exception.                   
                    ;;   To differentiate the JsonParseException from a java.io.IOException, attempt to 'getMessage' on the exception.
                    (try
                      (.getMessage e)
-                     (str "IO exception when reading file, but the file was found." (.getMessage e))
+                     (str "IO exception when reading config file '"config-file"', but the file was found." (.getMessage e))
                      (catch clojure.lang.ExceptionInfo ei
-                       (str "JSON parse error.")))))]
+                       (str "JSON parse error when reading config file '" config-file "'.")))))]
     (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)
       (assoc (assoc response :result result) :success true)
       (assoc response :reason result))))
@@ -169,6 +169,9 @@
   [line]
   (str/split-lines line))
 
+(defn is-enabled?
+  [config]
+  (println "enabled?"))
 
 (defn is-string-min-char-compliant?
   "Returns 'true' if 'line' has 'min-chars' characters or more and 'false' otherwise."
@@ -186,10 +189,18 @@
     false))
 
 
-
-(defn dostuff
-  [args]
-  (println "hi"))
+;; todo rename
+(defn ^:impure dostuff
+  [edit-commit-msg-file]
+  (let [config-response (get-parse-config-file)]
+    (if (:success config-response)
+      (let [config (:result config-response)]
+        (if (contains? config :enabled)
+          (if (:enabled config)
+            (println "config is enabled")
+            (handle-warn-proceed (str "This commit-msg script is disabled, per the config file '" config-file "'.")))
+          (handle-err-exit (str "The config file '" config-file "' does not contain the key 'enabled'."))))
+      (handle-err-exit (:reason config-response)))))
 
 
 
