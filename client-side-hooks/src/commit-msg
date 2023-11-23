@@ -44,6 +44,14 @@
 (def ^:const shell-color-reset "\\033[0m\\e[0m")
 
 
+
+(defn do-on-success
+  [fn data]
+  (if (:success data)
+    (fn data)
+    data))
+
+
 (defn ^:impure run-shell-command
   "Runs commands in 'lines', as either a string or vector of strings, by using 'shell'."
   [lines]
@@ -169,9 +177,6 @@
   [line]
   (str/split-lines line))
 
-(defn is-enabled?
-  [config]
-  (println "enabled?"))
 
 (defn is-string-min-char-compliant?
   "Returns 'true' if 'line' has 'min-chars' characters or more and 'false' otherwise."
@@ -189,15 +194,82 @@
     false))
 
 
-;; todo rename
-(defn ^:impure dostuff
+(defn validate-config-fail
+  "Returns data with key ':success' of 'false' and ':reason' set to 'msg'."
+  [data msg]
+  (-> data
+      (assoc :success false)
+      (assoc :reason msg)))
+
+
+(defn validate-config-length
+  "Validates the min and max length fields in 'data'.  Returns a map result."
+  [data]
+  (if (pos-int? (get-in data [:config :length :titleLine :min]))
+    (if (pos-int? (get-in data [:config :length :titleLine :max]))
+      (if (>= (get-in data [:config :length :titleLine :max]) (get-in data [:config :length :titleLine :min]))
+        (if (pos-int? (get-in data [:config :length :bodyLine :min]))
+          (if (pos-int? (get-in data [:config :length :bodyLine :max]))
+            (if (>= (get-in data [:config :length :bodyLine :max]) (get-in data[:config :length :bodyLine :min]))
+              data
+              (validate-config-fail data "Maximum length of body line (length.bodyLine.max) must be equal to or greater than minimum length of body line (length.bodyLine.min)."))
+            (validate-config-fail data "Maximum length of body line (length.bodyLine.max) must be a positive integer."))
+          (validate-config-fail data "Minimum length of body line (length.bodyLine.min) must be a positive integer."))
+        (validate-config-fail data "Maximum length of title line (length.titleLine.max) must be equal to or greater than minimum length of title line (length.titleLine.min)."))
+      (validate-config-fail data "Maximum length of title line (length.titleLine.max) must be a positive integer."))
+    (validate-config-fail data "Minimum length of title line (length.titleLine.min) must be a positive integer.")))
+
+;; sub-projects: scopes (plural) 0 or more
+;; scope -> name, optional alias, 1 or more types array, optional scopes
+
+(defn validate-config-param-string
+  [data key-path required]
+  (if (or required (contains? data key-path))
+    (string? (get-in data key-path))
+    true))
+
+
+(defn validate-config-param-array
+  [data key-path required]
+  (if (or required (contains? data key-path))
+    (and (vector? (get-in data key-path))
+         (> 0 (count (get-in data key-path))))
+    true))
+
+
+(defn validate-config-project
+  "Performs validation of the top-level project in the config 'data'."
+  [data]
+  (if (map? (get-in data [:config :scope]))
+    (if (validate-config-param-string data [:config :scope :name] true)
+      (if (validate-config-param-string data [:config :scope :alias] false)
+        data ;;todo
+        (validate-config-fail data "Top-level project has optional key 'alias' that must have string value."))
+      (validate-config-fail data "Top-level project must have key 'name' with string value."))
+    (validate-config-fail data "Top-level project must have key 'scope' with value type of object.")))
+
+
+(defn validate-config
+  "Performs validation of the config file 'config'.  Returns a map result with key ':success' of 'true' if valid and 'false' otherwise.  If invalid, then returns a key ':reason' with string reason why the validation failed."
+  [config]
+  (let [data {:success true :config config}]
+    (let [result (->> data 
+                      (do-on-success validate-config-length)
+                      (do-on-success validate-config-project))]
+      (dissoc result :config))))
+
+
+(defn ^:impure process-commit-attempt
   [edit-commit-msg-file]
   (let [config-response (get-parse-config-file)]
     (if (:success config-response)
       (let [config (:result config-response)]
-        (if (contains? config :enabled)
+        (if (contains? config :enabled) ;; early check if config is enabled prior to validating entire 'config' structure
           (if (:enabled config)
-            (println "config is enabled")
+            (let [config-validation-response (validate-config config)]
+              (if (:success config-validation-response)
+                (println "config is valid")
+                (handle-err-exit (str "Error in config file '" config-file "'. " (:reason config-validation-response)))))
             (handle-warn-proceed (str "This commit-msg script is disabled, per the config file '" config-file "'.")))
           (handle-err-exit (str "The config file '" config-file "' does not contain the key 'enabled'."))))
       (handle-err-exit (:reason config-response)))))
@@ -236,9 +308,11 @@
 ;;
 ;; - display status and exit [impure]
 ;;
+
+;; impure
 (let [args *command-line-args*]
   (if (= (count args) 1)
-    (dostuff (first args))
+    (process-commit-attempt (first args))
     (handle-err-exit "Exactly one argument required.")))
 
 

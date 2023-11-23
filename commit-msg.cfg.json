@@ -10,162 +10,160 @@
          "max": 72
       }
    },
-   "scopes": [
-      {
-         "name": "proj",
-         "alias": "p",
-         "types": [
-            "revert",
-            "security",
-            "build",
-            "vendor",
-            "ci",
-            "docs",
-            "chore"
-         ],
-         "scopes": [
-            {
-               "name": "client",
-               "alias": "c",
-               "description": "Client-side hooks",
-               "types": [
-                  "feat",
-                  "more",
-                  "change",
-                  "fix",
-                  "deprecate",
-                  "remove",
-                  "less",
-                  "refactor",
-                  "perf",
-                  "security",
-                  "style",
-                  "test",
-                  "docs",
-                  "build",
-                  "vendor",
-                  "ci",
-                  "chore"
-               ],
+   "scope": {
+      "name": "proj",
+      "alias": "p",
+      "types": [
+         "revert",
+         "security",
+         "build",
+         "vendor",
+         "ci",
+         "docs",
+         "chore"
+      ],
+      "scopes": [
+         {
+            "name": "client",
+            "alias": "c",
+            "description": "Client-side hooks",
+            "types": [
+               "feat",
+               "more",
+               "change",
+               "fix",
+               "deprecate",
+               "remove",
+               "less",
+               "refactor",
+               "perf",
+               "security",
+               "style",
+               "test",
+               "docs",
+               "build",
+               "vendor",
+               "ci",
+               "chore"
+            ],
+            "scopes": [
+               {
+                  "name": "blah",
+                  "alias": "b",
+                  "description": "Client blah",
+                  "types": [
+                     "feat",
+                     "more",
+                     "change",
+                     "fix",
+                     "deprecate",
+                     "remove",
+                     "less",
+                     "refactor",
+                     "perf",
+                     "security",
+                     "style",
+                     "test",
+                     "docs",
+                     "build",
+                     "vendor",
+                     "ci",
+                     "chore"
+                  ],
                "scopes": [
-                  {
-                     "name": "blah",
-                     "alias": "b",
-                     "description": "Client blah",
-                     "types": [
-                        "feat",
-                        "more",
-                        "change",
-                        "fix",
-                        "deprecate",
-                        "remove",
-                        "less",
-                        "refactor",
-                        "perf",
-                        "security",
-                        "style",
-                        "test",
-                        "docs",
-                        "build",
-                        "vendor",
-                        "ci",
-                        "chore"
-                     ],
-                  "scopes": [
-                        {
-                           "name": "zulu",
-                           "alias": "z",
-                           "description": "Client blah zulu",
-                           "types": [
-                              "feat",
-                              "more",
-                              "change",
-                              "fix",
-                              "deprecate",
-                              "remove",
-                              "less",
-                              "refactor",
-                              "perf",
-                              "security",
-                              "style",
-                              "test",
-                              "docs",
-                              "build",
-                              "vendor",
-                              "ci",
-                              "chore"
-                           ]
-                        }
-                     ]
-                  },
-                  {
-                     "name": "yada",
-                     "alias": "y",
-                     "description": "Client yada",
-                     "types": [
-                        "feat",
-                        "more",
-                        "change",
-                        "fix",
-                        "deprecate",
-                        "remove",
-                        "less",
-                        "refactor",
-                        "perf",
-                        "security",
-                        "style",
-                        "test",
-                        "docs",
-                        "build",
-                        "vendor",
-                        "ci",
-                        "chore"
-                     ]
-                  }
-               ]
-            },
-            {
-               "name": "server",
-               "alias": "s",
-               "description": "Server-side hooks",
-               "types": [
-                  "feat",
-                  "more",
-                  "change",
-                  "fix",
-                  "deprecate",
-                  "remove",
-                  "less",
-                  "refactor",
-                  "perf",
-                  "security",
-                  "style",
-                  "test",
-                  "docs",
-                  "build",
-                  "vendor",
-                  "ci",
-                  "chore"
-               ]
-            },
-            {
-               "name": "ex-cfg",
-               "alias": "g",
-               "description": "The example commit message JSON file at docs/commit-msg.cfg.json",
-               "types": [
-                  "docs"
-               ]
-            },
-            {
-               "name": "readme",
-               "alias": "r",
-               "types": [
-                  "docs"
-               ]
-            }
-         ]
-      }
-   ]
+                     {
+                        "name": "zulu",
+                        "alias": "z",
+                        "description": "Client blah zulu",
+                        "types": [
+                           "feat",
+                           "more",
+                           "change",
+                           "fix",
+                           "deprecate",
+                           "remove",
+                           "less",
+                           "refactor",
+                           "perf",
+                           "security",
+                           "style",
+                           "test",
+                           "docs",
+                           "build",
+                           "vendor",
+                           "ci",
+                           "chore"
+                        ]
+                     }
+                  ]
+               },
+               {
+                  "name": "yada",
+                  "alias": "y",
+                  "description": "Client yada",
+                  "types": [
+                     "feat",
+                     "more",
+                     "change",
+                     "fix",
+                     "deprecate",
+                     "remove",
+                     "less",
+                     "refactor",
+                     "perf",
+                     "security",
+                     "style",
+                     "test",
+                     "docs",
+                     "build",
+                     "vendor",
+                     "ci",
+                     "chore"
+                  ]
+               }
+            ]
+         },
+         {
+            "name": "server",
+            "alias": "s",
+            "description": "Server-side hooks",
+            "types": [
+               "feat",
+               "more",
+               "change",
+               "fix",
+               "deprecate",
+               "remove",
+               "less",
+               "refactor",
+               "perf",
+               "security",
+               "style",
+               "test",
+               "docs",
+               "build",
+               "vendor",
+               "ci",
+               "chore"
+            ]
+         },
+         {
+            "name": "ex-cfg",
+            "alias": "g",
+            "description": "The example commit message JSON file at docs/commit-msg.cfg.json",
+            "types": [
+               "docs"
+            ]
+         },
+         {
+            "name": "readme",
+            "alias": "r",
+            "types": [
+               "docs"
+            ]
+         }
+      ]
+   }
 }
 
 
