@@ -219,33 +219,73 @@
       (validate-config-fail data "Maximum length of title line (length.titleLine.max) must be a positive integer."))
     (validate-config-fail data "Minimum length of title line (length.titleLine.min) must be a positive integer.")))
 
-;; sub-projects: scopes (plural) 0 or more
-;; scope -> name, optional alias, 1 or more types array, optional scopes
 
 (defn validate-config-param-string
+  "Returns 'true' if the value at vector 'key-path' in map 'data' is a string and 'false' otherwise."
   [data key-path required]
-  (if (or required (contains? data key-path))
+  (if (or required (get-in data key-path))
     (string? (get-in data key-path))
     true))
 
 
 (defn validate-config-param-array
-  [data key-path required]
-  (if (or required (contains? data key-path))
+  "Returns 'true' if for all elements in map 'data' at vector 'key-path' the application of 'fn' to those elements is 'true' and if 'required' is 'true' or if that location is set; 'false' otherwise'."
+  [data key-path required fn]
+  (if (or required (get-in data key-path))
     (and (vector? (get-in data key-path))
-         (> 0 (count (get-in data key-path))))
+         (> (count (get-in data key-path)) 0)
+         (not (.contains (vec (map fn (get-in data key-path))) false)))
     true))
 
 
 (defn validate-config-project
+  "Returns 'true' if a given project level is valid and 'false' otherwise."
+  [data key-path msg-prefix]
+  (if (validate-config-param-string data (conj key-path :name) true)
+    (if (validate-config-param-string data (conj key-path :alias) false)
+      (if (validate-config-param-array data (conj key-path :types) true string?)
+        (if (validate-config-param-array data (conj key-path :scopes) false map?)
+          data
+          (validate-config-fail data (str msg-prefix "has optional key 'scopes' that must be be an array of objects and contain at least one object.")))
+        (validate-config-fail data (str msg-prefix "must have key 'types' that must be an array of strings and contain at least one string.")))
+      (validate-config-fail data (str msg-prefix "project has optional key 'alias' that must have string value.")))
+    (validate-config-fail data (str msg-prefix "must have key 'name' with string value."))))
+
+
+(defn validate-config-add-scopes
+  [data key-path]
+  (if (get-in data key-path)
+    data
+    data))
+
+
+(defn validate-config-sub-projects
+  [init-data]
+  ;; if it has :scopes, then it is a vector of 1 or more maps
+  (if (get-in init-data [:config :scope :scopes])
+    (loop [data init-data visit (vec (map #(assoc % :key-path [:config :scope :scopes]) (get-in init-data [:config :scope :scopes])))]
+      (if (= (count visit) 0)
+        data ;; inspected all nodes, return
+        (let [current (first visit) key-path (:keypath current)]
+          (if (not (validate-config-project data key-path (str "Sub-project level" (- (count (:keypath current)) 2))))
+            data ;; failed, return
+            (do
+              ;; add scopes for that node to end of visit
+              ;; remove first from visit
+              (recur))))))
+    init-data))
+  
+
+
+(defn validate-config-top-level-project
   "Performs validation of the top-level project in the config 'data'."
   [data]
+  ;; a top-level project differs from sub-projects because former has exactly one scope called ':scope' (singular) of type map whereas latter has 0 or more scopes called ':scopes' (plural) of type vector of maps
   (if (map? (get-in data [:config :scope]))
-    (if (validate-config-param-string data [:config :scope :name] true)
-      (if (validate-config-param-string data [:config :scope :alias] false)
-        data ;;todo
-        (validate-config-fail data "Top-level project has optional key 'alias' that must have string value."))
-      (validate-config-fail data "Top-level project must have key 'name' with string value."))
+    (let [scope-result (validate-config-project data [:config :scope] "Top-level project")]
+      (if (:success scope-result)
+        (validate-config-sub-projects scope-result)
+        scope-result))
     (validate-config-fail data "Top-level project must have key 'scope' with value type of object.")))
 
 
@@ -255,7 +295,7 @@
   (let [data {:success true :config config}]
     (let [result (->> data 
                       (do-on-success validate-config-length)
-                      (do-on-success validate-config-project))]
+                      (do-on-success validate-config-top-level-project))]
       (dissoc result :config))))
 
 
