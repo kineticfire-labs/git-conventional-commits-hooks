@@ -158,13 +158,13 @@
         result (try 
                  (json/parse-stream-strict (clojure.java.io/reader config-file) true)
                  (catch java.io.FileNotFoundException e
-                   (str "Config file '"config-file"' not found." (.getMessage e)))
+                   (str "Config file '"config-file"' not found. " (.getMessage e)))
                  (catch java.io.IOException e
                    ;; Babashka can't find com.fasterxml.jackson.core.JsonParseException, which is thrown for a JSON parse exception.                   
                    ;;   To differentiate the JsonParseException from a java.io.IOException, attempt to 'getMessage' on the exception.
                    (try
                      (.getMessage e)
-                     (str "IO exception when reading config file '"config-file"', but the file was found." (.getMessage e))
+                     (str "IO exception when reading config file '"config-file"', but the file was found. " (.getMessage e))
                      (catch clojure.lang.ExceptionInfo ei
                        (str "JSON parse error when reading config file '" config-file "'.")))))]
     (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)

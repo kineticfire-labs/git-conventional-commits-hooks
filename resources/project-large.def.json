@@ -1,0 +1,79 @@
+{
+   "commit-msg-enforcement": {
+      "enabled": true
+   },
+   "commit-msg": {
+      "length": {
+         "titleLine": {
+            "min": 20,
+            "max": 50
+         },
+         "bodyLine": {
+            "min": 2,
+            "max": 72
+         }
+      }
+   },
+   "project": {
+      "name": "Echo System",
+      "description": "Top-level project for the Echo System which provides client and server components.",
+      "includes": [
+         "readme"
+      ],
+      "scope": "proj",
+      "scope-alias": "p",
+      "types": [
+         "revert",
+         "security",
+         "build",
+         "vendor",
+         "ci",
+         "docs",
+         "chore"
+      ],
+      "projects": [
+         {
+            "name": "Echo System Client",
+            "description": "Provides a client for the Echo System.",
+            "scope": "client",
+            "scope-alias": "clp",
+            "types": [
+               "security",
+               "build",
+               "vendor",
+               "ci",
+               "docs",
+               "chore"
+            ]
+         },
+         {
+            "name": "Echo System Server",
+            "description": "Provides a server for the Echo System.",
+            "scope": "server",
+            "scope-alias": "sp",
+            "types": [
+               "security",
+               "build",
+               "vendor",
+               "ci",
+               "docs",
+               "chore"
+            ]
+         },
+         {
+            "name": "Common",
+            "description": "Provides common components.",
+            "scope": "common",
+            "scope-alias": "cop",
+            "types": [
+               "security",
+               "build",
+               "vendor",
+               "ci",
+               "docs",
+               "chore"
+            ]
+         }
+      ]
+   }
+}
