@@ -15,7 +15,7 @@
       }
    },
    "project": {
-      "name": "Echo System",
+      "name": "Echo System Project",
       "description": "Top-level project for the Echo System which provides client and server components.",
       "includes": [
          "readme"
@@ -33,7 +33,7 @@
       ],
       "projects": [
          {
-            "name": "Echo System Client",
+            "name": "Echo Client Project",
             "description": "Provides a client for the Echo System.",
             "scope": "client",
             "scope-alias": "clp",
@@ -44,13 +44,55 @@
                "ci",
                "docs",
                "chore"
+            ],
+            "artifacts": [
+               {
+                  "name": "Echo Client",
+                  "description": "Client executable as 'echo-client-<version>.jar'.",
+                  "depends": [
+                     {
+                        "ref": "common.common-lib"
+                     }
+                  ],
+                  "scope": "client",
+                  "scope-alias": "clj",
+                  "types": [
+                     "feat",
+                     "more",
+                     "change",
+                     "fix",
+                     "deprecate",
+                     "remove",
+                     "less",
+                     "refactor",
+                     "perf",
+                     "security",
+                     "style",
+                     "test",
+                     "docs",
+                     "build",
+                     "vendor",
+                     "ci",
+                     "chore"
+                  ]
+               },
+               {
+                  "name": "Echo Client User Guide",
+                  "description": "User guide for client as 'echo-client-user-guide.txt'.",
+                  "category": "docs",
+                  "scope": "client-guide",
+                  "scope-alias": "clg",
+                  "types": [
+                     "docs"
+                  ]
+               }
             ]
          },
          {
-            "name": "Echo System Server",
-            "description": "Provides a server for the Echo System.",
+            "name": "Echo Server Project",
+            "description": "Provides aserver for the Echo System.",
             "scope": "server",
-            "scope-alias": "sp",
+            "scope-alias": "sep",
             "types": [
                "security",
                "build",
@@ -58,11 +100,126 @@
                "ci",
                "docs",
                "chore"
+            ],
+            "projects": [
+               {
+                  "name": "Echo Server Executable Project",
+                  "description": "Provides an executable (JAR) server for the Echo System.",
+                  "scope": "server-jar-project",
+                  "scope-alias": "sejp",
+                  "types": [
+                     "security",
+                     "build",
+                     "vendor",
+                     "ci",
+                     "docs",
+                     "chore"
+                  ],
+                  "artifacts": [
+                     {
+                        "name": "Echo Server Executable (JAR)",
+                        "description": "Server executable as 'echo-server-<version>.jar'.",
+                        "depends": [
+                           {
+                              "ref": "common.common-lib"
+                           }
+                        ],
+                        "scope": "server-jar",
+                        "scope-alias": "sej",
+                        "types": [
+                           "feat",
+                           "more",
+                           "change",
+                           "fix",
+                           "deprecate",
+                           "remove",
+                           "less",
+                           "refactor",
+                           "perf",
+                           "security",
+                           "style",
+                           "test",
+                           "docs",
+                           "build",
+                           "vendor",
+                           "ci",
+                           "chore"
+                        ]
+                     },
+                     {
+                        "name": "Echo Server Executable (JAR) User Guide",
+                        "description": "User guide for server (JAR executable) as 'echo-server-executable-user-guide.txt'.",
+                        "category": "docs",
+                        "scope": "server-guide-jar",
+                        "scope-alias": "clg",
+                        "types": [
+                           "docs"
+                        ]
+                     }
+                  ]
+               },
+               {
+                  "name": "Echo Server Docker Project",
+                  "description": "Provides a Docker image as a server for the Echo System.",
+                  "scope": "server-docker",
+                  "scope-alias": "sed",
+                  "types": [
+                     "security",
+                     "build",
+                     "vendor",
+                     "ci",
+                     "docs",
+                     "chore"
+                  ],
+                  "artifacts": [
+                     {
+                        "name": "Echo Server Docker",
+                        "description": "Server executable as a docker image.",
+                        "depends": [
+                           {
+                              "ref": "server.server-jar-project.server-jar"
+                           }
+                        ],
+                        "scope": "server-docker",
+                        "scope-alias": "sed",
+                        "types": [
+                           "feat",
+                           "more",
+                           "change",
+                           "fix",
+                           "deprecate",
+                           "remove",
+                           "less",
+                           "refactor",
+                           "perf",
+                           "security",
+                           "style",
+                           "test",
+                           "docs",
+                           "build",
+                           "vendor",
+                           "ci",
+                           "chore"
+                        ]
+                     },
+                     {
+                        "name": "Echo Server Docker User Guide",
+                        "description": "User guide for server (Docker image) as 'echo-server-docker-user-guide.txt'.",
+                        "category": "docs",
+                        "scope": "server-guide-jar",
+                        "scope-alias": "clg",
+                        "types": [
+                           "docs"
+                        ]
+                     }
+                  ]
+                  
+               }
             ]
          },
          {
-            "name": "Common",
-            "description": "Provides common components.",
+            "name": "Echo Common Project",
+            "description": "Provides common component library for the Echo System.",
             "scope": "common",
             "scope-alias": "cop",
             "types": [
@@ -72,6 +229,33 @@
                "ci",
                "docs",
                "chore"
+            ],
+            "artifacts": [
+               {
+                  "name": "Echo Common Library",
+                  "description": "Provides common library in form of 'echo-common-lib-<version>.jar'.",
+                  "scope": "common-lib",
+                  "scope-alias": "coj",
+                  "types": [
+                     "feat",
+                     "more",
+                     "change",
+                     "fix",
+                     "deprecate",
+                     "remove",
+                     "less",
+                     "refactor",
+                     "perf",
+                     "security",
+                     "style",
+                     "test",
+                     "docs",
+                     "build",
+                     "vendor",
+                     "ci",
+                     "chore"
+                  ]
+               }
             ]
          }
       ]
