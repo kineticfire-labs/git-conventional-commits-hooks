@@ -12,14 +12,14 @@
                      (shell (get-shell-line)))}
          
          test {:extra-paths ["test"]
-           :extra-deps {io.github.cognitect-labs/test-runner
-                        {:git/url "https://github.com/cognitect-labs/test-runner"
-                         :git/tag "v0.5.1"
-                         :git/sha "dfb30dd"}}
-           :task (exec 'cognitect.test-runner.api/test)
-           :exec-args {:dirs ["test"]}
-           :org.babashka/cli {:core {:nses [:symbol]
-                                     :vars [:symbol]}}} 
+               :extra-deps {io.github.cognitect-labs/test-runner
+                            {:git/url "https://github.com/cognitect-labs/test-runner"
+                             :git/tag "v0.5.1"
+                             :git/sha "dfb30dd"}}
+               :task (exec 'cognitect.test-runner.api/test)
+               :exec-args {:dirs ["test"]}
+               :org.babashka/cli {:core {:nses [:symbol]
+                                         :vars [:symbol]}}} 
 
          uber {:extra-deps {io.github.borkdude/carve {:git/url "https://github.com/borkdude/carve"
                                                   :git/sha "cb621317ae1582869c8bd8f1a47cf57a3598d803"}}
