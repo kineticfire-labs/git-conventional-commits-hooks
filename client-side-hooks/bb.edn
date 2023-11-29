@@ -2,6 +2,15 @@
  :deps {org.babashka/cli {:mvn/version "0.7.53"}}
  :tasks {
          
+         go {:task (do
+                     (defn get-shell-line
+                       []
+                       (let [shell-line "bb src/client_side_hooks/commit_msg.bb"]
+                         (if (nil? *command-line-args*)
+                           shell-line
+                           (str shell-line " " (clojure.string/join " " (map (fn [x] (str x)) *command-line-args*))))))
+                     (shell (get-shell-line)))}
+         
          test {:extra-paths ["test"]
            :extra-deps {io.github.cognitect-labs/test-runner
                         {:git/url "https://github.com/cognitect-labs/test-runner"
@@ -11,17 +20,6 @@
            :exec-args {:dirs ["test"]}
            :org.babashka/cli {:core {:nses [:symbol]
                                      :vars [:symbol]}}} 
-         
-         go {
-             :task (do
-                     (defn get-shell-line
-                       []
-                       (let [shell-line "bb src/client_side_hooks/commit_msg.bb"]
-                         (if (nil? *command-line-args*)
-                           shell-line
-                           (str shell-line " " (clojure.string/join " " (map (fn [x] (str x)) *command-line-args*))))))
-                     (shell (get-shell-line))
-                     )} 
 
          uber {:extra-deps {io.github.borkdude/carve {:git/url "https://github.com/borkdude/carve"
                                                   :git/sha "cb621317ae1582869c8bd8f1a47cf57a3598d803"}}
