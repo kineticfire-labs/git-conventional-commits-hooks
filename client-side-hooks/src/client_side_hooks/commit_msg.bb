@@ -45,23 +45,23 @@
 (def ^:const shell-color-reset "\\033[0m\\e[0m")
 
 
+;; todo for testing tests
 (defn add-up
   [a b]
   (+ a b))
+;;(println "add-up 1 2" (add-up 1 2))
 
-(println "add-up 1 2" (add-up 1 2))
-
+;; todo for testing inclusion of 'common' project
 (defn do-on-success
   [fn data]
   (if (:success data)
     (fn data)
     data))
-
 (defn current-add-two
   [x]
   (common/add-two x))
+;;(println "current-add-two 5" (current-add-two 5))
 
-(println "current-add-two 5" (current-add-two 5))
 
 
 (defn ^:impure run-shell-command
