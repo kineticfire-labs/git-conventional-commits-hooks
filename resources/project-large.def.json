@@ -161,8 +161,8 @@
                {
                   "name": "Project: Echo Server Docker Image",
                   "description": "Provides a Docker image as a server for the Echo System.",
-                  "scope": "server-docker",
-                  "scope-alias": "docker",
+                  "scope": "docker",
+                  "scope-alias": "d",
                   "types": [
                      "security",
                      "build",
@@ -181,7 +181,7 @@
                            }
                         ],
                         "scope": "docker",
-                        "scope-alias": "sed",
+                        "scope-alias": "d",
                         "types": [
                            "feat",
                            "more",
@@ -235,7 +235,7 @@
                   "name": "Artifact: Echo Common Library",
                   "description": "Provides common library in form of 'echo-common-lib-<version>.jar'.",
                   "scope": "lib",
-                  "scope-alias": "lib",
+                  "scope-alias": "l",
                   "types": [
                      "feat",
                      "more",
