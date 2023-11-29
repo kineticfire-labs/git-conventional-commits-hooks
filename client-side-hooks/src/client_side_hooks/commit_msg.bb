@@ -25,7 +25,8 @@
             [babashka.cli      :as cli]
             [babashka.process  :refer [shell process exec]]
             [clojure.java.io   :as io]
-            [cheshire.core     :as json]))
+            [cheshire.core     :as json]
+            [common.core       :as common]))
 
 
 
@@ -55,6 +56,12 @@
   (if (:success data)
     (fn data)
     data))
+
+(defn current-add-two
+  [x]
+  (common/add-two x))
+
+(println "current-add-two 5" (current-add-two 5))
 
 
 (defn ^:impure run-shell-command
