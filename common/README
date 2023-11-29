@@ -25,4 +25,4 @@ All commands executed from 'client-side-hooks/' as follows:
         bb src/client_side_hooks/commit_msg.bb
 
     Test:
-        bb test:bb
+        bb test
