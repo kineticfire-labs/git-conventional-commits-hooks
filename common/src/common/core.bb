@@ -31,8 +31,6 @@
   [num]
   (+ num 2))
 
-;; todo temp for testing and converting code below moved from commit_msg.bb
-(def ^:const config-file "../../commit-msg.cfg.json")
 
 (def ^:const shell-color-red "\\e[1m\\e[31m")
 
@@ -152,22 +150,22 @@
   (run-shell-command (generate-commit-warn-msg title warn-msg)))
 
 
-(defn ^:impure get-parse-config-file
-  "Reads and parses the JSON config file, global constant 'config-file, and returns a map result.  If successful, ':success' is 'true' and 'result' contains the JSON config as a map.  Else ':success' is 'false' and ':reason' describes the failure."
-  []
+(defn ^:impure parse-json-file
+  "Reads and parses the JSON config file, 'filename', and returns a map result.  If successful, ':success' is 'true' and 'result' contains the JSON config as a map.  Else ':success' is 'false' and ':reason' describes the failure."
+  [filename]
   (let [response {:success false}
         result (try
-                 (json/parse-stream-strict (clojure.java.io/reader config-file) true)
+                 (json/parse-stream-strict (clojure.java.io/reader filename) true)
                  (catch java.io.FileNotFoundException e
-                   (str "Config file '" config-file "' not found. " (.getMessage e)))
+                   (str "Config file '" filename "' not found. " (.getMessage e)))
                  (catch java.io.IOException e
                    ;; Babashka can't find com.fasterxml.jackson.core.JsonParseException, which is thrown for a JSON parse exception.                   
                    ;;   To differentiate the JsonParseException from a java.io.IOException, attempt to 'getMessage' on the exception.
                    (try
                      (.getMessage e)
-                     (str "IO exception when reading config file '" config-file "', but the file was found. " (.getMessage e))
+                     (str "IO exception when reading config file '" filename "', but the file was found. " (.getMessage e))
                      (catch clojure.lang.ExceptionInfo ei
-                       (str "JSON parse error when reading config file '" config-file "'.")))))]
+                       (str "JSON parse error when reading config file '" filename "'.")))))]
     (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)
       (assoc (assoc response :result result) :success true)
       (assoc response :reason result))))
@@ -223,6 +221,12 @@
     (validate-config-fail "Minimum length of title line (length.titleLine.min) must be a positive integer." data)))
 
 
+;;todo
+(defn validate-config-length-todo
+  [data]
+  data)
+
+
 (defn validate-config-param-string
   "Returns boolean 'true' if the value at vector 'key-path' in map 'data' is a string and 'false' otherwise."
   [data key-path required]
@@ -267,20 +271,23 @@
     (validate-config-project-node node)))
 
 
-(defn validate-config-project-temp
+(defn validate-config-project-todo
   [data]
-  {:success false :reason "Due to testing."})
+  data)
 
 
-(defn validate-config
+(defn validate-config-todo
   "Performs validation of the config file 'config'.  Returns a map result with key ':success' of 'true' if valid and 'false' otherwise.  If invalid, then returns a key ':reason' with string reason why the validation failed."
   [config]
   (let [data {:success true :config config}]
     (let [result (->> data
-                      ;; 'enabled' was previously evaluated
-                      (do-on-success validate-config-length)
-                      (do-on-success validate-config-project-temp))]
+                      (do-on-success validate-config-length-todo)
+                      (do-on-success validate-config-project-todo))]
       (dissoc result :config))))
 
+
+(defn validate-config
+  [config]
+  (assoc config :success true))
 
 

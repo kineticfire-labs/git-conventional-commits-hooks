@@ -33,10 +33,11 @@
 ;; version updated by CI pipeline
 (def ^:const version "latest")
 
+;; todo changed path for testing
+(def ^:const config-file "../resources/project-small.def.json")
+
 (def ^:const title "by local commit-msg hook.")
 
-;; todo changed path for testing
-(def ^:const config-file "../../commit-msg.cfg.json")
 
 
 ;; todo for testing tests
@@ -88,11 +89,10 @@
 ;;    - err w/ exit 1 if can't read file
 ;;    - err w/ exit 1 if can't parse json
 ;;
-;; - if enabled=false (early exit before validating the entire config file, and before looking at git commit edit message)
-;;    - then warning and exit 0
-;;
 ;; - validate config file (common)
 ;;    - exit 1 if invalid
+;;
+;; - warning and proceeed (exit 0) if enabled=false
 ;;
 ;; - read git editmsg from file and keep as string
 ;;    - err w/ exit 1 if can't read file
@@ -115,10 +115,22 @@
 ;;
 
 
+;; parse-config-file
+;; validate-config-file
+;; is-enabled
+
+;; get edit message: (process-commit-attempt (first args))
+
 (defn ^:impure -main
   [& args]
   (if (= (count args) 1)
-    (process-commit-attempt (first args))
+    (let [config-response (common/parse-json-file config-file)]
+      (if (:success config-response)
+        (let [config-validation-response (common/validate-config (:config config-response))]
+          (if (:success config-validation-response)
+            (println "config valid 2")
+            (common/handle-err-exit title (str "Error in config file '" config-file "'. " (:reason config-validation-response)))))
+        (common/handle-err-exit title (:reason config-response))))
     (common/handle-err-exit title "Exactly one argument required.")))
 
 
