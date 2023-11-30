@@ -44,10 +44,6 @@
 
 (def ^:const shell-color-reset "\\033[0m\\e[0m")
 
-(def ^:const locale-local "local")
-
-(def ^:const locale-server "server")
-
 
 (defn do-on-success
   [fn data]

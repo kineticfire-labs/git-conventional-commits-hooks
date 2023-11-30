@@ -33,10 +33,10 @@
 ;; version updated by CI pipeline
 (def ^:const version "latest")
 
+(def ^:const title "by local commit-msg hook.")
+
 ;; todo changed path for testing
 (def ^:const config-file "../../commit-msg.cfg.json")
-
-
 
 
 ;; todo for testing tests
@@ -69,7 +69,9 @@
       (handle-err-exit (:reason config-response))))))
 
 
-
+;; parse-config-file
+;; validate-config-file
+;; is-enabled
 (defn ^:impure process-commit-attempt 
   [edit-commit-msg-file]
   (println "got commit msg file of " edit-commit-msg-file))
@@ -117,7 +119,7 @@
   [& args]
   (if (= (count args) 1)
     (process-commit-attempt (first args))
-    (common/handle-err-exit common/locale-local "Exactly one argument required.")))
+    (common/handle-err-exit title "Exactly one argument required.")))
 
 
 (when (= *file* (System/getProperty "babashka.file"))
