@@ -21,7 +21,7 @@
 (ns common.core
   (:require [clojure.string    :as str]
             [babashka.cli      :as cli]
-            [babashka.process  :refer [shell process exec]]
+            [babashka.process  :refer [shell process check]]
             [clojure.java.io   :as io]
             [cheshire.core     :as json]))
 
@@ -151,7 +151,7 @@
 
 
 (defn ^:impure parse-json-file
-  "Reads and parses the JSON config file, 'filename', and returns a map result.  If successful, ':success' is 'true' and 'result' contains the JSON config as a map.  Else ':success' is 'false' and ':reason' describes the failure."
+  "Reads and parses the JSON config file, 'filename', and returns a map result.  If successful, ':success' is 'true' and 'config' contains the JSON config as a map.  Else ':success' is 'false' and ':reason' describes the failure."
   [filename]
   (let [response {:success false}
         result (try
@@ -167,7 +167,7 @@
                      (catch clojure.lang.ExceptionInfo ei
                        (str "JSON parse error when reading config file '" filename "'.")))))]
     (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)
-      (assoc (assoc response :result result) :success true)
+      (assoc (assoc response :config result) :success true)
       (assoc response :reason result))))
 
 
@@ -289,5 +289,43 @@
 (defn validate-config
   [config]
   (assoc config :success true))
+
+
+(defn config-enabled?
+  [config]
+  (if (:enabled (:commit-msg-enforcement config))
+    true
+    false))
+
+
+(defn get-commit-msg-from-file
+  "Reads the file 'filename' and returns a map with the result.  Key 'success' is 'true' if successful and 'result' contains the contents of the file as a string, otherwise 'success' is 'false' and 'reason' contains the reason the operation failed."
+  [filename]
+  (let [response {:success false}
+        result (try
+                 (slurp filename)
+                 (catch java.io.FileNotFoundException e
+                   {:err (str "Config file '" filename "' not found. " (.getMessage e))})
+                 (catch java.io.IOException e
+                   {:err (str "IO exception when reading config file '" filename "', but the file was found. " (.getMessage e))}))] 
+    (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)
+      (assoc response :reason result)
+      (assoc (assoc response :result result) :success true))))
+
+
+;; sed 's/$/foo/' ;; replace newline with foo
+
+
+(defn format-commit-msg
+  [commit-msg]
+  
+  (println (str/trim (-> (process "echo -n " commit-msg)
+                         (process "sed '/#/d'")                                     ;; delete all lines that contain a comment
+                         (process "sed '/$/foo'")
+                         ;;(process "sed 's/^[ ]*$/foo/'")                             ;; replace a line with 1 or more spaces and newline with a newline only (removing spaces)
+                         ;;(process "sed '/^$/N;/^\n$/D'")                         ;; replace two or more consecutive newlines with a single newline
+                         ;;(process "sed -e :a -e '/^\n*$/{$d;N;ba' -e '}'")       ;; remove one or more newlines to EOF
+                         (process {:out :string} "sed 's/xxxx/i/'") check :out))))
+
 
 
