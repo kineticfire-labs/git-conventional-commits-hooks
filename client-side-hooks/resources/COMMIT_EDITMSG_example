@@ -1,4 +1,4 @@
-feat  (  client  )  !  :      add super neat feature
+    feat  (  client  )  !  :      add super neat feature
 
 Support new data with addition of super neat feature
 
@@ -10,10 +10,9 @@ Another line
 
 Another line
 
-Line with spaces only below
+Line with 4 spaces only below
     
 Last real line
-
 
 
 # Please enter the commit message for your changes. Lines starting
@@ -25,5 +24,4 @@ Last real line
 # Changes to be committed:
 #	modified:   client-side-hooks/src/commit-msg
 #
-
 

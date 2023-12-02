@@ -318,14 +318,20 @@
 
 (defn format-commit-msg
   [commit-msg]
-  
-  (println (str/trim (-> (process "echo -n " commit-msg)
-                         (process "sed '/#/d'")                                     ;; delete all lines that contain a comment
-                         (process "sed '/$/foo'")
-                         ;;(process "sed 's/^[ ]*$/foo/'")                             ;; replace a line with 1 or more spaces and newline with a newline only (removing spaces)
-                         ;;(process "sed '/^$/N;/^\n$/D'")                         ;; replace two or more consecutive newlines with a single newline
-                         ;;(process "sed -e :a -e '/^\n*$/{$d;N;ba' -e '}'")       ;; remove one or more newlines to EOF
-                         (process {:out :string} "sed 's/xxxx/i/'") check :out))))
-
+  (println "---------------------------------------------------")
+  ;;(println (str/trim commit-msg))
+  (println "---------------------------------------------------")
+  (println (-> commit-msg
+               ;; Overall:
+               (str/replace #"(?m)^.*#.*" "")     ;; delete all lines that contain a comment
+               (str/replace #"(?m)^[ ]+$" "")     ;; for a line with spaces only, remove all spaces
+               (str/replace #"(?m)^\n{2,}" "\n")  ;; replace two or more consecutive newlines with a single newline
+               ;;(str/replace #"(?m)^\n{1,}$" "") ;; as above, to the end of the string... TODO not needed w/ trim?
+               (str/trim)                         ;; remove leading/trailing newlines/spaces
+               ;; todo
+               ;; In the title line (first line):
+               ;;(str/replace #"(?m)^.*\n" "X") ;; TODO remove extra spaces before the opening parenthesis: sed -i '1 s/[ ]*(/(/' "$1"
+               ))
+  (println "---------------------------------------------------"))
 
 
