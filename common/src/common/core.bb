@@ -26,11 +26,6 @@
             [cheshire.core     :as json]))
 
 
-;; todo for testing tests
-(defn add-two
-  [num]
-  (+ num 2))
-
 
 (def ^:const shell-color-red "\\e[1m\\e[31m")
 
@@ -279,7 +274,7 @@
                       (do-on-success validate-config-project-todo))]
       (dissoc result :config))))
 
-
+;; todo: test
 (defn validate-config
   [config]
   (assoc config :success true))
@@ -292,7 +287,8 @@
     false))
 
 
-(defn get-commit-msg-from-file
+;; todo test
+(defn ^:impure get-commit-msg-from-file
   "Reads the file 'filename' and returns a map with the result.  Key 'success' is 'true' if successful and 'result' contains the contents of the file as a string, otherwise 'success' is 'false' and 'reason' contains the reason the operation failed."
   [filename]
   (let [response {:success false}
@@ -308,40 +304,31 @@
 
 
 (defn split-lines
-  "Splits the lines data an optional carriage return '\r' and newline '\n'.  Same as split-lines, but this function allows for optional carriage return."
+  "Splits the string 'data' based on an optional carriage return '\r' and newline '\n' and returns the result as a vector.  Same as split-lines, but this function allows for optional carriage return."
   [data]
   (clojure.string/split data #"\r?\n" -1))
 
 
-;; todo for testing
-(defn print-debug
-  [data]
-  (println "---------------------------------------------------")
-  (println
-   (-> data
-       ;;(str/replace #"(?m) " ".")
-       (str/replace #"(?m)\r" "R\r")
-       (str/replace #"(?m)\n" "N\n")
-       (str/replace #"(?m)aakjhsdafkjdhf" "")))
-  (println "---------------------------------------------------"))
-
-
 (defn format-commit-msg-all
+  "Performs overall formatting of the commit message--what can be applied to the entire message--with the message as a multi-line string 'commit-msg' and returns the formatted multi-line string as the result."
   [commit-msg]
   (-> commit-msg
-      (str/replace #"(?m)^.*#.*" "")                                            ;; delete all lines that contain a comment
+      (str/replace #"(?m)^.*#.*" "")                                            ;; replace all lines that contain comments with empty strings
+      (str/trim)                                                                ;; remove leading/trailing newlines/spaces
       (str/replace #"(?m)^[ ]+$" "")                                            ;; for a line with spaces only, remove all spaces
       (str/replace #"(?m)^\n{2,}" "\n")                                         ;; replace two or more consecutive newlines with a single newline
       (str/replace #"(?mi)[ ]+$" "")                                            ;; remove spaces at end of lines (without removing spaces at beginning of lines)
-      (str/replace #"(?mi)BRE?AKING[ -_]*CHANGE[ ]*:[ ]*" "BREAKING CHANGE: ")  ;; convert to 'BREAKING CHANGE:' regardless of: case, mispelled 'BRAKING' or 'BREAKING', separated with space/dash/underscore, and searpated by 0 or more spaces before and/or after the colon
+      (str/replace #"^(.+)\n+(.)" "$1\n\n$2")                                   ;; ensure exactly two newlines between subject and body (if any body)
+      (str/replace #"(?mi)BRE?AKING[ -_]*CHANGE[ ]*:[ ]*" "BREAKING CHANGE: ")  ;; convert to 'BREAKING CHANGE:' regardless of: case, mispelled 'BRAKING', separated with space/dash/underscore, and searpated by 0 or more spaces before and/or after the colon
       (str/replace #"(?mi)BRAEKING[ -_]*CHANGE[ ]*:[ ]*" "BREAKING CHANGE: ")   ;; as above, if mispelled 'BRAEKING'
-      (str/trim)))                                                              ;; remove leading/trailing newlines/spaces
+      (str/trim)))                                                              ;; remove leading/trailing newlines/spaces (again)
 
 
-(defn format-commit-msg-frist-line
+(defn format-commit-msg-first-line
+  "Performs formatting of the first line (e.g. subject line aka title line) only of the commit message and returns the formatted string result.  The 'line' must be a string of the first line only."
   [line]
   (-> line
-      (str/replace #"^[ ]*" "")      ;; remove extra spaces at the start of the line 
+      (str/trim)                     ;; remove spaces at beginning/end of line
       (str/replace #"[ ]*\(" "(")    ;; remove extra spaces before the opening parenthesis
       (str/replace #"\([ ]*" "(")    ;; remove extra spaces after the opening parenthesis
       (str/replace #"[ ]*\)" ")")    ;; remove extra spaces before the closing parenthesis
@@ -352,10 +339,11 @@
 
 
 (defn format-commit-msg
-  "Accepts a string commit-msg and returns the formatted string commit-message.  If the commit message is an empty string or nil, then returns an empty string."
+  "Accepts a multi-line string commit-msg and returns the formatted multi-line string commit-message.  If the commit message is an empty string or nil, then returns an empty string."
   [commit-msg]
   (if (empty? commit-msg)
     ""
-    (format-commit-msg-frist-line (first (split-lines (format-commit-msg-all commit-msg))))))
+    (let [commit-msg-vec (split-lines (format-commit-msg-all commit-msg))]
+      (str/join "\n" (into [] (concat (conj [] (format-commit-msg-first-line (first commit-msg-vec))) (rest commit-msg-vec)))))))
 
 

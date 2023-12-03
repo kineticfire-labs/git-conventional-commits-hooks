@@ -47,9 +47,9 @@
 ;;(println "add-up 1 2" (add-up 1 2))
 
 ;; todo for testing inclusion of 'common' project
-(defn current-add-two
-  [x]
-  (common/add-two x))
+;;(defn current-add-two
+;;  [x]
+;;  (common/add-two x))
 ;;(println "current-add-two 5" (current-add-two 5))
 
 
@@ -107,7 +107,7 @@
             (if (common/config-enabled? (:config config-response))
               (let [commit-msg-response (common/get-commit-msg-from-file (first args))]
                 (if (:success commit-msg-response)
-                  (common/format-commit-msg (:result commit-msg-response))
+                  (println (common/format-commit-msg (:result commit-msg-response)))
                   (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-response)))))
               (common/handle-warn-proceed title "Commit message enforcement disabled."))
             (common/handle-err-exit title (str "Error in config file '" config-file "'. " (:reason config-validation-response)))))
