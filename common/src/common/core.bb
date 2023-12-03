@@ -171,12 +171,6 @@
       (assoc response :reason result))))
 
 
-(defn string-to-vector
-  "Converts and returns the string 'lines' to a vector split on newlines.  A wrapper around 'clojure.string/split-lines'."
-  [line]
-  (str/split-lines line))
-
-
 (defn is-string-min-char-compliant?
   "Returns 'true' if 'line' has 'min-chars' characters or more and 'false' otherwise."
   [line min-chars]
@@ -313,25 +307,55 @@
       (assoc (assoc response :result result) :success true))))
 
 
-;; sed 's/$/foo/' ;; replace newline with foo
+(defn split-lines
+  "Splits the lines data an optional carriage return '\r' and newline '\n'.  Same as split-lines, but this function allows for optional carriage return."
+  [data]
+  (clojure.string/split data #"\r?\n" -1))
+
+
+;; todo for testing
+(defn print-debug
+  [data]
+  (println "---------------------------------------------------")
+  (println
+   (-> data
+       ;;(str/replace #"(?m) " ".")
+       (str/replace #"(?m)\r" "R\r")
+       (str/replace #"(?m)\n" "N\n")
+       (str/replace #"(?m)aakjhsdafkjdhf" "")))
+  (println "---------------------------------------------------"))
+
+
+(defn format-commit-msg-all
+  [commit-msg]
+  (-> commit-msg
+      (str/replace #"(?m)^.*#.*" "")                                            ;; delete all lines that contain a comment
+      (str/replace #"(?m)^[ ]+$" "")                                            ;; for a line with spaces only, remove all spaces
+      (str/replace #"(?m)^\n{2,}" "\n")                                         ;; replace two or more consecutive newlines with a single newline
+      (str/replace #"(?mi)[ ]+$" "")                                            ;; remove spaces at end of lines (without removing spaces at beginning of lines)
+      (str/replace #"(?mi)BRE?AKING[ -_]*CHANGE[ ]*:[ ]*" "BREAKING CHANGE: ")  ;; convert to 'BREAKING CHANGE:' regardless of: case, mispelled 'BRAKING' or 'BREAKING', separated with space/dash/underscore, and searpated by 0 or more spaces before and/or after the colon
+      (str/replace #"(?mi)BRAEKING[ -_]*CHANGE[ ]*:[ ]*" "BREAKING CHANGE: ")   ;; as above, if mispelled 'BRAEKING'
+      (str/trim)))                                                              ;; remove leading/trailing newlines/spaces
+
+
+(defn format-commit-msg-frist-line
+  [line]
+  (-> line
+      (str/replace #"^[ ]*" "")      ;; remove extra spaces at the start of the line 
+      (str/replace #"[ ]*\(" "(")    ;; remove extra spaces before the opening parenthesis
+      (str/replace #"\([ ]*" "(")    ;; remove extra spaces after the opening parenthesis
+      (str/replace #"[ ]*\)" ")")    ;; remove extra spaces before the closing parenthesis
+      (str/replace #"\)[ ]*" ")")    ;; remove extra spaces after the closing parenthesis
+      (str/replace #"[ ]*!" "!")     ;; remove extra spaces before the exclamation mark
+      (str/replace #"[ ]*:" ":")     ;; remove extra spaces before the colon
+      (str/replace #":[ ]*" ": ")))  ;; replace no space or extra spaces after the colon with a single space
 
 
 (defn format-commit-msg
+  "Accepts a string commit-msg and returns the formatted string commit-message.  If the commit message is an empty string or nil, then returns an empty string."
   [commit-msg]
-  (println "---------------------------------------------------")
-  ;;(println (str/trim commit-msg))
-  (println "---------------------------------------------------")
-  (println (-> commit-msg
-               ;; Overall:
-               (str/replace #"(?m)^.*#.*" "")     ;; delete all lines that contain a comment
-               (str/replace #"(?m)^[ ]+$" "")     ;; for a line with spaces only, remove all spaces
-               (str/replace #"(?m)^\n{2,}" "\n")  ;; replace two or more consecutive newlines with a single newline
-               ;;(str/replace #"(?m)^\n{1,}$" "") ;; as above, to the end of the string... TODO not needed w/ trim?
-               (str/trim)                         ;; remove leading/trailing newlines/spaces
-               ;; todo
-               ;; In the title line (first line):
-               ;;(str/replace #"(?m)^.*\n" "X") ;; TODO remove extra spaces before the opening parenthesis: sed -i '1 s/[ ]*(/(/' "$1"
-               ))
-  (println "---------------------------------------------------"))
+  (if (empty? commit-msg)
+    ""
+    (format-commit-msg-frist-line (first (split-lines (format-commit-msg-all commit-msg))))))
 
 
