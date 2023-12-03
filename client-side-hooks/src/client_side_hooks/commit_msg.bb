@@ -102,7 +102,7 @@
   (if (= (count args) 1)
     (let [config-response (common/parse-json-file config-file)]
       (if (:success config-response)
-        (let [config-validation-response (common/validate-config (:config config-response))]
+        (let [config-validation-response (common/validate-config (:result config-response))]
           (if (:success config-validation-response)
             (if (common/config-enabled? (:config config-response))
               (let [commit-msg-response (common/get-commit-msg-from-file (first args))]

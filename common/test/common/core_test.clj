@@ -18,10 +18,36 @@
 
 (ns common.core-test
   (:require [clojure.test       :refer [deftest is testing]]
-            [babashka.classpath :as cp]))
+            [clojure.string     :as str]
+            [babashka.classpath :as cp]
+            [common.core        :as common]))
 
 (cp/add-classpath "./")
 (require '[common.core :as common])
+
+
+(deftest parse-json-file-test
+  (testing "file not found"
+    (let [v (common/parse-json-file "resources/test/data/does-not-exist.json")]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (str/includes? (:reason v) "Config file 'resources/test/data/does-not-exist.json' not found.")))))
+  (testing "parse fail"
+    (let [v (common/parse-json-file "resources/test/data/parse-bad.json")]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (str/includes? (:reason v) "JSON parse error when reading config file 'resources/test/data/parse-bad.json'.")))))
+  (testing "parse ok"
+    (let [v (common/parse-json-file "resources/test/data/parse-good.json")]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (true? (:success v)))
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type (:result v)))))
+      (is (= "hi" (:cb (:c (:result v))))))))
 
 
 (deftest config-enabled?-test
@@ -136,6 +162,7 @@
       (is (= "feat(client)!: add super neat feature" v))
       (is (= "class java.lang.String" (str (type v)))))))
 
+
 (def long-commit-msg
 "
    feat  (  client  )  !  :      add super neat feature   
@@ -184,6 +211,7 @@ breaking change    :    a big change
 
 
 ")
+
 
 (def long-commit-msg-expected
 "feat(client)!: add super neat feature

@@ -146,7 +146,7 @@
 
 
 (defn ^:impure parse-json-file
-  "Reads and parses the JSON config file, 'filename', and returns a map result.  If successful, ':success' is 'true' and 'config' contains the JSON config as a map.  Else ':success' is 'false' and ':reason' describes the failure."
+  "Reads and parses the JSON config file, 'filename', and returns a map result.  If successful, ':success' is 'true' and 'result' contains the JSON config as a map.  Else ':success' is 'false' and ':reason' describes the failure."
   [filename]
   (let [response {:success false}
         result (try
@@ -162,7 +162,7 @@
                      (catch clojure.lang.ExceptionInfo ei
                        (str "JSON parse error when reading config file '" filename "'.")))))]
     (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)
-      (assoc (assoc response :config result) :success true)
+      (assoc (assoc response :result result) :success true)
       (assoc response :reason result))))
 
 
