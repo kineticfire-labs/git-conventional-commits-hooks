@@ -68,26 +68,124 @@
 
 
 (deftest generate-commit-msg-offending-line-header-test
-  (testing "line-num < 0"
+  (testing "lines is empty vector"
+    (let [v (common/generate-commit-msg-offending-line-header [] -1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 0 (count v)))))
+  (testing "lines is empty string"
+    (let [v (common/generate-commit-msg-offending-line-header [""] -1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 1 (count v)))
+      (is (= "" (first v)))))
+  (testing "line-num < 0 (no offending line)"
     (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] -1)]
       (is (= "class clojure.lang.PersistentVector" (str (type v))))
       (is (= 2 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))))
-  (testing "line-num = 0"
+  (testing "line-num = 0 (first line)"
     (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 0)]
       (is (= "class clojure.lang.PersistentVector" (str (type v))))
       (is (= 3 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))
       (is (= "\"   (offending line # 1 in red) **************\"" (nth v 2)))))
-  (testing "line-num = 1"
+  (testing "line-num = 1 (second line)"
     (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 1)]
       (is (= "class clojure.lang.PersistentVector" (str (type v))))
       (is (= 3 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))
       (is (= "\"   (offending line # 2 in red) **************\"" (nth v 2))))))
+
+
+(deftest generate-commit-msg-offending-line-msg-highlight-test
+  (testing "lines is empty vector"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight [] -1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 0 (count v)))))
+  (testing "lines is empty string"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight [""] -1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 1 (count v)))
+      (is (= "" (first v)))))
+  (testing "line-num < 0 (no offending line)"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] -1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 2 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "Line 2" (nth v 1)))))
+  (testing "line-num = 0 (first line)"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] 0)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 2 (count v)))
+      (is (= "\\e[1m\\e[31mLine 1\\033[0m\\e[0m" (first v)))
+      (is (= "Line 2" (nth v 1)))))
+  (testing "line-num = 1 (second line)"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] 1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 2 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "\\e[1m\\e[31mLine 2\\033[0m\\e[0m" (nth v 1))))))
+
+
+(deftest generate-commit-msg-test
+  (testing "lines is empty vector"
+    (let [v (common/generate-commit-msg [] -1)]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (true? (str/includes? (nth v 3) "*************************")))
+      (is (= 6 (count v)))))
+  (testing "lines is empty string"
+    (let [v (common/generate-commit-msg [""] -1)]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 7 (count v)))
+      (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
+      (is (= "echo -e " (nth v 3)))
+      (is (true? (str/includes? (nth v 5) "echo -e \"END - COMMIT MESSAGE")))))
+  (testing "line-num < 0 (no offending line)"
+    (let [v (common/generate-commit-msg ["Line 1" "Line 2"] -1)]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 8 (count v)))
+      (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
+      (is (= "echo -e Line 1" (nth v 3)))
+      (is (= "echo -e Line 2" (nth v 4)))
+      (is (true? (str/includes? (nth v 6) "echo -e \"END - COMMIT MESSAGE")))))
+  (testing "line-num = 0 (first line)"
+    (let [v (common/generate-commit-msg ["Line 1" "Line 2"] 0)]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 9 (count v)))
+      (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
+      (is (true? (str/includes? (nth v 2) "echo -e \"   (offending line # 1 in red)")))
+      (is (= "echo -e \\e[1m\\e[31mLine 1\\033[0m\\e[0m" (nth v 4))) 
+      (is (= "echo -e Line 2" (nth v 5)))
+      (is (true? (str/includes? (nth v 7) "echo -e \"END - COMMIT MESSAGE")))))
+  (testing "line-num = 1 (second line)"
+    (let [v (common/generate-commit-msg ["Line 1" "Line 2"] 1)]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 9 (count v)))
+      (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
+      (is (true? (str/includes? (nth v 2) "echo -e \"   (offending line # 2 in red)")))
+      (is (= "echo -e Line 1" (nth v 4)))
+      (is (= "echo -e \\e[1m\\e[31mLine 2\\033[0m\\e[0m" (nth v 5)))
+      (is (true? (str/includes? (nth v 7) "echo -e \"END - COMMIT MESSAGE"))))))
+
+
+(deftest generate-commit-err-msg-test
+  (testing "title and err-msg"
+    (let [v (common/generate-commit-err-msg "A title." "An error message.")]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 2 (count v)))
+      (is (= "echo -e \"\\e[1m\\e[31mCOMMIT REJECTED A title.\"" (first v)))
+      (is (= "echo -e \"\\e[1m\\e[31mCommit failed reason: An error message.\\033[0m\\e[0m\"" (nth v 1))))))
+
+
+(deftest generate-commit-err-warn-test
+  (testing "title and err-msg"
+    (let [v (common/generate-commit-warn-msg "A title." "A warning message.")]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 2 (count v)))
+      (is (= "echo -e \"\\e[1m\\e[33mCOMMIT WARNING A title.\"" (first v)))
+      (is (= "echo -e \"\\e[1m\\e[33mCommit proceeding with warning: A warning message.\\033[0m\\e[0m\"" (nth v 1))))))
 
 
 (deftest parse-json-file-test
@@ -123,6 +221,9 @@
     (let [v (common/config-enabled? {:commit-msg-enforcement {:enabled false}})]
       (is (false? v))
       (is (= "class java.lang.Boolean" (str (type v)))))))
+
+
+;;todo get-commit-msg-from-file
 
 
 (deftest split-lines-test

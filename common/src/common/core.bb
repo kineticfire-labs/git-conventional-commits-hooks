@@ -91,7 +91,7 @@
 
 
 (defn generate-commit-msg
-  "Generates a formatted commit message, 'msg', with optional call-out to the offending line if the optional integer 'line-num' is non-negative; 'line-num' is indexed starting at 0.  Returns the result as a vector of strings, formatted for shell output with color-coding."
+  "Generates a formatted commit message, vector 'msg', with optional call-out to the offending line if the optional integer 'line-num' is non-negative; 'line-num' is indexed starting at 0.  Argument vector msg may contain an empty string or be an empty vector.  Returns the result as a lazy sequence of strings, formatted for shell output with color-coding."
   ([msg]
    (generate-commit-msg msg -1))
   ([msg line-num]
@@ -109,7 +109,7 @@
 
 
 (defn generate-commit-err-msg
-  "Generates and returns as a vector of strings an error message including the string 'title' as part of the title and teh string 'err-msg' as the reason, formatting the string for shell output with color-coding."
+  "Generates and returns as a vector of strings an error message including the string 'title' as part of the title and the string 'err-msg' as the reason, formatting the string for shell output with color-coding."
   [title err-msg]
   (apply-display-with-shell
    [(str "\"" shell-color-red "COMMIT REJECTED " title"\"")
@@ -316,7 +316,7 @@
       (str/trim)                                                                ;; remove leading/trailing newlines/spaces
       (str/replace #"(?m)^[ ]+$" "")                                            ;; for a line with spaces only, remove all spaces
       (str/replace #"(?m)^\n{2,}" "\n")                                         ;; replace two or more consecutive newlines with a single newline
-      (str/replace #"(?mi)[ ]+$" "")                                            ;; remove spaces at end of lines (without removing spaces at beginning of lines)
+      (str/replace #"(?m)[ ]+$" "")                                            ;; remove spaces at end of lines (without removing spaces at beginning of lines)
       (str/replace #"^(.+)\n+(.)" "$1\n\n$2")                                   ;; ensure exactly two newlines between subject and body (if any body)
       (str/replace #"(?mi)BRE?AKING[ -_]*CHANGE[ ]*:[ ]*" "BREAKING CHANGE: ")  ;; convert to 'BREAKING CHANGE:' regardless of: case, mispelled 'BRAKING', separated with space/dash/underscore, and searpated by 0 or more spaces before and/or after the colon
       (str/replace #"(?mi)BRAEKING[ -_]*CHANGE[ ]*:[ ]*" "BREAKING CHANGE: ")   ;; as above, if mispelled 'BRAEKING'
