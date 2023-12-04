@@ -59,7 +59,7 @@
 
 
 (defn apply-display-with-shell
-  "Applies 'echo -e' to each line in 'lines', which supports display to the terminal with color coding, and returns the result.  If argument 'lines' is a string, then returns a string; if 'lines' is a vector of strings, then returns a vector of strings."
+  "Applies 'echo -e' to each line in 'lines', which supports display to the terminal with color coding, and returns the result.  If argument 'lines' is a string, then returns a string; if 'lines' is a collection of strings, then returns a lazy sequence of strings."
   [lines]
   (if (= (.getSimpleName (type lines)) "String")
     (str "echo -e " lines)
@@ -71,7 +71,7 @@
   ([]
    (generate-shell-newline-characters 1))
   ([num]
-   (vec (repeat num "\n"))))
+   (str/join "" (repeat num "\n"))))
 
 
 (defn generate-commit-msg-offending-line-header
@@ -287,7 +287,6 @@
     false))
 
 
-;; todo test
 (defn ^:impure get-commit-msg-from-file
   "Reads the file 'filename' and returns a map with the result.  Key 'success' is 'true' if successful and 'result' contains the contents of the file as a string, otherwise 'success' is 'false' and 'reason' contains the reason the operation failed."
   [filename]

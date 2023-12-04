@@ -26,6 +26,70 @@
 (require '[common.core :as common])
 
 
+
+(deftest do-on-success-test
+  (testing "success"
+    (let [v (common/do-on-success #(update % :val inc) {:success true :val 1})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (true? (:success v)))
+      (is (= 2 (:val v)))))
+  (testing "unsuccess"
+    (let [v (common/do-on-success #(update % :val inc) {:success false :val 1})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (false? (:success v)))
+      (is (= 1 (:val v))))))
+
+
+(deftest apply-display-with-shell-test
+  (testing "string input"
+    (let [v (common/apply-display-with-shell "test line")]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "echo -e test line" v))))
+  (testing "vector string input"
+    (let [v (common/apply-display-with-shell ["test line 1" "test line 2" "test line 3"])]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 3 (count v)))
+      (is (= "echo -e test line 1" (first v))))))
+
+
+(deftest generate-shell-newline-characters-test
+  (testing "no arg"
+    (let [v (common/generate-shell-newline-characters)]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "\n" v))))
+  (testing "arg=1"
+    (let [v (common/generate-shell-newline-characters 1)]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "\n" v))))
+  (testing "arg=3"
+    (let [v (common/generate-shell-newline-characters 3)]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "\n\n\n" v)))))
+
+
+(deftest generate-commit-msg-offending-line-header-test
+  (testing "line-num < 0"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] -1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 2 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "Line 2" (nth v 1)))))
+  (testing "line-num = 0"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 0)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 3 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "Line 2" (nth v 1)))
+      (is (= "\"   (offending line # 1 in red) **************\"" (nth v 2)))))
+  (testing "line-num = 1"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 1)]
+      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (= 3 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "Line 2" (nth v 1)))
+      (is (= "\"   (offending line # 2 in red) **************\"" (nth v 2))))))
+
+
 (deftest parse-json-file-test
   (testing "file not found"
     (let [v (common/parse-json-file "resources/test/data/does-not-exist.json")]
