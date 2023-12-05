@@ -195,14 +195,14 @@
       (is (= "class java.lang.Boolean" (str (type (:success v)))))
       (is (false? (:success v)))
       (is (= "class java.lang.String" (str (type (:reason v)))))
-      (is (true? (str/includes? (:reason v) "Config file 'resources/test/data/does-not-exist.json' not found.")))))
+      (is (true? (str/includes? (:reason v) "File 'resources/test/data/does-not-exist.json' not found.")))))
   (testing "parse fail"
     (let [v (common/parse-json-file "resources/test/data/parse-bad.json")]
       (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
       (is (= "class java.lang.Boolean" (str (type (:success v)))))
       (is (false? (:success v)))
       (is (= "class java.lang.String" (str (type (:reason v)))))
-      (is (true? (str/includes? (:reason v) "JSON parse error when reading config file 'resources/test/data/parse-bad.json'.")))))
+      (is (true? (str/includes? (:reason v) "JSON parse error when reading file 'resources/test/data/parse-bad.json'.")))))
   (testing "parse ok"
     (let [v (common/parse-json-file "resources/test/data/parse-good.json")]
       (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
@@ -223,7 +223,21 @@
       (is (= "class java.lang.Boolean" (str (type v)))))))
 
 
-;;todo get-commit-msg-from-file
+(deftest read-file-test
+  (testing "file not found"
+    (let [v (common/read-file "resources/test/data/does-not-exist.txt")]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (str/includes? (:reason v) "File 'resources/test/data/does-not-exist.txt' not found."))))) 
+  (testing "file ok"
+    (let [v (common/read-file "resources/test/data/file-to-read.txt")]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (true? (:success v)))
+      (is (= "class java.lang.String" (str (type (:result v)))))
+      (is (= "This is a\n\nmulti-line file to read\n" (:result v))))))
 
 
 (deftest split-lines-test

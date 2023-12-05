@@ -88,7 +88,7 @@
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
 ;;      - JSON file fails to parse
-;; - validate config file
+;; - validate config file (todo: implement validation)
 ;;    - exit 0 if
 ;;      - disabled
 ;;    - exit 1 if
@@ -105,7 +105,7 @@
         (let [config-validation-response (common/validate-config (:result config-response))]
           (if (:success config-validation-response)
             (if (common/config-enabled? (:config config-response))
-              (let [commit-msg-response (common/get-commit-msg-from-file (first args))]
+              (let [commit-msg-response (common/read-file (first args))]
                 (if (:success commit-msg-response)
                   (println (common/format-commit-msg (:result commit-msg-response)))
                   (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-response)))))

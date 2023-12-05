@@ -152,15 +152,15 @@
         result (try
                  (json/parse-stream-strict (clojure.java.io/reader filename) true)
                  (catch java.io.FileNotFoundException e
-                   (str "Config file '" filename "' not found. " (.getMessage e)))
+                   (str "File '" filename "' not found. " (.getMessage e)))
                  (catch java.io.IOException e
                    ;; Babashka can't find com.fasterxml.jackson.core.JsonParseException, which is thrown for a JSON parse exception.                   
                    ;;   To differentiate the JsonParseException from a java.io.IOException, attempt to 'getMessage' on the exception.
                    (try
                      (.getMessage e)
-                     (str "IO exception when reading config file '" filename "', but the file was found. " (.getMessage e))
+                     (str "IO exception when reading file '" filename "', but the file was found. " (.getMessage e))
                      (catch clojure.lang.ExceptionInfo ei
-                       (str "JSON parse error when reading config file '" filename "'.")))))]
+                       (str "JSON parse error when reading file '" filename "'.")))))]
     (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)
       (assoc (assoc response :result result) :success true)
       (assoc response :reason result))))
@@ -287,18 +287,18 @@
     false))
 
 
-(defn ^:impure get-commit-msg-from-file
+(defn ^:impure read-file
   "Reads the file 'filename' and returns a map with the result.  Key 'success' is 'true' if successful and 'result' contains the contents of the file as a string, otherwise 'success' is 'false' and 'reason' contains the reason the operation failed."
   [filename]
   (let [response {:success false}
         result (try
                  (slurp filename)
                  (catch java.io.FileNotFoundException e
-                   {:err (str "Config file '" filename "' not found. " (.getMessage e))})
+                   {:err (str "File '" filename "' not found. " (.getMessage e))})
                  (catch java.io.IOException e
-                   {:err (str "IO exception when reading config file '" filename "', but the file was found. " (.getMessage e))}))] 
+                   {:err (str "IO exception when reading file '" filename "', but the file was found. " (.getMessage e))}))] 
     (if (= (compare (str (type result)) "class clojure.lang.PersistentArrayMap") 0)
-      (assoc response :reason result)
+      (assoc response :reason (:err result))
       (assoc (assoc response :result result) :success true))))
 
 
