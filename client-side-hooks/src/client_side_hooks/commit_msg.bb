@@ -88,7 +88,7 @@
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
 ;;      - JSON file fails to parse
-;; - validate config file (todo: implement validation)
+;; * validate config file (todo: implement validation)
 ;;    - exit 0 if
 ;;      - disabled
 ;;    - exit 1 if
@@ -96,6 +96,7 @@
 ;; - retrieve git edit message file
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
+;; * format git edit message file (todo)
 ;;
 (defn ^:impure -main
   [& args]
@@ -104,10 +105,12 @@
       (if (:success config-response)
         (let [config-validation-response (common/validate-config (:result config-response))]
           (if (:success config-validation-response)
-            (if (common/config-enabled? (:config config-response))
+            (if (common/config-enabled? (:result config-response))
               (let [commit-msg-response (common/read-file (first args))]
                 (if (:success commit-msg-response)
-                  (println (common/format-commit-msg (:result commit-msg-response)))
+                  ;;(println (common/format-commit-msg (:result commit-msg-response)))
+                  ;; java.io.FileNotFoundException
+                  (println (common/write-file "xyz/blah.txt" "Hello\nthere\narrg2"))
                   (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-response)))))
               (common/handle-warn-proceed title "Commit message enforcement disabled."))
             (common/handle-err-exit title (str "Error in config file '" config-file "'. " (:reason config-validation-response)))))

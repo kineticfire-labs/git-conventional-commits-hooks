@@ -302,6 +302,21 @@
       (assoc (assoc response :result result) :success true))))
 
 
+(defn ^:impure write-file
+  "Writes the string 'content' to file 'filename' and returns a map with the result.  Key 'success' is 'true' if successful, otherwise 'success' is 'false' and 'reason' contains the reason the operation failed."
+  [filename content]
+  (let [response {:success false}
+        result (try
+                 (spit filename content)
+                 (catch java.io.FileNotFoundException e
+                   (str "File '" filename "' not found. " (.getMessage e)))
+                 (catch java.io.IOException e
+                   (str "IO exception when writing file '" filename "'. " (.getMessage e))))]
+    (if (nil? result)
+      (assoc response :success true)
+      (assoc response :reason result))))
+
+
 (defn split-lines
   "Splits the string 'data' based on an optional carriage return '\r' and newline '\n' and returns the result as a vector.  Same as split-lines, but this function allows for optional carriage return."
   [data]
@@ -338,7 +353,7 @@
 
 
 (defn format-commit-msg
-  "Accepts a multi-line string commit-msg and returns the formatted multi-line string commit-message.  If the commit message is an empty string or nil, then returns an empty string."
+  "Accepts a string commit-msg and returns the formatted string commit-message.  If the commit message is an empty string or nil, then returns an empty string."
   [commit-msg]
   (if (empty? commit-msg)
     ""
