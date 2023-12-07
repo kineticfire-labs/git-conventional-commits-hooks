@@ -26,19 +26,13 @@
 (require '[common.core :as common])
 
 
-;; todo
-;; https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Files.html
-;; String tmpdir = Files.createTempDir().getAbsolutePath();
-;; tmpdir.toFile().deleteOnExit();
 
-;; (def my-temp-file (java.io.File/createTempFile "filename" ".txt"))
-;; (.getAbsolutePath my-temp-file)
-;; (.deleteOnExit my-temp-file)
-;; (.delete my-temp-file)
 (defn get-temp-dir
-  ([]
-   (get-temp-dir "any.txt"))
-  ([filename]))
+  "Creates a test directory if it doesn't exist and returns a string path to the directory.  The ptah does NOT end with s slash."
+  []
+  (let [path "gen/test"]
+    (.mkdirs (java.io.File. path))
+    path))
 
 
 (deftest do-on-success-test
@@ -254,30 +248,23 @@
       (is (= "This is a\n\nmulti-line file to read\n" (:result v))))))
 
 
-;; todo
-;; String tmpdir = Files.createTempDir().getAbsolutePath();
-;; tmpdir.toFile().deleteOnExit();
-
-;; (def my-temp-file (java.io.File/createTempFile "filename" ".txt"))
-;; (.getAbsolutePath my-temp-file)
-;; (.deleteOnExit my-temp-file)
-;; (.delete my-temp-file)
-
-
-;; todo
 (deftest write-file-test
-  (testing "file not found"
-    (let [v (common/write-file "Line 1\nLine 2\nLine 3")]
-      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
-      (is (false? (:success v)))
-      (is (= "class java.lang.String" (str (type (:reason v)))))
-      (is (true? (str/includes? (:reason v) "File 'resources/test/data/does-not-exist.txt' not found.")))))
-  (testing "file ok"
-    (let [v (common/write-file "Line 1\nLine2\nLine 3")]
-      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
-      (is (true? (:success v))))))
+  (let [test-dir (get-temp-dir)]
+    (testing "file not found"
+      (let [v (common/write-file (str test-dir "/does-not-exist/file.txt") "Line 1\nLine 2\nLine 3")]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (true? (str/includes? (:reason v) (str "File '" test-dir "/does-not-exist/file.txt' not found."))))))
+    (testing "file ok"
+      (let [content "Line 1\nLine 2\nLine 3"
+            out-file (str test-dir "/write-file-ok.txt")
+            v (common/write-file out-file content)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))
+        (is (= content (slurp out-file)))))))
 
 
 (deftest split-lines-test
