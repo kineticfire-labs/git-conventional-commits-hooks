@@ -361,3 +361,21 @@
       (str/join "\n" (into [] (concat (conj [] (format-commit-msg-first-line (first commit-msg-vec))) (rest commit-msg-vec)))))))
 
 
+;; todo
+(defn validate-commit-msg
+  "Accepts the commit message as a string... todo"
+  ;; input:
+  ;;   - string commit msg (already formatted)
+  ;;   - valid types/scopes (from config, validated so no errs)
+  ;;   - min/max line lengths (from config, validated so no errs)
+  ;; return:
+  ;;   - yes/no valid
+  ;;   - scope path... name not alias
+  ;;   - type
+  ;;   - yes/no breaking change
+  ;; presume has been formatted, so not re-checking those
+  [commit-msg]
+  (println commit-msg)
+  {:success true})
+
+

@@ -88,7 +88,7 @@
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
 ;;      - JSON file fails to parse
-;; * validate config file (todo: implement validation)
+;; * validate config file (todo)
 ;;    - exit 0 if
 ;;      - disabled
 ;;    - exit 1 if
@@ -96,7 +96,8 @@
 ;; - retrieve git edit message file
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
-;; * format git edit message file (todo)
+;; - format git edit message file
+;; * validate git commit message (todo)
 ;;
 (defn ^:impure -main
   [& args]
@@ -106,12 +107,14 @@
         (let [config-validation-response (common/validate-config (:result config-response))]
           (if (:success config-validation-response)
             (if (common/config-enabled? (:result config-response))
-              (let [commit-msg-response (common/read-file (first args))]
-                (if (:success commit-msg-response)
-                  ;;(println (common/format-commit-msg (:result commit-msg-response)))
-                  ;; java.io.FileNotFoundException
-                  (println (common/write-file "xyz/blah.txt" "Hello\nthere\narrg2"))
-                  (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-response)))))
+              (let [commit-msg-read-response (common/read-file (first args))]
+                (if (:success commit-msg-read-response)
+                  (let [commit-msg-format-response (common/format-commit-msg (:result commit-msg-read-response))
+                        commit-msg-validate-response (common/validate-commit-msg commit-msg-format-response)]
+                    (if (:success commit-msg-validate-response)
+                      (println "commit msg valid!")
+                      (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)))))
+                  (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-read-response)))))
               (common/handle-warn-proceed title "Commit message enforcement disabled."))
             (common/handle-err-exit title (str "Error in config file '" config-file "'. " (:reason config-validation-response)))))
         (common/handle-err-exit title (:reason config-response))))
