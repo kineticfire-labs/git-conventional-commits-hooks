@@ -82,6 +82,7 @@
     (conj lines (str "\"   (offending line # " (inc line-num) " in red) **************\""))))
 
 
+;; todo: change to accept line-num as list
 (defn generate-commit-msg-offending-line-msg-highlight
   "Adds shell color-code formatting for an offending line identified by integer 'line-num' in the vector of strings 'lines'.  Argument 'line-num' is indexed starting at 0.  If 'line-num' is negative, then 'lines' is returned unchanged."
   [lines line-num]
@@ -361,6 +362,25 @@
       (str/join "\n" (into [] (concat (conj [] (format-commit-msg-first-line (first commit-msg-vec))) (rest commit-msg-vec)))))))
 
 
+(defn index-matches
+  "Returns a lazy sequence containing the zero-based indicies of matches found applying the 'regex' to the 'collection'.  If no matches, then the returned lazy sequence is empty."
+  [collection regex]
+  (keep-indexed (fn [idx itm] (when-not (empty? (re-find regex itm)) idx)) collection))
+
+
+(defn create-validate-commit-msg-err
+  "Creates and return a map describing a commit message validation error with key 'success' to 'false', 'reason', and optional 'locations'."
+  ([reason]
+   (create-validate-commit-msg-err reason nil))
+  ([reason locations]
+   (let [response (-> {}
+                      (assoc :success false)
+                      (assoc :reason reason))]
+     (if (nil? locations)
+       response
+       (assoc response :locations locations)))))
+
+
 ;; todo
 (defn validate-commit-msg
   "Accepts the commit message as a string... todo"
@@ -370,12 +390,35 @@
   ;;   - min/max line lengths (from config, validated so no errs)
   ;; return:
   ;;   - yes/no valid
-  ;;   - scope path... name not alias
-  ;;   - type
-  ;;   - yes/no breaking change
+  ;;   - if valid
+  ;;      - scope path... name not alias
+  ;;      - type
+  ;;      - yes/no breaking change
+  ;;   - if invalid
+  ;;      - reason
+  ;;      - vector where errs were found, only if they correspond to line #s!
   ;; presume has been formatted, so not re-checking those
-  [commit-msg]
-  (println commit-msg)
-  {:success true})
+  ;;
+  ;; assumptions: formatted
+  ;;
+  ;; checking:
+  ;; - msg can't be empty string or nil
+  ;; - msg can't contain tabs
+  ;; - min/max chars
+  ;; - title-line (todo)
+  ;;
+  [commit-msg config]
+  ;;(println commit-msg)
+  ;;(assoc response :success true)
+  (let [response {:success false}]
+    (if (empty? commit-msg)
+      (create-validate-commit-msg-err "Commit message cannot be empty.")
+      (let [commit-msg-vec-all (split-lines commit-msg)
+            err-tab-seq (index-matches commit-msg-vec-all #"	")]
+        (if (= 0 (count err-tab-seq))
+          (let [err-title-min-seq (index-matches commit-msg-vec-all #"^.{6,}$")] ;;todo min for regex... look in config.... do first first line then body, if any
+            ;;todo
+            (assoc response :success true))
+          (create-validate-commit-msg-err "Commit message cannot contain tab characters." err-tab-seq))))))
 
 

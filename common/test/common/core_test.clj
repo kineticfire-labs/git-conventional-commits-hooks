@@ -492,3 +492,89 @@ BREAKING CHANGE: a big change")
     (let [v (common/format-commit-msg long-commit-msg)]
       (is (= long-commit-msg-expected v))
       (is (= "class java.lang.String" (str (type v)))))))
+
+
+(deftest index-matches-test
+  (testing "empty collection"
+    (let [v (common/index-matches [] #"z")]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 0 (count v)))))
+  (testing "no matches"
+    (let [v (common/index-matches ["aqq" "bqq" "cqq" "dqq"] #"z")]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 0 (count v)))))
+  (testing "1 match with collection count 1"
+    (let [v (common/index-matches ["bqq"] #"b")]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 1 (count v)))))
+  (testing "1 match with collection count 5"
+    (let [v (common/index-matches ["aqq" "bqq" "cqq" "dqq"] #"a")]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 1 (count v)))))
+  (testing "4 matches with collection count 7"
+    (let [v (common/index-matches ["aqq" "bqq" "acqq" "dqq" "eqq" "faqq" "gaqq"] #"a")]
+      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (= 4 (count v))))))
+
+
+(deftest create-validate-commit-msg-err-test
+  (testing "reason without locations"
+    (let [v (common/create-validate-commit-msg-err "Reason error occurred")]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (false? (contains? v :locations)))))
+  (testing "reason with locations"
+    (let [v (common/create-validate-commit-msg-err "Reason error occurred" '(3 7 9))]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (= 3 (count (:locations v))))
+      (is (= 3 (first (:locations v))))
+      (is (= 7 (nth (:locations v) 1)))
+      (is (= 9 (nth (:locations v) 2))))))
+
+
+(deftest validate-commit-msg-test
+  (let [config {:commit-msg {:length {:title-line {:min 3
+                                                   :max 8}
+                                      :body-line {:min 2
+                                                  :max 10}}}}]
+    (testing "commit msg is nil"
+      (let [v (common/validate-commit-msg nil config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= "Commit message cannot be empty." (:reason v)))
+        (is (false? (contains? v :locations)))))
+    (testing "commit msg is empty string"
+      (let [v (common/validate-commit-msg "" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= "Commit message cannot be empty." (:reason v)))
+        (is (false? (contains? v :locations)))))
+    (testing "commit msg contains tab on one line"
+      (let [v (common/validate-commit-msg "Line 1 ok\nLine 2 has tab between here	and here\nLine 3 ok" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= "Commit message cannot contain tab characters." (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 1 (first (:locations v))))))
+    (testing "commit msg contains tab on three lines"
+      (let [v (common/validate-commit-msg "Line 1 ok\nLine 2 has tab between here	and here\nLine 3 ok\nLine 4 has tab between here	and here\nLine 5 ok\nLine 6 has tab between here	and here" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= "Commit message cannot contain tab characters." (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 3 (count (:locations v))))
+        (is (= 1 (first (:locations v))))
+        (is (= 3 (nth (:locations v) 1)))
+        (is (= 5 (nth (:locations v) 2)))))))

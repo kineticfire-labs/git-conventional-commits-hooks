@@ -88,11 +88,9 @@
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
 ;;      - JSON file fails to parse
-;; * validate config file (todo)
+;; - check copnfig enabled
 ;;    - exit 0 if
 ;;      - disabled
-;;    - exit 1 if
-;;      - config file invalid
 ;; - retrieve git edit message file
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
@@ -104,21 +102,19 @@
   (if (= (count args) 1)
     (let [config-response (common/parse-json-file config-file)]
       (if (:success config-response)
-        (let [config-validation-response (common/validate-config (:result config-response))]
-          (if (:success config-validation-response)
-            (if (common/config-enabled? (:result config-response))
-              (let [commit-msg-read-response (common/read-file (first args))]
-                (if (:success commit-msg-read-response)
-                  (let [commit-msg-format-response (common/format-commit-msg (:result commit-msg-read-response))
-                        commit-msg-validate-response (common/validate-commit-msg commit-msg-format-response)]
-                    (if (:success commit-msg-validate-response)
-                      (println "commit msg valid!")
-                      (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)))))
-                  (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-read-response)))))
-              (common/handle-warn-proceed title "Commit message enforcement disabled."))
-            (common/handle-err-exit title (str "Error in config file '" config-file "'. " (:reason config-validation-response)))))
+        (if (common/config-enabled? (:result config-response))
+          (let [commit-msg-read-response (common/read-file (first args))]
+            (if (:success commit-msg-read-response)
+              (let [commit-msg-format-response (common/format-commit-msg (:result commit-msg-read-response))
+                    commit-msg-validate-response (common/validate-commit-msg commit-msg-format-response (:result config-response))]
+                (if (:success commit-msg-validate-response)
+                  (println "commit msg valid!")
+                  (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)))))
+              (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-read-response)))))
+          (common/handle-warn-proceed title "Commit message enforcement disabled."))
         (common/handle-err-exit title (:reason config-response))))
     (common/handle-err-exit title "Exactly one argument required.  Usage:  commit-msg <path to git edit message>")))
+
 
 
 (when (= *file* (System/getProperty "babashka.file"))
