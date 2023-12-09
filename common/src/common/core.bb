@@ -382,7 +382,7 @@
        (assoc response :locations locations)))))
 
 
-(defn validate-commit-msg-title
+(defn validate-commit-msg-title-len
   "Validates the commit message string 'title' (e.g. first line), returning 'nil' on success and a map on error with key 'success' equal to 'false', 'reason', and optional 'locations'.  The title is valid if it's within the min/max character range (inclusive) set in the config file."
   [title config]
   (if (seq (re-find (Pattern/compile (str "^.{" (:min (:title-line (:length (:commit-msg config)))) ",}$")) title))    ;; title-line: regex for n or more characters
@@ -392,7 +392,7 @@
     (create-validate-commit-msg-err (str "Commit message title line must be at least " (:min (:title-line (:length (:commit-msg config)))) " characters.") (lazy-seq [0]))))
 
 
-(defn validate-commit-msg-body
+(defn validate-commit-msg-body-len
   "Validates the commit message 'body' (e.g. lines after the title) where each line of the body is an element of a vector; must not have an element representing the two newlines separating the title from the body. Returns 'nil' on success (including if 'body' is an empty sequence) and a map on error with key 'success' equal to 'false', 'reason', and optional 'locations'.  The body is valid if all lines are within the min/max character range (inclusive) set in the config file."
   [body config]
   (if (empty? body)
@@ -406,10 +406,48 @@
         (create-validate-commit-msg-err (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") err-body-min)))))
 
 
+(defn add-string-if-key-empty
+  "Adds the 'add-text' to 'text' if the value in 'collection' identified by 'key' is empty and returns the modified text; else returns 'text' unchanged.  Adds two spaces before adding 'add-text' to 'text' if 'text' is not empty, else does not."
+  [text add-text key collection]
+  (if (empty? ((keyword key) collection))
+    (if (empty? text)
+      add-text
+      (str text "  " add-text))
+    text))
+
+
+;; todo: write tests
+;; todo: apply check of valid scopes/types from config
+(defn validate-commit-msg-title-scope-type
+  "todo"
+  [title config]
+  (let [matcher (re-matcher #"^(?<type>[a-z]+)\((?<scope>([a-zA-Z0-9]+))\)(?<breaking>!)?:(?<descr>.*)" title)]
+    (if (.matches matcher)
+      (let [match {:type (.group matcher "type")
+                   :scope (.group matcher "scope")
+                   :breaking (if (empty? (.group matcher "breaking"))
+                               false
+                               true)
+                   :title-descr (str/trim (.group matcher "descr"))}
+            reason (-> ""
+                       (add-string-if-key-empty "Cloud not identify type." :type match)
+                       (add-string-if-key-empty "Cloud not identify scope." :scope match)
+                       (add-string-if-key-empty "Cloud not identify description." :title-descr match))]
+        (if (empty? reason)
+          (assoc match :success true)
+          (-> match
+              (assoc :success false)
+              (assoc :reason reason))))
+      {:success false :reason "Bad form on title.  Could not identify type, scope, or description."})))
+
+
+;; todo: validate title line
+;;   - type/scope all lowercase
+;;   - recommend that title be all lowercase, but allow upper for acronyms
+;;   - before and after colon should be re-formatted?
+
 
 ;; todo
-(defn validate-commit-msg
-  "Accepts the commit message as a string... todo"
   ;; input:
   ;;   - string commit msg (already formatted)
   ;;   - valid types/scopes (from config, validated so no errs)
@@ -437,6 +475,8 @@
   ;; * check scope and type
   ;; * get if breaking change (! or words)
   ;;
+(defn validate-commit-msg
+  "Accepts the commit message as a string... todo"
   [commit-msg config]
   ;;(println commit-msg)
   ;;(assoc response :success true)
@@ -448,13 +488,17 @@
             commit-msg-body-col (rest (rest commit-msg-all-col))  ;; the two 'rest' operations get the body collection without the empty string created by the two newlines separating the title from the body, if there is a body
             err-tab-seq (index-matches commit-msg-all-col #"	")]
         (if (= 0 (count err-tab-seq))
-          (let [err-title (validate-commit-msg-title commit-msg-title config)]
+          (let [err-title (validate-commit-msg-title-len commit-msg-title config)]
             (if (nil? err-title)
-              (let [err-body (validate-commit-msg-body commit-msg-body-col config)]
+              (let [err-body (validate-commit-msg-body-len commit-msg-body-col config)]
                 (if (nil? err-body)
-                  ;; todo
                   (assoc response :success true)
                   err-body))
               err-title))
           (create-validate-commit-msg-err "Commit message cannot contain tab characters." err-tab-seq))))))
 
+
+(comment (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title config)]
+           (println scope-type-response)
+                    ;; todo
+           (assoc response :success true)))

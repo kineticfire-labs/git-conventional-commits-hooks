@@ -572,16 +572,16 @@ BREAKING CHANGE: a big change")
         (is (true? (:success v)))))))
 
 
-(deftest validate-commit-msg-body-test
+(deftest validate-commit-msg-body-len-test
   (let [config {:commit-msg {:length {:title-line {:min 3
                                                    :max 8}
                                       :body-line {:min 2
                                                   :max 10}}}}]
     (testing "commit msg body is an empty sequence"
-      (let [v (common/validate-commit-msg-body [] config)]
+      (let [v (common/validate-commit-msg-body-len [] config)]
         (is (nil? v))))
     (testing "commit msg body line has too few characters, for single element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "L") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "L") config)]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
         (is (= "class java.lang.Boolean" (str (type (:success v)))))
         (is (false? (:success v)))
@@ -591,7 +591,7 @@ BREAKING CHANGE: a big change")
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
     (testing "commit msg body line has too few characters, for multi element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "L\nHello\nA\nAnother line\nX") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "L\nHello\nA\nAnother line\nX") config)]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
         (is (= "class java.lang.Boolean" (str (type (:success v)))))
         (is (false? (:success v)))
@@ -603,13 +603,13 @@ BREAKING CHANGE: a big change")
         (is (= 2 (nth (:locations v) 1)))
         (is (= 4 (nth (:locations v) 2)))))
     (testing "commit msg body line has meets minimum characters, for single element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "Li") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "Li") config)]
         (is (nil? v))))
     (testing "commit msg body line has meets minimum characters, for multi element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "Li\nAb\nAbcdef\nAb\nAb") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "Li\nAb\nAbcdef\nAb\nAb") config)]
         (is (nil? v))))
     (testing "commit msg body line has too many characters, for single element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcdef") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "Body abcdef") config)]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
         (is (= "class java.lang.Boolean" (str (type (:success v)))))
         (is (false? (:success v)))
@@ -619,7 +619,7 @@ BREAKING CHANGE: a big change")
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
     (testing "commit msg body line has too many characters, for multi element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcdef\nAbcd\nBody abcdef\nBody abcdef\nAbcd\nBody abcdef") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "Body abcdef\nAbcd\nBody abcdef\nBody abcdef\nAbcd\nBody abcdef") config)]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
         (is (= "class java.lang.Boolean" (str (type (:success v)))))
         (is (false? (:success v)))
@@ -632,11 +632,77 @@ BREAKING CHANGE: a big change")
         (is (= 3 (nth (:locations v) 2)))
         (is (= 5 (nth (:locations v) 3)))))
     (testing "commit msg body line has meets maximum characters, for single element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcde") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "Body abcde") config)]
         (is (nil? v))))
     (testing "commit msg body line has meets maximum characters, for multi element"
-      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcde\nAb\nBody abcde\nAb\nBody abcde") config)]
+      (let [v (common/validate-commit-msg-body-len (common/split-lines "Body abcde\nAb\nBody abcde\nAb\nBody abcde") config)]
         (is (nil? v))))))
+
+
+(deftest add-string-if-key-empty-test
+  (testing "text empty, and collection value not empty"
+    (let [v (common/add-string-if-key-empty "" "Added text." :data {:data "non empty"})]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "" v))))
+  (testing "text empty, and collection value is not defined so would be empty"
+    (let [v (common/add-string-if-key-empty "" "Added text." :other {:data "non empty"})]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "Added text." v))))
+  (testing "text empty, and collection value is nil so is empty"
+    (let [v (common/add-string-if-key-empty "" "Added text." :data {:data nil})]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "Added text." v))))
+  (testing "text not empty, and collection value not empty"
+    (let [v (common/add-string-if-key-empty "Original text." "Added text." :data {:data "non empty"})]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "Original text." v))))
+  (testing "text not empty, and collection value is not defined so would be empty"
+    (let [v (common/add-string-if-key-empty "Original text." "Added text." :other {:data "non empty"})]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "Original text.  Added text." v))))
+  (testing "text not empty, and collection value is nil so is empty"
+    (let [v (common/add-string-if-key-empty "Original text." "Added text." :data {:data nil})]
+      (is (= "class java.lang.String" (str (type v))))
+      (is (= "Original text.  Added text." v)))))
+
+
+;;todo
+(deftest validate-commit-msg-title-scope-type
+  (let [config {:commit-msg {:length {:title-line {:min 3
+                                                   :max 8}
+                                      :body-line {:min 2
+                                                  :max 10}}}}]
+    (testing "init"
+      (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature" config)]
+        (println v)
+        (is (= 1 1))))
+    (testing "good without exclamation mark"
+      (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))
+        (is (= "class java.lang.String" (str (type (:type v)))))
+        (is (= (:type v) "feat"))
+        (is (= "class java.lang.String" (str (type (:scope v)))))
+        (is (= (:scope v) "proj"))
+        (is (= "class java.lang.Boolean" (str (type (:breaking v)))))
+        (is (false? (:breaking v)))
+        (is (= "class java.lang.String" (str (type (:title-descr v)))))
+        (is (= (:title-descr v) "add cool new feature"))))
+    (testing "good with exclamation mark"
+      (let [v (common/validate-commit-msg-title-scope-type "feat(proj)!: add cool new feature" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))
+        (is (= "class java.lang.String" (str (type (:type v)))))
+        (is (= (:type v) "feat"))
+        (is (= "class java.lang.String" (str (type (:scope v)))))
+        (is (= (:scope v) "proj"))
+        (is (= "class java.lang.Boolean" (str (type (:breaking v)))))
+        (is (true? (:breaking v)))
+        (is (= "class java.lang.String" (str (type (:title-descr v)))))
+        (is (= (:title-descr v) "add cool new feature"))))))
+
 
 
 (deftest validate-commit-msg-test
