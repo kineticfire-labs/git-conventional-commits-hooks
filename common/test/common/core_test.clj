@@ -187,7 +187,7 @@
       (is (= "echo -e \"\\e[1m\\e[31mCommit failed reason: An error message.\\033[0m\\e[0m\"" (nth v 1))))))
 
 
-(deftest generate-commit-err-warn-test
+(deftest generate-commit-warn-msg-test
   (testing "title and err-msg"
     (let [v (common/generate-commit-warn-msg "A title." "A warning message.")]
       (is (= "class clojure.lang.LazySeq" (str (type v))))
@@ -535,6 +535,110 @@ BREAKING CHANGE: a big change")
       (is (= 9 (nth (:locations v) 2))))))
 
 
+(deftest validate-commit-msg-title-test
+  (let [config {:commit-msg {:length {:title-line {:min 3
+                                                   :max 8}
+                                      :body-line {:min 2
+                                                  :max 10}}}}]
+    (testing "commit msg title line has too few characters"
+      (let [v (common/validate-commit-msg "Li\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message title line must be at least " (:min (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg title line has meets minimum characters"
+      (let [v (common/validate-commit-msg "Lin\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg title line has too many characters"
+      (let [v (common/validate-commit-msg "Line 1 ab\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message title line must not contain more than " (:max (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg title line has meets maximum characters"
+      (let [v (common/validate-commit-msg "Line 1 a\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))))
+
+
+(deftest validate-commit-msg-body-test
+  (let [config {:commit-msg {:length {:title-line {:min 3
+                                                   :max 8}
+                                      :body-line {:min 2
+                                                  :max 10}}}}]
+    (testing "commit msg body is an empty sequence"
+      (let [v (common/validate-commit-msg-body [] config)]
+        (is (nil? v))))
+    (testing "commit msg body line has too few characters, for single element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "L") config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg body line has too few characters, for multi element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "L\nHello\nA\nAnother line\nX") config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 3 (count (:locations v))))
+        (is (= 0 (first (:locations v))))
+        (is (= 2 (nth (:locations v) 1)))
+        (is (= 4 (nth (:locations v) 2)))))
+    (testing "commit msg body line has meets minimum characters, for single element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "Li") config)]
+        (is (nil? v))))
+    (testing "commit msg body line has meets minimum characters, for multi element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "Li\nAb\nAbcdef\nAb\nAb") config)]
+        (is (nil? v))))
+    (testing "commit msg body line has too many characters, for single element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcdef") config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg body line has too many characters, for multi element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcdef\nAbcd\nBody abcdef\nBody abcdef\nAbcd\nBody abcdef") config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 4 (count (:locations v))))
+        (is (= 0 (first (:locations v))))
+        (is (= 2 (nth (:locations v) 1)))
+        (is (= 3 (nth (:locations v) 2)))
+        (is (= 5 (nth (:locations v) 3)))))
+    (testing "commit msg body line has meets maximum characters, for single element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcde") config)]
+        (is (nil? v))))
+    (testing "commit msg body line has meets maximum characters, for multi element"
+      (let [v (common/validate-commit-msg-body (common/split-lines "Body abcde\nAb\nBody abcde\nAb\nBody abcde") config)]
+        (is (nil? v))))))
+
+
 (deftest validate-commit-msg-test
   (let [config {:commit-msg {:length {:title-line {:min 3
                                                    :max 8}
@@ -557,7 +661,7 @@ BREAKING CHANGE: a big change")
         (is (= "Commit message cannot be empty." (:reason v)))
         (is (false? (contains? v :locations)))))
     (testing "commit msg contains tab on one line"
-      (let [v (common/validate-commit-msg "Line 1 ok\nLine 2 has tab between here	and here\nLine 3 ok" config)]
+      (let [v (common/validate-commit-msg "Line 1\n\ntabhere	x\nLine 3 ok" config)]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
         (is (= "class java.lang.Boolean" (str (type (:success v)))))
         (is (false? (:success v)))
@@ -565,9 +669,9 @@ BREAKING CHANGE: a big change")
         (is (= "Commit message cannot contain tab characters." (:reason v)))
         (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
         (is (= 1 (count (:locations v))))
-        (is (= 1 (first (:locations v))))))
+        (is (= 2 (first (:locations v))))))
     (testing "commit msg contains tab on three lines"
-      (let [v (common/validate-commit-msg "Line 1 ok\nLine 2 has tab between here	and here\nLine 3 ok\nLine 4 has tab between here	and here\nLine 5 ok\nLine 6 has tab between here	and here" config)]
+      (let [v (common/validate-commit-msg "Line 1\n\ntabhere	x\nLine 3 ok\ntabhere	x\nLine 5 ok\ntabhere	x" config)]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
         (is (= "class java.lang.Boolean" (str (type (:success v)))))
         (is (false? (:success v)))
@@ -575,6 +679,110 @@ BREAKING CHANGE: a big change")
         (is (= "Commit message cannot contain tab characters." (:reason v)))
         (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
         (is (= 3 (count (:locations v))))
-        (is (= 1 (first (:locations v))))
-        (is (= 3 (nth (:locations v) 1)))
-        (is (= 5 (nth (:locations v) 2)))))))
+        (is (= 2 (first (:locations v))))
+        (is (= 4 (nth (:locations v) 1)))
+        (is (= 6 (nth (:locations v) 2)))))
+    (testing "commit msg title line has too few characters"
+      (let [v (common/validate-commit-msg "Li\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message title line must be at least " (:min (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg title line has meets minimum characters"
+      (let [v (common/validate-commit-msg "Lin\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg title line has too many characters"
+      (let [v (common/validate-commit-msg "Line 1 ab\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message title line must not contain more than " (:max (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg title line has meets maximum characters"
+      (let [v (common/validate-commit-msg "Line 1 a\n\nAbcdef" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg consists of title line only (no body)"
+      (let [v (common/validate-commit-msg "Line 1 a" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg body is empty"
+      (let [v (common/validate-commit-msg "Abc" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg body line has too few characters, for single element"
+      (let [v (common/validate-commit-msg "Abc\n\nA" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg body line has too few characters, for multi element"
+      (let [v (common/validate-commit-msg "Abc\n\nA\nAbcd\nA\nAbc\nA" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 3 (count (:locations v))))
+        (is (= 0 (first (:locations v))))
+        (is (= 2 (nth (:locations v) 1)))
+        (is (= 4 (nth (:locations v) 2)))))
+    (testing "commit msg body line has meets minimum characters, for single element"
+      (let [v (common/validate-commit-msg "Abc\n\nAb" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg body line has meets minimum characters, for multi element"
+      (let [v (common/validate-commit-msg "Abc\nAb\nAbcdef\nAb\nAbcd" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg body line has too many characters, for single element"
+      (let [v (common/validate-commit-msg "Abc\n\nAbcdefghijk" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "commit msg body line has too many characters, for multi element"
+      (let [v (common/validate-commit-msg "Abc\n\nAbcdefghijk\nAbc\nAbcdefghijk\nAbcdefghijklmnop\nAbc" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (false? (:success v)))
+        (is (= "class java.lang.String" (str (type (:reason v)))))
+        (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 3 (count (:locations v))))
+        (is (= 0 (first (:locations v))))
+        (is (= 2 (nth (:locations v) 1)))
+        (is (= 3 (nth (:locations v) 2)))))
+    (testing "commit msg body line has meets maximum characters, for single element"
+      (let [v (common/validate-commit-msg "Abc\n\nAbcdefghij" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))
+    (testing "commit msg body line has meets maximum characters, for multi element"
+      (let [v (common/validate-commit-msg "Abc\n\nAbcdefghij\nAbcdef\nAbcdefghij\nAbcd" config)]
+        (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (true? (:success v)))))))

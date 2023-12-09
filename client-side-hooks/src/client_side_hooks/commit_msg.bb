@@ -97,7 +97,11 @@
 ;; - format git edit message file
 ;; * validate git commit message (todo)
 ;;
+
+
+;; One argument required, which is the path to the commit edit message.
 (defn ^:impure -main
+  "Validates the project config and formats/validates the commit edit message.  Returns exit value 0 (allowing the commit) if the message enforcement in the config disabled or if the config and commit message are valid.  Returns exit value 1 (aborting the commit) if the config or edit message are invalid or other error occured.  One argument required, which is the path to the commit edit message."
   [& args]
   (if (= (count args) 1)
     (let [config-response (common/parse-json-file config-file)]

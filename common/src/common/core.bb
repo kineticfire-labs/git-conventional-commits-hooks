@@ -23,7 +23,8 @@
             [babashka.cli      :as cli]
             [babashka.process  :refer [shell process check]]
             [clojure.java.io   :as io]
-            [cheshire.core     :as json]))
+            [cheshire.core     :as json])
+  (:import (java.util.regex Pattern)))
 
 
 
@@ -319,7 +320,7 @@
 
 
 (defn split-lines
-  "Splits the string 'data' based on an optional carriage return '\r' and newline '\n' and returns the result as a vector.  Same as split-lines, but this function allows for optional carriage return."
+  "Splits the string 'data' based on an optional carriage return '\r' and newline '\n' and returns the result as a vector.  Same as split-lines, but returns all newlines (including those that are newline-only)."
   [data]
   (clojure.string/split data #"\r?\n" -1))
 
@@ -381,6 +382,31 @@
        (assoc response :locations locations)))))
 
 
+(defn validate-commit-msg-title
+  "Validates the commit message string 'title' (e.g. first line), returning 'nil' on success and a map on error with key 'success' equal to 'false', 'reason', and optional 'locations'.  The title is valid if it's within the min/max character range (inclusive) set in the config file."
+  [title config]
+  (if (seq (re-find (Pattern/compile (str "^.{" (:min (:title-line (:length (:commit-msg config)))) ",}$")) title))    ;; title-line: regex for n or more characters
+    (if (seq (re-find (Pattern/compile (str "^.{1," (:max (:title-line (:length (:commit-msg config)))) "}$")) title)) ;; title-line: regex for n or fewer characters
+      nil
+      (create-validate-commit-msg-err (str "Commit message title line must not contain more than " (:max (:title-line (:length (:commit-msg config)))) " characters.") (lazy-seq [0])))
+    (create-validate-commit-msg-err (str "Commit message title line must be at least " (:min (:title-line (:length (:commit-msg config)))) " characters.") (lazy-seq [0]))))
+
+
+(defn validate-commit-msg-body
+  "Validates the commit message 'body' (e.g. lines after the title) where each line of the body is an element of a vector; must not have an element representing the two newlines separating the title from the body. Returns 'nil' on success (including if 'body' is an empty sequence) and a map on error with key 'success' equal to 'false', 'reason', and optional 'locations'.  The body is valid if all lines are within the min/max character range (inclusive) set in the config file."
+  [body config]
+  (if (empty? body)
+    nil
+    (let [err-body-min (index-matches body (Pattern/compile (str "^.{1," (dec (:min (:body-line (:length (:commit-msg config))))) "}$")))]
+      (if (= 0 (count err-body-min))
+        (let [err-body-max (index-matches body (Pattern/compile (str "^.{" (inc (:max (:body-line (:length (:commit-msg config))))) ",}$")))]
+          (if (= 0 (count err-body-max))
+            nil
+            (create-validate-commit-msg-err (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") err-body-max)))
+        (create-validate-commit-msg-err (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") err-body-min)))))
+
+
+
 ;; todo
 (defn validate-commit-msg
   "Accepts the commit message as a string... todo"
@@ -399,12 +425,14 @@
   ;;      - vector where errs were found, only if they correspond to line #s!
   ;; presume has been formatted, so not re-checking those
   ;;
-  ;; assumptions: formatted
+  ;; assumptions:
+  ;; - config validated
+  ;; - commit edit message formatted
   ;;
   ;; checking:
   ;; - msg can't be empty string or nil
   ;; - msg can't contain tabs
-  ;; - min/max chars
+  ;; - min/max chars (todo)
   ;; - title-line (todo)
   ;;
   [commit-msg config]
@@ -413,12 +441,17 @@
   (let [response {:success false}]
     (if (empty? commit-msg)
       (create-validate-commit-msg-err "Commit message cannot be empty.")
-      (let [commit-msg-vec-all (split-lines commit-msg)
-            err-tab-seq (index-matches commit-msg-vec-all #"	")]
+      (let [commit-msg-all-col (split-lines commit-msg)
+            commit-msg-title (first commit-msg-all-col)
+            commit-msg-body-col (rest (rest commit-msg-all-col))  ;; the two 'rest' operations get the body collection without the empty string created by the two newlines separating the title from the body, if there is a body
+            err-tab-seq (index-matches commit-msg-all-col #"	")]
         (if (= 0 (count err-tab-seq))
-          (let [err-title-min-seq (index-matches commit-msg-vec-all #"^.{6,}$")] ;;todo min for regex... look in config.... do first first line then body, if any
-            ;;todo
-            (assoc response :success true))
+          (let [err-title (validate-commit-msg-title commit-msg-title config)]
+            (if (nil? err-title)
+              (let [err-body (validate-commit-msg-body commit-msg-body-col config)]
+                (if (nil? err-body)
+                  (assoc response :success true)
+                  err-body))
+              err-title))
           (create-validate-commit-msg-err "Commit message cannot contain tab characters." err-tab-seq))))))
-
 
