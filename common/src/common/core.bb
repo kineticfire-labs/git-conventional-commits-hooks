@@ -432,8 +432,10 @@
   ;; checking:
   ;; - msg can't be empty string or nil
   ;; - msg can't contain tabs
-  ;; - min/max chars (todo)
-  ;; - title-line (todo)
+  ;; - min/max chars
+  ;; - title-line
+  ;; * check scope and type
+  ;; * get if breaking change (! or words)
   ;;
   [commit-msg config]
   ;;(println commit-msg)
@@ -450,6 +452,7 @@
             (if (nil? err-title)
               (let [err-body (validate-commit-msg-body commit-msg-body-col config)]
                 (if (nil? err-body)
+                  ;; todo
                   (assoc response :success true)
                   err-body))
               err-title))
