@@ -416,11 +416,9 @@
     text))
 
 
-;; todo: write tests
-;; todo: apply check of valid scopes/types from config
 (defn validate-commit-msg-title-scope-type
-  "todo"
-  [title config]
+  "Validates the commit message title line (as a string) for type, scope, and description but does NOT check type/scope against the config.  Returns a map result of bool 'success' true with string 'type', string 'scope', bool 'breaking' if breaking change or not, and string 'title-descr'.  Else returns bool 'success' false with string 'reason'."
+  [title]
   (let [matcher (re-matcher #"^(?<type>[a-z]+)\((?<scope>([a-zA-Z0-9]+))\)(?<breaking>!)?:(?<descr>.*)" title)]
     (if (.matches matcher)
       (let [match {:type (.group matcher "type")
@@ -430,22 +428,23 @@
                                true)
                    :title-descr (str/trim (.group matcher "descr"))}
             reason (-> ""
-                       (add-string-if-key-empty "Cloud not identify type." :type match)
-                       (add-string-if-key-empty "Cloud not identify scope." :scope match)
-                       (add-string-if-key-empty "Cloud not identify description." :title-descr match))]
+                       (add-string-if-key-empty "Could not identify type." :type match)
+                       (add-string-if-key-empty "Could not identify scope." :scope match)
+                       (add-string-if-key-empty "Could not identify description." :title-descr match))]
         (if (empty? reason)
           (assoc match :success true)
-          (-> match
-              (assoc :success false)
-              (assoc :reason reason))))
-      {:success false :reason "Bad form on title.  Could not identify type, scope, or description."})))
+          (create-validate-commit-msg-err (str "Bad form on title.  " reason) (lazy-seq [0]))))
+      (create-validate-commit-msg-err "Bad form on title.  Could not identify type, scope, or description." (lazy-seq [0])))))
 
+
+;; todo: apply check of valid scopes/types from config
 
 ;; todo: validate title line
 ;;   - type/scope all lowercase
 ;;   - recommend that title be all lowercase, but allow upper for acronyms
 ;;   - before and after colon should be re-formatted?
 
+;; todo: eval body for breaking change if not set in title
 
 ;; todo
   ;; input:
@@ -492,13 +491,12 @@
             (if (nil? err-title)
               (let [err-body (validate-commit-msg-body-len commit-msg-body-col config)]
                 (if (nil? err-body)
-                  (assoc response :success true)
+                  (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title)]
+                    (println scope-type-response)
+                    (if (:success scope-type-response)
+                      (assoc response :success true)
+                      scope-type-response))
                   err-body))
               err-title))
           (create-validate-commit-msg-err "Commit message cannot contain tab characters." err-tab-seq))))))
 
-
-(comment (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title config)]
-           (println scope-type-response)
-                    ;; todo
-           (assoc response :success true)))
