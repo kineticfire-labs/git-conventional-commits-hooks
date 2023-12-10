@@ -88,7 +88,9 @@
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
 ;;      - JSON file fails to parse
-;; - check copnfig enabled
+;; * validate config (todo)
+;;    - exit 1 if config invalid
+;; - check config enabled
 ;;    - exit 0 if
 ;;      - disabled
 ;; - retrieve git edit message file

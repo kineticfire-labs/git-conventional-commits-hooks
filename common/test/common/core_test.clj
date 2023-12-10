@@ -665,8 +665,7 @@ BREAKING CHANGE: a big change")
       (is (= "class java.lang.String" (str (type v))))
       (is (= "Original text.  Added text." v)))))
 
-;; todo: tests for location e.g. = 0
-;; todo: add those locaiton tets into validate-commit-msg
+
 (deftest validate-commit-msg-title-scope-type
   (testing "invalid - no type"
     (let [v (common/validate-commit-msg-title-scope-type "(proj): add cool new feature")]
@@ -678,7 +677,10 @@ BREAKING CHANGE: a big change")
       (is (false? (contains? v :type)))
       (is (false? (contains? v :scope)))
       (is (false? (contains? v :breaking)))
-      (is (false? (contains? v :title-descr)))))
+      (is (false? (contains? v :title-descr)))
+      (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+      (is (= 1 (count (:locations v))))
+      (is (= 0 (first (:locations v))))))
   (testing "invalid - no scope"
     (let [v (common/validate-commit-msg-title-scope-type "feat(): add cool new feature")]
       (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
@@ -689,7 +691,10 @@ BREAKING CHANGE: a big change")
       (is (false? (contains? v :type)))
       (is (false? (contains? v :scope)))
       (is (false? (contains? v :breaking)))
-      (is (false? (contains? v :title-descr)))))
+      (is (false? (contains? v :title-descr)))
+      (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+      (is (= 1 (count (:locations v))))
+      (is (= 0 (first (:locations v))))))
   (testing "invalid - no description"
     (let [v (common/validate-commit-msg-title-scope-type "feat(proj):")]
       (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
@@ -700,7 +705,10 @@ BREAKING CHANGE: a big change")
       (is (false? (contains? v :type)))
       (is (false? (contains? v :scope)))
       (is (false? (contains? v :breaking)))
-      (is (false? (contains? v :title-descr)))))
+      (is (false? (contains? v :title-descr)))
+      (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+      (is (= 1 (count (:locations v))))
+      (is (= 0 (first (:locations v))))))
   (testing "good without exclamation mark"
     (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature")]
       (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
@@ -893,7 +901,10 @@ BREAKING CHANGE: a big change")
         (is (false? (contains? v :type)))
         (is (false? (contains? v :scope)))
         (is (false? (contains? v :breaking)))
-        (is (false? (contains? v :title-descr)))))
+        (is (false? (contains? v :title-descr)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
     (testing "invalid - no scope"
       (let [v (common/validate-commit-msg-title-scope-type "feat(): add cool new feature")]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
@@ -904,7 +915,10 @@ BREAKING CHANGE: a big change")
         (is (false? (contains? v :type)))
         (is (false? (contains? v :scope)))
         (is (false? (contains? v :breaking)))
-        (is (false? (contains? v :title-descr)))))
+        (is (false? (contains? v :title-descr)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
     (testing "invalid - no description"
       (let [v (common/validate-commit-msg-title-scope-type "ab(cd):")]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
@@ -915,7 +929,10 @@ BREAKING CHANGE: a big change")
         (is (false? (contains? v :type)))
         (is (false? (contains? v :scope)))
         (is (false? (contains? v :breaking)))
-        (is (false? (contains? v :title-descr)))))
+        (is (false? (contains? v :title-descr)))
+        (is (= "class clojure.lang.LazySeq" (str (type (:locations v)))))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
     (testing "good without exclamation mark"
       (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature")]
         (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
