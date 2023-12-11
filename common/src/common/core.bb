@@ -168,6 +168,7 @@
       (assoc response :reason result))))
 
 
+;; todo: needed?
 (defn is-string-min-char-compliant?
   "Returns 'true' if 'line' has 'min-chars' characters or more and 'false' otherwise."
   [line min-chars]
@@ -176,6 +177,7 @@
     false))
 
 
+;; todo: needed?
 (defn is-string-max-char-compliant?
   "Returns 'true' if string 'line' has 'max-chars' characters or fewer and 'false' otherwise."
   [line max-chars]
@@ -194,22 +196,46 @@
        (assoc :reason msg))))
 
 
-(defn validate-config-length
-  "Validates the min and max length fields in map 'data'.  Returns map 'data' with key ':success' set to boolean 'true' oif valid or boolean 'false' and ':reason' set to a post-fix string message."
+(defn validate-config-msg-enforcement
+  "Validates the 'commit-msg-enforcement' fields in the config at key 'config' in map 'data'.  Returns map 'data' with key ':success' set to boolean 'true' if valid or boolean 'false' and ':reason' set to a string message."
   [data]
-  (if (pos-int? (get-in data [:config :length :titleLine :min]))
-    (if (pos-int? (get-in data [:config :length :titleLine :max]))
-      (if (>= (get-in data [:config :length :titleLine :max]) (get-in data [:config :length :titleLine :min]))
-        (if (pos-int? (get-in data [:config :length :bodyLine :min]))
-          (if (pos-int? (get-in data [:config :length :bodyLine :max]))
-            (if (>= (get-in data [:config :length :bodyLine :max]) (get-in data [:config :length :bodyLine :min]))
-              data
-              (validate-config-fail "Maximum length of body line (length.bodyLine.max) must be equal to or greater than minimum length of body line (length.bodyLine.min)." data))
-            (validate-config-fail "Maximum length of body line (length.bodyLine.max) must be a positive integer." data))
-          (validate-config-fail "Minimum length of body line (length.bodyLine.min) must be a positive integer." data))
-        (validate-config-fail "Maximum length of title line (length.titleLine.max) must be equal to or greater than minimum length of title line (length.titleLine.min)." data))
-      (validate-config-fail "Maximum length of title line (length.titleLine.max) must be a positive integer." data))
-    (validate-config-fail "Minimum length of title line (length.titleLine.min) must be a positive integer." data)))
+  (let [enforcement (get-in data [:config :commit-msg-enforcement])
+        enabled (:enabled enforcement)]
+    (if (some? enforcement)
+      (if (nil? enabled)
+        (validate-config-fail "Commit message enforcement must be set as enabled or disabled (commit-msg-enforcement.enabled) with either 'true' or 'false'." data)
+        ;;todo validate as boolean true/false)
+      (validate-config-fail "Commit message enforcement block (commit-msg-enforcement) must be defined." data))))
+
+
+(defn validate-config-length
+  "Validates the min and max length fields in the config at key 'config' in map 'data'.  Returns map 'data' with key ':success' set to boolean 'true' if valid or boolean 'false' and ':reason' set to a string message."
+  [data]
+  (let [title-line-min (get-in data [:config :commit-msg :length :title-line :min])
+        title-line-max (get-in data [:config :commit-msg :length :title-line :max])
+        body-line-min (get-in data [:config :commit-msg :length :body-line :min])
+        body-line-max (get-in data [:config :commit-msg :length :body-line :max])]
+    (if (some? title-line-min)
+      (if (some? title-line-max)
+        (if (some? body-line-min)
+          (if (some? body-line-max)
+            (if (pos-int? title-line-min)
+              (if (pos-int? title-line-max)
+                (if (>= title-line-max title-line-min)
+                  (if (pos-int? body-line-min)
+                    (if (pos-int? body-line-max)
+                      (if (>= body-line-max body-line-min)
+                        data
+                        (validate-config-fail "Maximum length of body line (length.body-line.max) must be equal to or greater than minimum length of body line (length.body-line.min)." data))
+                      (validate-config-fail "Maximum length of body line (length.body-line.max) must be a positive integer." data))
+                    (validate-config-fail "Minimum length of body line (length.body-line.min) must be a positive integer." data))
+                  (validate-config-fail "Maximum length of title line (length.title-line.max) must be equal to or greater than minimum length of title line (length.title-line.min)." data))
+                (validate-config-fail "Maximum length of title line (length.title-line.max) must be a positive integer." data))
+              (validate-config-fail "Minimum length of title line (length.title-line.min) must be a positive integer." data))
+            (validate-config-fail "Maximum length of body line (length.body-line.max) must be defined." data))
+          (validate-config-fail "Minimum length of body line (length.body-line.min) must be defined." data))
+        (validate-config-fail "Maximum length of title line (length.title-line.max) must be defined." data))
+      (validate-config-fail "Minimum length of title line (length.title-line.min) must be defined." data))))
 
 
 ;;todo
@@ -275,6 +301,7 @@
                       (do-on-success validate-config-length-todo)
                       (do-on-success validate-config-project-todo))]
       (dissoc result :config))))
+
 
 ;; todo: test
 (defn validate-config

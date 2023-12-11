@@ -220,6 +220,151 @@
       (is (= "hi" (:cb (:c (:result v))))))))
 
 
+(deftest validate-config-length-test
+  ;; keys are defined
+  (testing "title-line.min is not defined"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:max 20}
+                                                                           :body-line {:min 2
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Minimum length of title line (length.title-line.min) must be defined.")))))
+  (testing "title-line.max is not defined"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12}
+                                                                           :body-line {:min 2
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be defined.")))))
+  (testing "body-line.min is not defined"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                           :max 20}
+                                                              :body-line {:max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Minimum length of body line (length.body-line.min) must be defined.")))))
+  (testing "body-line.max is not defined"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max 20}
+                                                                           :body-line {:min 2}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be defined.")))))
+  ;; title-line min/max and relative
+  (testing "title-line.min is negative"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min -1
+                                                                                        :max 20}
+                                                                           :body-line {:min 2
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Minimum length of title line (length.title-line.min) must be a positive integer.")))))
+  (testing "title-line.min is zero"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 0
+                                                                                        :max 20}
+                                                                           :body-line {:min 2
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Minimum length of title line (length.title-line.min) must be a positive integer.")))))
+  (testing "title-line.max is negative"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max -1}
+                                                                           :body-line {:min 2
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be a positive integer.")))))
+  (testing "title-line.max is zero"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max 0}
+                                                                           :body-line {:min 2
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be a positive integer.")))))
+  (testing "title-line.max is less than title-line.min"
+     (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                         :max 11}
+                                                                            :body-line {:min 2
+                                                                                        :max 10}}}}})]
+       (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+       (is (= "class java.lang.Boolean" (str (type (:success v)))))
+       (is (false? (:success v)))
+       (is (= "class java.lang.String" (str (type (:reason v)))))
+       (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be equal to or greater than minimum length of title line (length.title-line.min).")))))
+  ;; body-line min/max and relative)
+  (testing "body-line.min is negative"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max 20}
+                                                                           :body-line {:min -1
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Minimum length of body line (length.body-line.min) must be a positive integer.")))))
+  (testing "body-line.min is zero"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max 20}
+                                                                           :body-line {:min 0
+                                                                                       :max 10}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Minimum length of body line (length.body-line.min) must be a positive integer.")))))
+  (testing "body-line.max is negative"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max 20}
+                                                                           :body-line {:min 2
+                                                                                       :max -1}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be a positive integer.")))))
+  (testing "body-line.max is zero"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max 20}
+                                                                           :body-line {:min 2
+                                                                                       :max 0}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be a positive integer.")))))
+  (testing "title-line.max is less than title-line.min"
+    (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
+                                                                                        :max 20}
+                                                                           :body-line {:min 2
+                                                                                       :max 1}}}}})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (= "class java.lang.String" (str (type (:reason v)))))
+      (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be equal to or greater than minimum length of body line (length.body-line.min)."))))))
+  
+
+
+
+
 (deftest config-enabled?-test
   (testing "enabled"
     (let [v (common/config-enabled? {:commit-msg-enforcement {:enabled true}})]

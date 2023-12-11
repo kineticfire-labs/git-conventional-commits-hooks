@@ -55,36 +55,9 @@
 
 
 
-
-
-
-
-;;todo
-;;
-;; - read git editmsg from file and keep as string
-;;    - err w/ exit 1 if can't read file
-;; - reformat commit message (common)
-;; - write commit message
-;;
-;; - validate commit message (common)
-;;    - check if empty, then exit 1
-;;    - convert editmsg string to vector of strings split on newline
-;;    - group
-;;       - check if contains tabs, then get line num and exit 1
-;;       - check for (1) one line only or (2) line, newline, rest
-;;       - check for min/max chars (first line min/max diff from others)
-;;    - subject
-;;       - x
-;;    - body
-;;       - x
-;;
-;; - display status and exit
-;;
-
-
-
-
-;; - parse JSON config file
+;; - one arg required, which is path to commit edit message file
+;;    - exit 1 if not one arg given
+;; - read/parse JSON config file
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
 ;;      - JSON file fails to parse
@@ -97,8 +70,10 @@
 ;;    - exit 1 if
 ;;      - file doesn't exist or can't read file
 ;; - format git edit message file
-;; * validate git commit message (todo)
-;;
+;; * validate git commit message (todo... need validated config for defined types/scopes)
+;; * write git edit message to file (todo)
+;;   - exit 1 if fail
+;; exit 0
 
 
 ;; One argument required, which is the path to the commit edit message.
