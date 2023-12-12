@@ -168,7 +168,7 @@
       (assoc response :reason result))))
 
 
-;; todo: needed?
+;; todo: needed?  if so, tests and move under 'validate-config-fail'
 (defn is-string-min-char-compliant?
   "Returns 'true' if 'line' has 'min-chars' characters or more and 'false' otherwise."
   [line min-chars]
@@ -177,7 +177,7 @@
     false))
 
 
-;; todo: needed?
+;; todo: needed?  if so, tests and move under 'validate-config-fail'
 (defn is-string-max-char-compliant?
   "Returns 'true' if string 'line' has 'max-chars' characters or fewer and 'false' otherwise."
   [line max-chars]
@@ -196,6 +196,17 @@
        (assoc :reason msg))))
 
 
+;;todo - experimental
+(defn validate-map-value
+  [data key-path eval-fn fail-fn err-msg-nil err-msg-fail-eval]
+  (let [v (get-in data key-path)]
+    (if (nil? v)
+      (fail-fn err-msg-nil data)
+      (if (eval-fn v)
+        (assoc data :success true)
+        (fail-fn err-msg-fail-eval data)))))
+
+
 (defn validate-config-msg-enforcement
   "Validates the 'commit-msg-enforcement' fields in the config at key 'config' in map 'data'.  Returns map 'data' with key ':success' set to boolean 'true' if valid or boolean 'false' and ':reason' set to a string message."
   [data]
@@ -204,7 +215,8 @@
     (if (some? enforcement)
       (if (nil? enabled)
         (validate-config-fail "Commit message enforcement must be set as enabled or disabled (commit-msg-enforcement.enabled) with either 'true' or 'false'." data)
-        ;;todo validate as boolean true/false)
+        ;;todo validate as boolean true/false
+        data)
       (validate-config-fail "Commit message enforcement block (commit-msg-enforcement) must be defined." data))))
 
 

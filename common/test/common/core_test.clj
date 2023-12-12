@@ -220,6 +220,39 @@
       (is (= "hi" (:cb (:c (:result v))))))))
 
 
+(deftest validate-config-fail-test
+  (testing "msg only"
+    (let [v (common/validate-config-fail "An error message.")]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (string? (:reason v)))
+      (is (= "An error message." (:reason v)))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))))
+  (testing "map and msg"
+    (let [v (common/validate-config-fail "An error message." {:other "abcd"})]
+      (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
+      (is (string? (:reason v)))
+      (is (= "An error message." (:reason v)))
+      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (false? (:success v)))
+      (is (string? (:other v)))
+      (is (= "abcd" (:other v))))))
+
+
+;;todo: finish
+(deftest validate-map-value-test
+  (testing "key sequence not found"
+    (let [v (common/validate-map-value {:a {:b 2}} [:a :c] pos-int? (fn[err-msg data](assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
+      (is (string? (:reason v)))
+      (is (= "Was nil." (:reason v)))))
+  (testing "value not positive int"
+    (let [v (common/validate-map-value {:a {:b -1}} [:a :b] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
+      (is (string? (:reason v)))
+      (is (= "Not positive int." (:reason v))))))
+
+
+
+
 (deftest validate-config-length-test
   ;; keys are defined
   (testing "title-line.min is not defined"
