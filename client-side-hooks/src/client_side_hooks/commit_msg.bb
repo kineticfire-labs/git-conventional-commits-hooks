@@ -81,19 +81,22 @@
   "Validates the project config and formats/validates the commit edit message.  Returns exit value 0 (allowing the commit) if the message enforcement in the config disabled or if the config and commit message are valid.  Returns exit value 1 (aborting the commit) if the config or edit message are invalid or other error occured.  One argument required, which is the path to the commit edit message."
   [& args]
   (if (= (count args) 1)
-    (let [config-response (common/parse-json-file config-file)]
-      (if (:success config-response)
-        (if (common/config-enabled? (:result config-response))
-          (let [commit-msg-read-response (common/read-file (first args))]
-            (if (:success commit-msg-read-response)
-              (let [commit-msg-format-response (common/format-commit-msg (:result commit-msg-read-response))
-                    commit-msg-validate-response (common/validate-commit-msg commit-msg-format-response (:result config-response))]
-                (if (:success commit-msg-validate-response)
-                  (println "commit msg valid!")
-                  (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)))))
-              (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-read-response)))))
-          (common/handle-warn-proceed title "Commit message enforcement disabled."))
-        (common/handle-err-exit title (:reason config-response))))
+    (let [config-parse-response (common/parse-json-file config-file)]
+      (if (:success config-parse-response)
+        (let [config-validate-response (common/validate-config (:result config-parse-response))]
+          (if (:success config-validate-response)
+            (if (common/config-enabled? (:result config-parse-response))
+              (let [commit-msg-read-response (common/read-file (first args))]
+                (if (:success commit-msg-read-response)
+                  (let [commit-msg-format-response (common/format-commit-msg (:result commit-msg-read-response))
+                        commit-msg-validate-response (common/validate-commit-msg commit-msg-format-response (:result config-parse-response))]
+                    (if (:success commit-msg-validate-response)
+                      (println "commit msg valid!")
+                      (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)))))
+                  (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-read-response)))))
+              (common/handle-warn-proceed title "Commit message enforcement disabled."))
+            (common/handle-err-exit title (:reason config-validate-response))))
+        (common/handle-err-exit title (:reason config-parse-response))))
     (common/handle-err-exit title "Exactly one argument required.  Usage:  commit-msg <path to git edit message>")))
 
 

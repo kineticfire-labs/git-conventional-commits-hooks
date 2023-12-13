@@ -196,7 +196,7 @@
        (assoc :reason msg))))
 
 
-;;todo - experimental
+;; todo: not being used at this time
 (defn validate-map-value
   [data key-path eval-fn fail-fn err-msg-nil err-msg-fail-eval]
   (let [v (get-in data key-path)]
@@ -207,6 +207,24 @@
         (fail-fn err-msg-fail-eval data)))))
 
 
+(defn validate-config-param-string
+  "Returns boolean 'true' if the value at vector 'key-path' in map 'data' is a string and 'false' otherwise."
+  [data key-path required]
+  (if (or required (get-in data key-path))
+    (string? (get-in data key-path))
+    true))
+
+
+(defn validate-config-param-array
+  "Returns boolean 'true' if for all elements in map 'data' at vector 'key-path' the application of 'fn' to those elements is 'true' and if 'required' is 'true' or if that location is set; 'false' otherwise'."
+  [data key-path required fn]
+  (if (or required (get-in data key-path))
+    (and (vector? (get-in data key-path))
+         (> (count (get-in data key-path)) 0)
+         (not (.contains (vec (map fn (get-in data key-path))) false)))
+    true))
+
+
 (defn validate-config-msg-enforcement
   "Validates the 'commit-msg-enforcement' fields in the config at key 'config' in map 'data'.  Returns map 'data' with key ':success' set to boolean 'true' if valid or boolean 'false' and ':reason' set to a string message."
   [data]
@@ -215,9 +233,20 @@
     (if (some? enforcement)
       (if (nil? enabled)
         (validate-config-fail "Commit message enforcement must be set as enabled or disabled (commit-msg-enforcement.enabled) with either 'true' or 'false'." data)
-        ;;todo validate as boolean true/false
-        data)
+        (if (boolean? enabled)
+          (assoc data :success true)
+          (validate-config-fail "Commit message enforcement 'enabled' (commit-msg-enforcement.enabled) must be a boolean 'true' or 'false'." data)))
       (validate-config-fail "Commit message enforcement block (commit-msg-enforcement) must be defined." data))))
+
+
+;;todo: want to re-cast checks into this form, but need variadic funct from do-on-success
+(comment (defn validate-config-length
+  [data]
+  (let [response (-> data
+                     (validate-map-value [:config :commit-msg :length :title-line :min] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg))
+                                         "Minimum length of title line (length.title-line.min) must be defined."
+                                         "Minimum length of title line (length.title-line.min) must be a positive integer."))])
+  ))
 
 
 (defn validate-config-length
@@ -250,30 +279,19 @@
       (validate-config-fail "Minimum length of title line (length.title-line.min) must be defined." data))))
 
 
-;;todo
-(defn validate-config-length-todo
+(defn validate-config-for-root-project
+  "Validates the root project, returning the data with key 'success' to 'true' if valid other 'false' with key 'reason' with the reason.  Root project must be checked for appropriate structure before checking config with recursion.  The root project is different than sub-projects because former structure is a map while latter is a vector."
   [data]
-  data)
+  (let [project (get-in data [:config :project])]
+    (if (nil? project)
+      (validate-config-fail "Property 'project' must be defined at the top-level." data)
+      (if (map? project)
+        (assoc data :success true)
+        (validate-config-fail "Property 'project' must be a map." data)))))
 
 
-(defn validate-config-param-string
-  "Returns boolean 'true' if the value at vector 'key-path' in map 'data' is a string and 'false' otherwise."
-  [data key-path required]
-  (if (or required (get-in data key-path))
-    (string? (get-in data key-path))
-    true))
-
-
-(defn validate-config-param-array
-  "Returns boolean 'true' if for all elements in map 'data' at vector 'key-path' the application of 'fn' to those elements is 'true' and if 'required' is 'true' or if that location is set; 'false' otherwise'."
-  [data key-path required fn]
-  (if (or required (get-in data key-path))
-    (and (vector? (get-in data key-path))
-         (> (count (get-in data key-path)) 0)
-         (not (.contains (vec (map fn (get-in data key-path))) false)))
-    true))
-
-
+;; todo... needed?  use for project?
+;; todo: tests
 (defn validate-config-project-node
   "Returns a map with key ':success' equal to 'true' if the node is valid else 'false' with a key ':reason' set to a post-fix message for why the node is valid."
   [node]
@@ -288,37 +306,28 @@
     (validate-config-fail (str "must have key 'name' with string value."))))
 
 
-
 ;; get scopes and assign then a key path
 ;; (vec (map #(assoc % :key-path [:config :scope :scopes]) (get-in init-data [:config :scope :scopes])))
-
+;; todo
+;; todo: tests
 (defn validate-config-project
   [data]
-  (loop [index-path []
-         node (get-in data [:config :scope])
-         node-queue []]
-    (validate-config-project-node node)))
+  (assoc data :success true))
 
 
-(defn validate-config-project-todo
-  [data]
-  data)
-
-
-(defn validate-config-todo
+;; todo
+;; todo: what needs returned with validate-config?
+;; todo: tests
+(defn validate-config
   "Performs validation of the config file 'config'.  Returns a map result with key ':success' of 'true' if valid and 'false' otherwise.  If invalid, then returns a key ':reason' with string reason why the validation failed."
   [config]
-  (let [data {:success true :config config}]
-    (let [result (->> data
-                      (do-on-success validate-config-length-todo)
-                      (do-on-success validate-config-project-todo))]
-      (dissoc result :config))))
-
-
-;; todo: test
-(defn validate-config
-  [config]
-  (assoc config :success true))
+  (let [data {:config config}
+        result (->> data
+                    (do-on-success validate-config-msg-enforcement)
+                    (do-on-success validate-config-length)
+                    (do-on-success validate-config-for-root-project)
+                    (do-on-success validate-config-project))]
+    result))
 
 
 (defn config-enabled?

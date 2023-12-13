@@ -239,18 +239,63 @@
       (is (= "abcd" (:other v))))))
 
 
-;;todo: finish
 (deftest validate-map-value-test
-  (testing "key sequence not found"
+  (testing "invalid: key sequence not found"
     (let [v (common/validate-map-value {:a {:b 2}} [:a :c] pos-int? (fn[err-msg data](assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
       (is (string? (:reason v)))
-      (is (= "Was nil." (:reason v)))))
-  (testing "value not positive int"
+      (is (= "Was nil." (:reason v)))
+      (is (= 2 (get-in v [:a :b])))))
+  (testing "invalid: eval fails"
     (let [v (common/validate-map-value {:a {:b -1}} [:a :b] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
       (is (string? (:reason v)))
-      (is (= "Not positive int." (:reason v))))))
+      (is (= "Not positive int." (:reason v)))
+      (is (= -1 (get-in v [:a :b])))))
+  (testing "valid: eval passes"
+    (let [v (common/validate-map-value {:a {:b 2}} [:a :b] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (false? (contains? v :reason )))
+      (is (= 2 (get-in v [:a :b]))))))
 
 
+(deftest validate-config-msg-enforcement-test
+  (testing "enforcement block not defined"
+    (let [v (common/validate-config-msg-enforcement {:config {}})]
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
+      (is (string? (:reason v)))
+      (is (= "Commit message enforcement block (commit-msg-enforcement) must be defined." (:reason v)))
+      (is (true? (contains? v :config)))))
+  (testing "'enabled' not defined"
+    (let [v (common/validate-config-msg-enforcement {:config {:commit-msg-enforcement {}}})]
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
+      (is (string? (:reason v)))
+      (is (= "Commit message enforcement must be set as enabled or disabled (commit-msg-enforcement.enabled) with either 'true' or 'false'." (:reason v)))
+      (is (true? (contains? v :config)))))
+  (testing "'enabled' set to nil"
+    (let [v (common/validate-config-msg-enforcement {:config {:commit-msg-enforcement {:enabled nil}}})]
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
+      (is (string? (:reason v)))
+      (is (= "Commit message enforcement must be set as enabled or disabled (commit-msg-enforcement.enabled) with either 'true' or 'false'." (:reason v)))
+      (is (true? (contains? v :config)))))
+  (testing "'enabled' set to true"
+    (let [v (common/validate-config-msg-enforcement {:config {:commit-msg-enforcement {:enabled true}}})]
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (false? (contains? v :reason)))
+      (is (true? (contains? v :config)))))
+  (testing "'enabled' set to false"
+    (let [v (common/validate-config-msg-enforcement {:config {:commit-msg-enforcement {:enabled false}}})]
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (false? (contains? v :reason)))
+      (is (true? (contains? v :config))))))
 
 
 (deftest validate-config-length-test
@@ -395,7 +440,36 @@
       (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be equal to or greater than minimum length of body line (length.body-line.min)."))))))
   
 
-
+(deftest validate-config-for-root-project-test
+  (testing "project valid"
+    (let [v (common/validate-config-for-root-project {:config {:project {:a 1 :b 2}}})]
+      (is (map? v))
+      (is (true? (contains? v :config)))
+      (is (true? (:success v)))))
+  (testing "project invalid: property not defined"
+    (let [v (common/validate-config-for-root-project {:config {:another {:a 1 :b 2}}})]
+      (is (map? v))
+      (is (true? (contains? v :config)))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Property 'project' must be defined at the top-level."))))
+  (testing "project invalid: project is nil"
+    (let [v (common/validate-config-for-root-project {:config {:project nil}})]
+      (is (map? v))
+      (is (true? (contains? v :config)))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Property 'project' must be defined at the top-level."))))
+  (testing "project invalid: property is a scalar vs a map"
+    (let [v (common/validate-config-for-root-project {:config {:project 5}})]
+      (is (map? v))
+      (is (true? (contains? v :config)))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Property 'project' must be a map."))))
+  (testing "project invalid: property is a vector vs a map"
+    (let [v (common/validate-config-for-root-project {:config {:project [5]}})]
+      (is (map? v))
+      (is (true? (contains? v :config)))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Property 'project' must be a map.")))))
 
 
 (deftest config-enabled?-test
