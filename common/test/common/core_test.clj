@@ -472,6 +472,14 @@
       (is (= (:reason v) "Property 'project' must be a map.")))))
 
 
+;; todo
+(deftest validate-config-project-test
+  (testing "initial"
+    (let [v (common/validate-config-project {:config {:project {:name "top" :projects [{:name "a" :projects [{:name "a.1"}]} {:name "b" :projects [{:name "b.1"}]}]}}})]
+      (is (map? v))
+      (is (= v {})))))
+
+
 (deftest config-enabled?-test
   (testing "enabled"
     (let [v (common/config-enabled? {:commit-msg-enforcement {:enabled true}})]

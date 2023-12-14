@@ -310,9 +310,30 @@
 ;; (vec (map #(assoc % :key-path [:config :scope :scopes]) (get-in init-data [:config :scope :scopes])))
 ;; todo
 ;; todo: tests
+;;
+;; notes
+;;   - the contents of project/projects' arrays must be validated to be maps prior to the loop
 (defn validate-config-project
   [data]
-  (assoc data :success true))
+  (loop [parent-scope-path []
+         queue [[:config :project]]]
+    (if (empty? queue)
+      (assoc data :success true)
+      (let [json-path (first queue)
+            node (get-in data json-path)
+            name (:name node)] ;;todo for testing
+        ;; todo: validate
+        ;; todo: validate project names/scopes/aliases at same level don't conflict
+        (println "-------------------------------------------------------------------------------")
+        (println "Start project node name:" name)
+        (println "Start parent scope path:" parent-scope-path)
+        (println "Start queue:" queue)
+        (if (validate-config-param-array data (conj json-path :projects) false map?)
+          (if (nil? (get-in data (conj json-path :projects)))
+            (recur (conj parent-scope-path name) (vec (rest queue)))
+            (recur (conj parent-scope-path name) (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))
+          (validate-config-fail (str "Value of 'projects' must be an array of objects at project name" name "and path" parent-scope-path) data))
+        ))))
 
 
 ;; todo
@@ -321,7 +342,7 @@
 (defn validate-config
   "Performs validation of the config file 'config'.  Returns a map result with key ':success' of 'true' if valid and 'false' otherwise.  If invalid, then returns a key ':reason' with string reason why the validation failed."
   [config]
-  (let [data {:config config}
+  (let [data {:config config :success true}
         result (->> data
                     (do-on-success validate-config-msg-enforcement)
                     (do-on-success validate-config-length)
