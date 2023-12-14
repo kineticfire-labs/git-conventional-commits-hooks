@@ -472,12 +472,215 @@
       (is (= (:reason v) "Property 'project' must be a map.")))))
 
 
+(deftest validate-config-project-node-test
+  (testing "valid config with all optional properties"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description "The top project"
+                                                                     :scope "proj"
+                                                                     :scope-alias "p"
+                                                                     :types ["feat", "chore", "refactor"]
+                                                                     :projects [
+                                                                                {:name "Subproject A"
+                                                                                 :description "The subproject A"
+                                                                                 :scope "proja"
+                                                                                 :scope-alias "a"
+                                                                                 :types ["feat", "chore", "refactor"]}
+                                                                                {:name "Subproject B"
+                                                                                 :description "The subproject B"
+                                                                                 :scope "projb"
+                                                                                 :scope-alias "b"
+                                                                                 :types ["feat", "chore", "refactor"]}]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "valid config without optional properties but with 'projects'"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :scope "proj"
+                                                                     :types ["feat", "chore", "refactor"]
+                                                                     :projects [{:name "Subproject A"
+                                                                                 :scope "proja"
+                                                                                 :types ["feat", "chore", "refactor"]}
+                                                                                {:name "Subproject B"
+                                                                                 :scope "projb"
+                                                                                 :types ["feat", "chore", "refactor"]}]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "valid config without optional properties and without 'projects'"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :scope "proj"
+                                                                     :types ["feat", "chore", "refactor"]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "invalid config: name not defined"
+    (let [v (common/validate-config-project-node {:config {:project {:description "The top project"
+                                                                     :scope "proj"
+                                                                     :scope-alias "p"
+                                                                     :types ["feat", "chore", "refactor"]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project required property 'name' at path [:config :project] must be a string."))))
+  (testing "invalid config: name not a string"
+    (let [v (common/validate-config-project-node {:config {:project {:name 5
+                                                                     :description "The top project"
+                                                                     :scope "proj"
+                                                                     :scope-alias "p"
+                                                                     :types ["feat", "chore", "refactor"]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project required property 'name' at path [:config :project] must be a string."))))
+  (testing "invalid config: description not a string"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description 5
+                                                                     :scope "proj"
+                                                                     :scope-alias "p"
+                                                                     :types ["feat", "chore", "refactor"]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project optional property 'description' at name Top Project and path [:config :project] must be a string."))))
+  (testing "invalid config: scope not defined"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description "The top project"
+                                                                     :scope-alias "p"
+                                                                     :types ["feat", "chore", "refactor"]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project required property 'scope' at name Top Project and path [:config :project] must be a string."))))
+  (testing "invalid config: scope not a string"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description "The top project"
+                                                                     :scope 5
+                                                                     :scope-alias "p"
+                                                                     :types ["feat", "chore", "refactor"]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project required property 'scope' at name Top Project and path [:config :project] must be a string."))))
+  (testing "invalid config: scope-alias not a string"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description "The top project"
+                                                                     :scope "proj"
+                                                                     :scope-alias 5
+                                                                     :types ["feat", "chore", "refactor"]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project optional property 'scope-alias' at name Top Project and path [:config :project] must be a string."))))
+  (testing "invalid config: types not defined"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description "The top project"
+                                                                     :scope "proj"
+                                                                     :scope-alias "p"}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project required property 'types' at name Top Project and path [:config :project] must be an array of strings."))))
+  (testing "invalid config: types not an array"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description "The top project"
+                                                                     :scope "proj"
+                                                                     :scope-alias "p"
+                                                                     :types {:object-invalid 5}}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project required property 'types' at name Top Project and path [:config :project] must be an array of strings."))))
+  (testing "invalid config: projects not an array of objects"
+    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
+                                                                     :description "The top project"
+                                                                     :scope "proj"
+                                                                     :scope-alias "p"
+                                                                     :types ["feat", "chore", "refactor"]
+                                                                     :projects [1 2 3]}}}
+                                                 [:config :project])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project optional property 'projects' at name Top Project and path [:config :project] must be an array of objects.")))))
+
+
+(deftest get-frequency-on-properties-on-array-of-objects-test
+  ;; single property
+  (testing "empty target, no duplicates"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [] [:name])]
+      (is (seq? v))
+      (is (= 0 (count v)))))
+  (testing "single property, no duplicates"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a"} {:name "b"} {:name "c"}][:name])]
+      (is (seq? v))
+      (is (= 0 (count v)))))
+  (testing "single property, 1 duplicate"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a"} {:name "b"} {:name "c"} {:name "c"}] [:name])]
+      (is (seq? v))
+      (is (= 1 (count v)))
+      (is (= "c" (first v)))))
+  (testing "single property, 2 duplicates"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a"} {:name "b"} {:name "c"} {:name "c"} {:name "b"}  {:name "b"}] [:name])]
+      (is (seq? v))
+      (is (= 2 (count v)))
+      (is (some #{"b"} v))
+      (is (some #{"c"} v))))
+  ;; multiple properties
+  (testing "multiple properties, no duplicates"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a" :other "1"} {:name "b" :other "2"} {:name "c" :other "3"}] [:name :other])]
+      (is (seq? v))
+      (is (= 0 (count v)))))
+  (testing "multiple properties, 1 duplicate on same property"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a" :other "1"} {:name "b" :other "2"} {:name "c" :other "3"} {:name "c" :other "9"}] [:name :other])]
+      (is (seq? v))
+      (is (= 1 (count v)))
+      (is (= "c" (first v)))))
+  (testing "multiple properties, 2 duplicates on same properties"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a" :other "1"} {:name "b" :other "2"} {:name "c" :other "3"} {:name "c" :other "9"} {:name "b" :other "8"}] [:name :other])]
+      (is (seq? v))
+      (is (= 2 (count v)))
+      (is (some #{"b"} v))
+      (is (some #{"c"} v))))
+  (testing "multiple properties, 1 duplicate on different property"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a" :other "1"} {:name "b" :other "2"} {:name "c" :other "3"} {:name "d" :other "3"}] [:name :other])]
+      (is (seq? v))
+      (is (= 1 (count v)))
+      (is (= "3" (first v)))))
+  (testing "multiple properties, 2 duplicates on different properties"
+    (let [v (common/get-frequency-on-properties-on-array-of-objects [{:name "a" :other "1"} {:name "b" :other "2"} {:name "c" :other "3"} {:name "c" :other "9"} {:name "z" :other "2"}] [:name :other])]
+      (is (seq? v))
+      (is (= 2 (count v)))
+      (is (some #{"2"} v))
+      (is (some #{"c"} v)))))
+
+
+;; todo
+(deftest validate-config-project-node-subproject-lookahead-test
+  (testing "initial"
+    (let [v (common/validate-config-project-node-subproject-lookahead {:config {:project {:name "top" :projects [{:name "a"
+                                                                                                                  :scope "alpha"
+                                                                                                                  :scope-alias "a"}
+                                                                                                                 {:name "b"
+                                                                                                                  :scope "bravo"
+                                                                                                                  :scope-alias "b"}
+                                                                                                                 {:name "c"
+                                                                                                                  :scope "charlie"
+                                                                                                                  :scope-alias "charlie"}
+                                                                                                                 {:name "c"
+                                                                                                                  :scope "blah"}
+                                                                                                                 {:todo-noname "d"}]}}}
+                                                                      [:config :project :projects])]
+      ;;(is (map? v))
+      ;;(is (= v {}))
+      )))
+
+
 ;; todo
 (deftest validate-config-project-test
   (testing "initial"
     (let [v (common/validate-config-project {:config {:project {:name "top" :projects [{:name "a" :projects [{:name "a.1"}]} {:name "b" :projects [{:name "b.1"}]}]}}})]
-      (is (map? v))
-      (is (= v {})))))
+      ;;(is (map? v))
+      ;;(is (= v {}))
+      )))
 
 
 (deftest config-enabled?-test

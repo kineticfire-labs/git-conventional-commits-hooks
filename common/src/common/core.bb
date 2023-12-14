@@ -290,26 +290,55 @@
         (validate-config-fail "Property 'project' must be a map." data)))))
 
 
-;; todo... needed?  use for project?
-;; todo: tests
 (defn validate-config-project-node
-  "Returns a map with key ':success' equal to 'true' if the node is valid else 'false' with a key ':reason' set to a post-fix message for why the node is valid."
-  [node]
-  (if (validate-config-param-string node [:name] true)
-    (if (validate-config-param-string node [:alias] false)
-      (if (validate-config-param-array node [:types] true string?)
-        (if (validate-config-param-array node [:scopes] false map?)
-          {:success :true}
-          (validate-config-fail (str "has optional key 'scopes' that must be be an array of objects and contain at least one object.")))
-        (validate-config-fail (str "must have key 'types' that must be an array of strings and contain at least one string.")))
-      (validate-config-fail (str "project has optional key 'alias' that must have string value.")))
-    (validate-config-fail (str "must have key 'name' with string value."))))
+  "Validates the project located at `json-path` in the map `data`, returning the `data` with key 'success' set to 'true' on success and otherwise 'false' with 'reason' reason."
+  [data json-path]
+  (let [node (get-in data json-path)]
+    (if (validate-config-param-string node [:name] true)
+      (let [name (get-in data (conj json-path :name))]
+        (if (validate-config-param-string node [:description] false)
+          (if (validate-config-param-string node [:scope] true)
+            (if (validate-config-param-string node [:scope-alias] false)
+              (if (validate-config-param-array node [:types] true string?)
+                (if (validate-config-param-array node [:projects] false map?)
+                  (assoc data :success true)
+                  (validate-config-fail (str "Project optional property 'projects' at name " name " and path " json-path " must be an array of objects.") data))
+                (validate-config-fail (str "Project required property 'types' at name " name " and path " json-path " must be an array of strings.") data))
+              (validate-config-fail (str "Project optional property 'scope-alias' at name " name " and path " json-path " must be a string.") data))
+            (validate-config-fail (str "Project required property 'scope' at name " name " and path " json-path " must be a string.") data))
+          (validate-config-fail (str "Project optional property 'description' at name " name " and path " json-path " must be a string.") data)))
+      (validate-config-fail (str "Project required property 'name' at path " json-path " must be a string.") data))))
+
+
+(defn get-frequency-on-properties-on-array-of-objects
+  [target properties]
+  (filter some? (map (fn [[key value]] (when (>= value 2) key)) (frequencies (apply concat (map (fn [path] (map (fn [project] (get-in project [path])) target)) properties))))))
+
+
+;; todo
+;;   - name
+;;   - description
+;;   - scope/scope-alias
+;; todo tests
+(defn validate-config-project-node-subproject-lookahead
+  [data json-path]
+  (let [projects (get-in data json-path)]
+    (println projects)
+    (println (get-frequency-on-properties-on-array-of-objects projects [:name]))
+    (println (get-frequency-on-properties-on-array-of-objects projects [:scope :scope-alias]))
+    ;;
+    ;;
+    ;;
+    ;; works for single path
+    ;;(println (filter some? (map (fn [[key value]] (when (>= value 2) key)) (frequencies (map (fn [project] (get-in project [:name])) projects)))))
+    ;;
+    ;; works for multiple paths
+    ;;(println (apply concat (map (fn [path] (map (fn [project] (get-in project [path])) projects)) [:scope :scope-alias])))
+    (println "******************************************************")
+    ))
 
 
 ;; todo NEXT
-;;    - look at checks on start for validate-config-project... be sure won't get nil or etc.
-;;       - do tests on that
-;;    - do tests to be sure visiting all nodes
 ;;    - function to validate basic stuff
 ;;    - function to validate sub-projects
 ;;       - if any
@@ -325,12 +354,13 @@
 ;; todo: tests
 ;;
 ;; notes
-;;   - the contents of project/projects' arrays must be validated to be maps prior to the loop
 ;;   - using breadth-first traversal because easier to check for name/scope/alias conflict at same level of tree.  noting this is AG... implicit D.
+;;   - ignore properties not used by this tool to allow other systems to re-use the same project definition
+;; Pre-conditions:
+;;   - Data is a valid config with the config at [:config]
+;;   - The top-level project at [:config :project] exists and is a map, as validated by validate-config-for-root-project
 (defn validate-config-project
   [data]
-  ;; err if can't get config, e.g. is nil... check at start only
-  ;; err if can't get node, e.g. is nil... check at start only... or should be validated by root-project?
   (loop [parent-scope-path []
          queue [[:config :project]]]
     (if (empty? queue)
@@ -345,10 +375,10 @@
         (println "Start parent scope path:" parent-scope-path)
         (println "Start queue:" queue)
         ;;
-        ;; todo: validate
-        ;; todo: validate project names/scopes/aliases at same level don't conflict
+        ;; validate-config-project-node
+        ;; validate-config-project-node-subproject-lookahead
         ;;
-        ;;
+        ;; prepare to recur
         (if (validate-config-param-array data (conj json-path :projects) false map?)
           (if (nil? (get-in data (conj json-path :projects)))
             (recur (conj parent-scope-path name) (vec (rest queue)))
