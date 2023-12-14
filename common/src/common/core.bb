@@ -306,15 +306,31 @@
     (validate-config-fail (str "must have key 'name' with string value."))))
 
 
-;; get scopes and assign then a key path
-;; (vec (map #(assoc % :key-path [:config :scope :scopes]) (get-in init-data [:config :scope :scopes])))
+;; todo NEXT
+;;    - look at checks on start for validate-config-project... be sure won't get nil or etc.
+;;       - do tests on that
+;;    - do tests to be sure visiting all nodes
+;;    - function to validate basic stuff
+;;    - function to validate sub-projects
+;;       - if any
+;;       - names don't conflict
+;;       - scopes/alias don't conflict
+;;       - RETURN:
+;;          - succes = true/false
+;;          - reason = if err
+;;          - has-subprojects = true/false
+
+
 ;; todo
 ;; todo: tests
 ;;
 ;; notes
 ;;   - the contents of project/projects' arrays must be validated to be maps prior to the loop
+;;   - using breadth-first traversal because easier to check for name/scope/alias conflict at same level of tree.  noting this is AG... implicit D.
 (defn validate-config-project
   [data]
+  ;; err if can't get config, e.g. is nil... check at start only
+  ;; err if can't get node, e.g. is nil... check at start only... or should be validated by root-project?
   (loop [parent-scope-path []
          queue [[:config :project]]]
     (if (empty? queue)
@@ -322,19 +338,26 @@
       (let [json-path (first queue)
             node (get-in data json-path)
             name (:name node)] ;;todo for testing
-        ;; todo: validate
-        ;; todo: validate project names/scopes/aliases at same level don't conflict
+        ;;
+        ;;
         (println "-------------------------------------------------------------------------------")
         (println "Start project node name:" name)
         (println "Start parent scope path:" parent-scope-path)
         (println "Start queue:" queue)
+        ;;
+        ;; todo: validate
+        ;; todo: validate project names/scopes/aliases at same level don't conflict
+        ;;
+        ;;
         (if (validate-config-param-array data (conj json-path :projects) false map?)
           (if (nil? (get-in data (conj json-path :projects)))
             (recur (conj parent-scope-path name) (vec (rest queue)))
             (recur (conj parent-scope-path name) (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))
-          (validate-config-fail (str "Value of 'projects' must be an array of objects at project name" name "and path" parent-scope-path) data))
+          (validate-config-fail (str "Value of property 'projects' must be an array of objects at project name" name "and path" parent-scope-path) data))
         ))))
 
+
+;; todo: config-related error messages should say "Config"...  make that a statement in the 'validate-config' docs that the calling function should pre-pend "Config error at file location <path>."
 
 ;; todo
 ;; todo: what needs returned with validate-config?
