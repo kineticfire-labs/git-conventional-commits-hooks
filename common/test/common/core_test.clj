@@ -81,11 +81,11 @@
 (deftest apply-display-with-shell-test
   (testing "string input"
     (let [v (common/apply-display-with-shell "test line")]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "echo -e test line" v))))
   (testing "vector string input"
     (let [v (common/apply-display-with-shell ["test line 1" "test line 2" "test line 3"])]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 3 (count v)))
       (is (= "echo -e test line 1" (first v))))))
 
@@ -93,15 +93,15 @@
 (deftest generate-shell-newline-characters-test
   (testing "no arg"
     (let [v (common/generate-shell-newline-characters)]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "\n" v))))
   (testing "arg=1"
     (let [v (common/generate-shell-newline-characters 1)]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "\n" v))))
   (testing "arg=3"
     (let [v (common/generate-shell-newline-characters 3)]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "\n\n\n" v)))))
 
 
@@ -170,19 +170,19 @@
 (deftest generate-commit-msg-test
   (testing "lines is empty vector"
     (let [v (common/generate-commit-msg [] -1)]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (true? (str/includes? (nth v 3) "*************************")))
       (is (= 6 (count v)))))
   (testing "lines is empty string"
     (let [v (common/generate-commit-msg [""] -1)]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 7 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
       (is (= "echo -e " (nth v 3)))
       (is (true? (str/includes? (nth v 5) "echo -e \"END - COMMIT MESSAGE")))))
   (testing "line-num < 0 (no offending line)"
     (let [v (common/generate-commit-msg ["Line 1" "Line 2"] -1)]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 8 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
       (is (= "echo -e Line 1" (nth v 3)))
@@ -190,7 +190,7 @@
       (is (true? (str/includes? (nth v 6) "echo -e \"END - COMMIT MESSAGE")))))
   (testing "line-num = 0 (first line)"
     (let [v (common/generate-commit-msg ["Line 1" "Line 2"] 0)]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 9 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
       (is (true? (str/includes? (nth v 2) "echo -e \"   (offending line # 1 in red)")))
@@ -199,7 +199,7 @@
       (is (true? (str/includes? (nth v 7) "echo -e \"END - COMMIT MESSAGE")))))
   (testing "line-num = 1 (second line)"
     (let [v (common/generate-commit-msg ["Line 1" "Line 2"] 1)]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 9 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
       (is (true? (str/includes? (nth v 2) "echo -e \"   (offending line # 2 in red)")))
@@ -211,7 +211,7 @@
 (deftest generate-commit-err-msg-test
   (testing "title and err-msg"
     (let [v (common/generate-commit-err-msg "A title." "An error message.")]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 2 (count v)))
       (is (= "echo -e \"\\e[1m\\e[31mCOMMIT REJECTED A title.\"" (first v)))
       (is (= "echo -e \"\\e[1m\\e[31mCommit failed reason: An error message.\\033[0m\\e[0m\"" (nth v 1))))))
@@ -220,7 +220,7 @@
 (deftest generate-commit-warn-msg-test
   (testing "title and err-msg"
     (let [v (common/generate-commit-warn-msg "A title." "A warning message.")]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 2 (count v)))
       (is (= "echo -e \"\\e[1m\\e[33mCOMMIT WARNING A title.\"" (first v)))
       (is (= "echo -e \"\\e[1m\\e[33mCommit proceeding with warning: A warning message.\\033[0m\\e[0m\"" (nth v 1))))))
@@ -246,7 +246,7 @@
       (is (map? v))
       (is (boolean? (:success v)))
       (is (true? (:success v)))
-      (is (= "class clojure.lang.PersistentArrayMap" (str (type (:result v)))))
+      (is (map? (:result v)))
       (is (= "hi" (:cb (:c (:result v))))))))
 
 
@@ -1546,82 +1546,82 @@
   (testing "empty string"
     (let [v (common/format-commit-msg-all "")]
       (is (= "" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "replace all lines with comments with empty strings"
     (let [v (common/format-commit-msg-all "#Comment0\nLine1\n#Comment2\nLine3\n #Comment4\nLine5\n#  Comment 6\nLine7")]
       (is (= "Line1\n\nLine3\n\nLine5\n\nLine7" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "for a line with spaces only, remove all spaces"
     (let [v (common/format-commit-msg-all "Line1\n \nLine3\n   \nLine5")]
       (is (= "Line1\n\nLine3\n\nLine5" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "replace two or more consecutive newlines with a single newline"
     ;; "Line1\n\nLine2" because of regex for "<title>\n\n<body>"
     (let [v (common/format-commit-msg-all "Line1\nLine2\n\nLine3\n\nLine4\nLine5\nLine6\n\n\nLine7\n\n\n\n\n\nLine8")]
       (is (= "Line1\n\nLine2\n\nLine3\n\nLine4\nLine5\nLine6\n\nLine7\n\nLine8" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "remove spaces at end of lines (without removing spaces at beginning of lines)"
     ;; "Line1\n\nLine2" because of regex for "<title>\n\n<body>"
     (let [v (common/format-commit-msg-all "Line1\nLine2  \n  Line3  \nLine4\n Line5 ")]
       (is (= "Line1\n\nLine2\n  Line3\nLine4\n Line5" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE: <msg>' formatted correctly"
     (let [v (common/format-commit-msg-all "BREAKING CHANGE: a change")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE:<msg>' with spaces"
     (let [v (common/format-commit-msg-all "  BREAKING CHANGE  :   a change  ")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE:<msg>' lowercase"
     (let [v (common/format-commit-msg-all "  breaking change  :   a change  ")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE:<msg>' mixed case"
     (let [v (common/format-commit-msg-all "  BreaKing chANge  :   a change  ")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE:<msg>' separated with underscore"
     (let [v (common/format-commit-msg-all "  breaking_change  :   a change  ")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE:<msg>' separated with dash"
     (let [v (common/format-commit-msg-all "  breaking-change  :   a change  ")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE:<msg>' misspeled braking"
     (let [v (common/format-commit-msg-all "  braking change  :   a change  ")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "convert to 'BREAKING CHANGE:<msg>' misspeled braeking"
     (let [v (common/format-commit-msg-all "  braeking change  :   a change  ")]
       (is (= "BREAKING CHANGE: a change" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "remove leading/trailing spaces"
     ;; "Line1\n\nLine2" because of regex for "<title>\n\n<body>"
     (let [v (common/format-commit-msg-all "  Line1\nTest\nLine2  ")]
       (is (= "Line1\n\nTest\nLine2" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "remove leading/trailing newlines"
     ;; "Line1\n\nLine2" because of regex for "<title>\n\n<body>"
     (let [v (common/format-commit-msg-all "\nLine1\nTest\nLine2\n")]
       (is (= "Line1\n\nTest\nLine2" v))
-      (is (= "class java.lang.String" (str (type v)))))))
+      (is (string? v)))))
 
 
 (deftest format-commit-msg-first-line-test
   (testing "empty string"
     (let [v (common/format-commit-msg-first-line "")]
       (is (= "" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "without exclamation mark"
     (let [v (common/format-commit-msg-first-line "    feat  (  client  )    :      add super neat feature   ")]
       (is (= "feat(client): add super neat feature" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "with exclamation mark"
     (let [v (common/format-commit-msg-first-line "    feat  (  client  )  !  :      add super neat feature   ")]
       (is (= "feat(client)!: add super neat feature" v))
-      (is (= "class java.lang.String" (str (type v)))))))
+      (is (string? v)))))
 
 
 (def long-commit-msg
@@ -1710,65 +1710,65 @@ BREAKING CHANGE: a big change")
   (testing "nil string"
     (let [v (common/format-commit-msg nil)]
       (is (= "" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "empty string"
     (let [v (common/format-commit-msg "")]
       (is (= "" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "one line"
     (let [v (common/format-commit-msg "    feat  (  client  )  !  :      add super neat feature   ")]
       (is (= "feat(client)!: add super neat feature" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "one line and newline"
     (let [v (common/format-commit-msg "    feat  (  client  )  !  :      add super neat feature   \n")]
       (is (= "feat(client)!: add super neat feature" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "one line and multiple newlines"
     (let [v (common/format-commit-msg "    feat  (  client  )  !  :      add super neat feature   \n\n\n")]
       (is (= "feat(client)!: add super neat feature" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "one line and comment"
     (let [v (common/format-commit-msg "    feat  (  client  )  !  :      add super neat feature   \n#Comment here")]
       (is (= "feat(client)!: add super neat feature" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "one newline then body"
     (let [v (common/format-commit-msg "    feat  (  client  )  !  :      add super neat feature   \nBody starts here")]
       (is (= "feat(client)!: add super neat feature\n\nBody starts here" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "two newlines then body"
     (let [v (common/format-commit-msg "    feat  (  client  )  !  :      add super neat feature   \n\nBody starts here")]
       (is (= "feat(client)!: add super neat feature\n\nBody starts here" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "three newlines then body"
     (let [v (common/format-commit-msg "    feat  (  client  )  !  :      add super neat feature   \n\n\nBody starts here")]
       (is (= "feat(client)!: add super neat feature\n\nBody starts here" v))
-      (is (= "class java.lang.String" (str (type v))))))
+      (is (string? v))))
   (testing "long commit message"
     (let [v (common/format-commit-msg long-commit-msg)]
       (is (= long-commit-msg-expected v))
-      (is (= "class java.lang.String" (str (type v)))))))
+      (is (string? v)))))
 
 
 (deftest index-matches-test
   (testing "empty collection"
     (let [v (common/index-matches [] #"z")]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 0 (count v)))))
   (testing "no matches"
     (let [v (common/index-matches ["aqq" "bqq" "cqq" "dqq"] #"z")]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 0 (count v)))))
   (testing "1 match with collection count 1"
     (let [v (common/index-matches ["bqq"] #"b")]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 1 (count v)))))
   (testing "1 match with collection count 5"
     (let [v (common/index-matches ["aqq" "bqq" "cqq" "dqq"] #"a")]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 1 (count v)))))
   (testing "4 matches with collection count 7"
     (let [v (common/index-matches ["aqq" "bqq" "acqq" "dqq" "eqq" "faqq" "gaqq"] #"a")]
-      (is (= "class clojure.lang.LazySeq" (str (type v))))
+      (is (seq? v))
       (is (= 4 (count v))))))
 
 
@@ -1897,27 +1897,27 @@ BREAKING CHANGE: a big change")
 (deftest add-string-if-key-empty-test
   (testing "text empty, and collection value not empty"
     (let [v (common/add-string-if-key-empty "" "Added text." :data {:data "non empty"})]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "" v))))
   (testing "text empty, and collection value is not defined so would be empty"
     (let [v (common/add-string-if-key-empty "" "Added text." :other {:data "non empty"})]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "Added text." v))))
   (testing "text empty, and collection value is nil so is empty"
     (let [v (common/add-string-if-key-empty "" "Added text." :data {:data nil})]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "Added text." v))))
   (testing "text not empty, and collection value not empty"
     (let [v (common/add-string-if-key-empty "Original text." "Added text." :data {:data "non empty"})]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "Original text." v))))
   (testing "text not empty, and collection value is not defined so would be empty"
     (let [v (common/add-string-if-key-empty "Original text." "Added text." :other {:data "non empty"})]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "Original text.  Added text." v))))
   (testing "text not empty, and collection value is nil so is empty"
     (let [v (common/add-string-if-key-empty "Original text." "Added text." :data {:data nil})]
-      (is (= "class java.lang.String" (str (type v))))
+      (is (string? v))
       (is (= "Original text.  Added text." v)))))
 
 
