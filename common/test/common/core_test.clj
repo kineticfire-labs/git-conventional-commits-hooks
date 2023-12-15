@@ -108,29 +108,29 @@
 (deftest generate-commit-msg-offending-line-header-test
   (testing "lines is empty vector"
     (let [v (common/generate-commit-msg-offending-line-header [] -1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 0 (count v)))))
   (testing "lines is empty string"
     (let [v (common/generate-commit-msg-offending-line-header [""] -1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 1 (count v)))
       (is (= "" (first v)))))
   (testing "line-num < 0 (no offending line)"
     (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] -1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 2 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))))
   (testing "line-num = 0 (first line)"
     (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 0)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 3 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))
       (is (= "\"   (offending line # 1 in red) **************\"" (nth v 2)))))
   (testing "line-num = 1 (second line)"
     (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 3 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))
@@ -140,28 +140,28 @@
 (deftest generate-commit-msg-offending-line-msg-highlight-test
   (testing "lines is empty vector"
     (let [v (common/generate-commit-msg-offending-line-msg-highlight [] -1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 0 (count v)))))
   (testing "lines is empty string"
     (let [v (common/generate-commit-msg-offending-line-msg-highlight [""] -1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 1 (count v)))
       (is (= "" (first v)))))
   (testing "line-num < 0 (no offending line)"
     (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] -1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 2 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))))
   (testing "line-num = 0 (first line)"
     (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] 0)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 2 (count v)))
       (is (= "\\e[1m\\e[31mLine 1\\033[0m\\e[0m" (first v)))
       (is (= "Line 2" (nth v 1)))))
   (testing "line-num = 1 (second line)"
     (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] 1)]
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))
+      (is (vector? v))
       (is (= 2 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "\\e[1m\\e[31mLine 2\\033[0m\\e[0m" (nth v 1))))))
@@ -230,21 +230,21 @@
   (testing "file not found"
     (let [v (common/parse-json-file "resources/test/data/does-not-exist.json")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (str/includes? (:reason v) "File 'resources/test/data/does-not-exist.json' not found.")))))
   (testing "parse fail"
     (let [v (common/parse-json-file "resources/test/data/parse-bad.json")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (str/includes? (:reason v) "JSON parse error when reading file 'resources/test/data/parse-bad.json'.")))))
   (testing "parse ok"
     (let [v (common/parse-json-file "resources/test/data/parse-good.json")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (true? (:success v)))
       (is (= "class clojure.lang.PersistentArrayMap" (str (type (:result v)))))
       (is (= "hi" (:cb (:c (:result v))))))))
@@ -256,14 +256,14 @@
       (is (map? v))
       (is (string? (:reason v)))
       (is (= "An error message." (:reason v)))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))))
   (testing "map and msg"
     (let [v (common/validate-config-fail "An error message." {:other "abcd"})]
       (is (map? v))
       (is (string? (:reason v)))
       (is (= "An error message." (:reason v)))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:other v)))
       (is (= "abcd" (:other v))))))
@@ -335,7 +335,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Minimum length of title line (length.title-line.min) must be defined.")))))
@@ -344,7 +344,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be defined.")))))
@@ -353,7 +353,7 @@
                                                                                         :max 20}
                                                                            :body-line {:max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Minimum length of body line (length.body-line.min) must be defined.")))))
@@ -362,7 +362,7 @@
                                                                                         :max 20}
                                                                            :body-line {:min 2}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be defined.")))))
@@ -373,7 +373,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Minimum length of title line (length.title-line.min) must be a positive integer.")))))
@@ -383,7 +383,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Minimum length of title line (length.title-line.min) must be a positive integer.")))))
@@ -393,7 +393,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be a positive integer.")))))
@@ -403,7 +403,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be a positive integer.")))))
@@ -413,7 +413,7 @@
                                                                             :body-line {:min 2
                                                                                         :max 10}}}}})]
        (is (map? v))
-       (is (= "class java.lang.Boolean" (str (type (:success v)))))
+       (is (boolean? (:success v)))
        (is (false? (:success v)))
        (is (string? (:reason v)))
        (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be equal to or greater than minimum length of title line (length.title-line.min).")))))
@@ -424,7 +424,7 @@
                                                                            :body-line {:min -1
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Minimum length of body line (length.body-line.min) must be a positive integer.")))))
@@ -434,7 +434,7 @@
                                                                            :body-line {:min 0
                                                                                        :max 10}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Minimum length of body line (length.body-line.min) must be a positive integer.")))))
@@ -444,7 +444,7 @@
                                                                            :body-line {:min 2
                                                                                        :max -1}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be a positive integer.")))))
@@ -454,7 +454,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 0}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be a positive integer.")))))
@@ -464,7 +464,7 @@
                                                                            :body-line {:min 2
                                                                                        :max 1}}}}})]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (= (:reason v) "Maximum length of body line (length.body-line.max) must be equal to or greater than minimum length of body line (length.body-line.min)."))))))
@@ -1490,16 +1490,16 @@
   (testing "file not found"
     (let [v (common/read-file "resources/test/data/does-not-exist.txt")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (true? (str/includes? (:reason v) "File 'resources/test/data/does-not-exist.txt' not found."))))) 
   (testing "file ok"
     (let [v (common/read-file "resources/test/data/file-to-read.txt")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (true? (:success v)))
-      (is (= "class java.lang.String" (str (type (:result v)))))
+      (is (string? (:result v)))
       (is (= "This is a\n\nmulti-line file to read\n" (:result v))))))
 
 
@@ -1508,7 +1508,7 @@
     (testing "file not found"
       (let [v (common/write-file (str test-dir "/does-not-exist/file.txt") "Line 1\nLine 2\nLine 3")]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (true? (str/includes? (:reason v) (str "File '" test-dir "/does-not-exist/file.txt' not found."))))))
@@ -1517,7 +1517,7 @@
             out-file (str test-dir "/write-file-ok.txt")
             v (common/write-file out-file content)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))
         (is (= content (slurp out-file)))))))
 
@@ -1527,19 +1527,19 @@
     (let [v (common/split-lines "")]
       (is (= 1 (count v)))
       (is (= "" (first v)))
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))))
+      (is (vector? v))))
   (testing "single line"
     (let [v (common/split-lines "One long line")]
       (is (= 1 (count v)))
       (is (= "One long line" (first v)))
-      (is (= "class clojure.lang.PersistentVector" (str (type v))))))
+      (is (vector? v))))
   (testing "multiple lines"
     (let [v (common/split-lines "First line\nSecond line\nThird line")]
       (is (= 3 (count v)))
       (is (= "First line" (first v)))
       (is (= "Second line" (nth v 1)))
       (is (= "Third line" (nth v 2)))
-      (is (= "class clojure.lang.PersistentVector" (str (type v)))))))
+      (is (vector? v)))))
 
 
 (deftest format-commit-msg-all-test
@@ -1776,13 +1776,13 @@ BREAKING CHANGE: a big change")
   (testing "reason without locations"
     (let [v (common/create-validate-commit-msg-err "Reason error occurred")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (string? (:reason v)))
       (is (false? (contains? v :locations)))))
   (testing "reason with locations"
     (let [v (common/create-validate-commit-msg-err "Reason error occurred" '(3 7 9))]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (string? (:reason v)))
       (is (= 3 (count (:locations v))))
       (is (= 3 (first (:locations v))))
@@ -1798,7 +1798,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg title line has too few characters"
       (let [v (common/validate-commit-msg "ab(cd): efg\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message title line must be at least " (:min (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -1808,12 +1808,12 @@ BREAKING CHANGE: a big change")
     (testing "commit msg title line has meets minimum characters"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     (testing "commit msg title line has too many characters"
       (let [v (common/validate-commit-msg "ab(cd): efghijklmnopq\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message title line must not contain more than " (:max (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -1823,7 +1823,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg title line has meets maximum characters"
       (let [v (common/validate-commit-msg "ab(cd): efghijklmnop\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))))
 
 
@@ -1838,7 +1838,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has too few characters, for single element"
       (let [v (common/validate-commit-msg-body-len (common/split-lines "L") config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -1848,7 +1848,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has too few characters, for multi element"
       (let [v (common/validate-commit-msg-body-len (common/split-lines "L\nHello\nA\nAnother line\nX") config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -1866,7 +1866,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has too many characters, for single element"
       (let [v (common/validate-commit-msg-body-len (common/split-lines "Body abcdef") config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -1876,7 +1876,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has too many characters, for multi element"
       (let [v (common/validate-commit-msg-body-len (common/split-lines "Body abcdef\nAbcd\nBody abcdef\nBody abcdef\nAbcd\nBody abcdef") config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -1925,7 +1925,7 @@ BREAKING CHANGE: a big change")
   (testing "invalid - no type"
     (let [v (common/validate-commit-msg-title-scope-type "(proj): add cool new feature")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (= (:reason v) "Bad form on title.  Could not identify type, scope, or description."))
@@ -1939,7 +1939,7 @@ BREAKING CHANGE: a big change")
   (testing "invalid - no scope"
     (let [v (common/validate-commit-msg-title-scope-type "feat(): add cool new feature")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (= (:reason v) "Bad form on title.  Could not identify type, scope, or description."))
@@ -1953,7 +1953,7 @@ BREAKING CHANGE: a big change")
   (testing "invalid - no description"
     (let [v (common/validate-commit-msg-title-scope-type "feat(proj):")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
       (is (string? (:reason v)))
       (is (= (:reason v) "Bad form on title.  Could not identify description."))
@@ -1967,7 +1967,7 @@ BREAKING CHANGE: a big change")
   (testing "good without exclamation mark"
     (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (true? (:success v)))
       (is (= "class java.lang.String" (str (type (:type v)))))
       (is (= (:type v) "feat"))
@@ -1980,7 +1980,7 @@ BREAKING CHANGE: a big change")
   (testing "good with exclamation mark"
     (let [v (common/validate-commit-msg-title-scope-type "feat(proj)!: add cool new feature")]
       (is (map? v))
-      (is (= "class java.lang.Boolean" (str (type (:success v)))))
+      (is (boolean? (:success v)))
       (is (true? (:success v)))
       (is (= "class java.lang.String" (str (type (:type v)))))
       (is (= (:type v) "feat"))
@@ -2002,7 +2002,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg is nil"
       (let [v (common/validate-commit-msg nil config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= "Commit message cannot be empty." (:reason v)))
@@ -2010,7 +2010,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg is empty string"
       (let [v (common/validate-commit-msg "" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= "Commit message cannot be empty." (:reason v)))
@@ -2019,7 +2019,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg contains tab on one line"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\ntabhere	x\nLine 3 ok" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= "Commit message cannot contain tab characters." (:reason v)))
@@ -2029,7 +2029,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg contains tab on three lines"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\ntabhere	x\nLine 3 ok\ntabhere	x\nLine 5 ok\ntabhere	x" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= "Commit message cannot contain tab characters." (:reason v)))
@@ -2042,7 +2042,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg title line has too few characters"
       (let [v (common/validate-commit-msg "ab(cd): efg\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message title line must be at least " (:min (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -2052,12 +2052,12 @@ BREAKING CHANGE: a big change")
     (testing "commit msg title line meets minimum characters" ;;todo-here
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     (testing "commit msg title line has too many characters"
       (let [v (common/validate-commit-msg "ab(cd): efghijklmnopq\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message title line must not contain more than " (:max (:title-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -2067,24 +2067,24 @@ BREAKING CHANGE: a big change")
     (testing "commit msg title line meets maximum characters"
       (let [v (common/validate-commit-msg "ab(cd): efghijklmnop\n\nAbcdef" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     ;; test commit-msg title/body: title only, no body
     (testing "commit msg consists of title line only without newline (e.g., no body; e.g. body is empty)"
       (let [v (common/validate-commit-msg "ab(cd): efgh" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     (testing "commit msg consists of title line only with newline (e.g., no body; e.g. body is empty)"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     ;; test commit-msg body: min/max characters
     (testing "commit msg body line has too few characters, for single element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nA" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -2094,7 +2094,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has too few characters, for multi element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nA\nAbcd\nA\nAbc\nA" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must be at least " (:min (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -2106,17 +2106,17 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has meets minimum characters, for single element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAb" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     (testing "commit msg body line has meets minimum characters, for multi element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\nAb\nAbcdef\nAb\nAbcd" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     (testing "commit msg body line has too many characters, for single element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghijk" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -2126,7 +2126,7 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has too many characters, for multi element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghijk\nAbc\nAbcdefghijk\nAbcdefghijklmnop\nAbc" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (str "Commit message body line must not contain more than " (:max (:body-line (:length (:commit-msg config)))) " characters.") (:reason v)))
@@ -2138,18 +2138,18 @@ BREAKING CHANGE: a big change")
     (testing "commit msg body line has meets maximum characters, for single element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghij" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     (testing "commit msg body line has meets maximum characters, for multi element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghij\nAbcdef\nAbcdefghij\nAbcd" config)]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))))
     ;; test type/scope,!,descr: format, length, retrieval
     (testing "invalid - no type"
       (let [v (common/validate-commit-msg-title-scope-type "(proj): add cool new feature")]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (:reason v) "Bad form on title.  Could not identify type, scope, or description."))
@@ -2163,7 +2163,7 @@ BREAKING CHANGE: a big change")
     (testing "invalid - no scope"
       (let [v (common/validate-commit-msg-title-scope-type "feat(): add cool new feature")]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (:reason v) "Bad form on title.  Could not identify type, scope, or description."))
@@ -2177,7 +2177,7 @@ BREAKING CHANGE: a big change")
     (testing "invalid - no description"
       (let [v (common/validate-commit-msg-title-scope-type "ab(cd):")]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
         (is (= (:reason v) "Bad form on title.  Could not identify description."))
@@ -2191,7 +2191,7 @@ BREAKING CHANGE: a big change")
     (testing "good without exclamation mark"
       (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature")]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))
         (is (= "class java.lang.String" (str (type (:type v)))))
         (is (= (:type v) "feat"))
@@ -2204,7 +2204,7 @@ BREAKING CHANGE: a big change")
     (testing "good with exclamation mark"
       (let [v (common/validate-commit-msg-title-scope-type "feat(proj)!: add cool new feature")]
         (is (map? v))
-        (is (= "class java.lang.Boolean" (str (type (:success v)))))
+        (is (boolean? (:success v)))
         (is (true? (:success v)))
         (is (= "class java.lang.String" (str (type (:type v)))))
         (is (= (:type v) "feat"))
