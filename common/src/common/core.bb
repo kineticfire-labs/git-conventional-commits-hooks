@@ -411,15 +411,23 @@
                           (do-on-success validate-config-project-specific json-path)
                           (do-on-success validate-config-project-artifact-lookahead :artifact (conj json-path :artifacts))
                           (do-on-success validate-config-project-artifact-lookahead :project (conj json-path :projects)))]
-          (println "Result:" result))
+          
+          ;;todo: need to look at conflicts b/w artifacts and projects together
+
+          (println "Result:" (:success result))
+          (when (some? (:reason result))
+            (println "Reason: " (:reason result))))
         
         ;;
         ;; todo: if successful, then recur
         ;;
+        ;; todo: need to fix the parent-scope-path
+        ;;
         ;; prepare to recur
-        (if (nil? (get-in data (conj json-path :projects)))
-          (recur (conj parent-scope-path name) (vec (rest queue)))
-          (recur (conj parent-scope-path name) (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))))))
+        (let [scope (:scope node)]
+         (if (nil? (get-in data (conj json-path :projects)))
+           (recur (conj parent-scope-path scope) (vec (rest queue)))
+           (recur (conj parent-scope-path scope) (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects)))))))))))))
 
 
 

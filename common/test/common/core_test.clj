@@ -1067,7 +1067,6 @@
       (is (true? (:success v))))))
 
 
-;; todo
 ;; a full config to use for more comprehensive tests
 (def config
   {:config {:commit-msg-enforcement {:enabled true}
@@ -1079,6 +1078,7 @@
                       :description "The Root Project"
                       :scope "proj"
                       :scope-alias "p"
+                      :types ["feat", "chore", "refactor"]
                       :artifacts [{:name "Root Project Artifact 1"
                                    :description "The Root Project Artifact 1"
                                    :scope "root-a1"
@@ -1173,16 +1173,88 @@
                                                            :description "The Alpha Sub Artifact3-3"
                                                            :scope "alpha-sart3-3"
                                                            :scope-alias "a-sa3-3"
-                                                           :types ["feat", "chore", "refactor"]}]}]}]}}})
+                                                           :types ["feat", "chore", "refactor"]}]}]}
+                                {:name "Bravo Project"
+                                 :description "The Bravo Project"
+                                 :scope "bravo-p"
+                                 :scope-alias "b"
+                                 :types ["feat", "chore", "refactor"]
+                                 :artifacts [{:name "Bravo Artifact1"
+                                              :description "The Bravo Artifact1"
+                                              :scope "bravo-art1"
+                                              :scope-alias "b-a1"
+                                              :types ["feat", "chore", "refactor"]}
+                                             {:name "Bravo Artifact2"
+                                              :description "The Bravo Artifact2"
+                                              :scope "bravo-art2"
+                                              :scope-alias "b-a2"
+                                              :types ["feat", "chore", "refactor"]}
+                                             {:name "Bravo Artifact3"
+                                              :description "The Bravo Artifact3"
+                                              :scope "bravo-art3"
+                                              :scope-alias "b-a3"
+                                              :types ["feat", "chore", "refactor"]}]
+                                 :projects [{:name "Bravo Subproject1"
+                                             :description "The Bravo Subproject1"
+                                             :scope "bravo-subp1"
+                                             :scope-alias "bs1"
+                                             :types ["feat", "chore", "refactor"]
+                                             :artifacts [{:name "Bravo Sub Artifact1-1"
+                                                          :description "The Bravo Sub Artifact1-1"
+                                                          :scope "bravo-bart1-1"
+                                                          :scope-alias "b-sa1-1"
+                                                          :types ["feat", "chore", "refactor"]}
+                                                         {:name "Bravo Sub Artifact1-2"
+                                                          :description "The Bravo Sub Artifact1-2"
+                                                          :scope "bravo-bart1-2"
+                                                          :scope-alias "b-sa1-2"
+                                                          :types ["feat", "chore", "refactor"]}
+                                                         {:name "Bravo Sub Artifact1-3"
+                                                          :description "The Bravo Sub Artifact1-3"
+                                                          :scope "bravo-bart1-3"
+                                                          :scope-alias "b-sa1-3"
+                                                          :types ["feat", "chore", "refactor"]}]}
+                                            {:name "Bravo Subproject2"
+                                             :description "The Bravo Subproject2"
+                                             :scope "bravo-subp2"
+                                             :scope-alias "bs2"
+                                             :types ["feat", "chore", "refactor"]
+                                             :artifacts [{:name "Bravo Sub Artifact2-1"
+                                                          :description "The Bravo Sub Artifact2-1"
+                                                          :scope "bravo-bart2-1"
+                                                          :scope-alias "b-sa2-1"
+                                                          :types ["feat", "chore", "refactor"]}
+                                                         {:name "Bravo Sub Artifact2-2"
+                                                          :description "The Bravo Sub Artifact2-2"
+                                                          :scope "bravo-bart2-2"
+                                                          :scope-alias "b-sa2-2"
+                                                          :types ["feat", "chore", "refactor"]}
+                                                         {:name "Bravo Sub Artifact2-3"
+                                                          :description "The Bravo Sub Artifact2-3"
+                                                          :scope "bravo-bart2-3"
+                                                          :scope-alias "b-sa1-3"
+                                                          :types ["feat", "chore", "refactor"]}]}
+                                            {:name "Bravo Subproject3"
+                                             :description "The Bravo Subproject3"
+                                             :scope "bravo-subp3"
+                                             :scope-alias "bs3"
+                                             :types ["feat", "chore", "refactor"]
+                                             :artifacts [{:name "Bravo Sub Artifact3-1"
+                                                          :description "The Bravo Sub Artifact3-1"
+                                                          :scope "bravo-bart3-1"
+                                                          :scope-alias "b-sa3-1"
+                                                          :types ["feat", "chore", "refactor"]}
+                                                         {:name "Bravo Sub Artifact3-2"
+                                                          :description "The Bravo Sub Artifact3-2"
+                                                          :scope "bravo-bart3-2"
+                                                          :scope-alias "b-sa3-2"
+                                                          :types ["feat", "chore", "refactor"]}
+                                                         {:name "Bravo Sub Artifact3-3"
+                                                          :description "The Bravo Sub Artifact3-3"
+                                                          :scope "bravo-bart3-3"
+                                                          :scope-alias "b-sa3-3"
+                                                          :types ["feat", "chore", "refactor"]}]}]}]}}})
 
-
-;;todo
-(comment {:name ""
- :description "x"
- :scope "x"
- :scope-alias "x"
- :projects [{}]
- :artifacts [{}]})
 
 
 ;; todo
@@ -1192,8 +1264,17 @@
       ;;(is (map? v))
       ;;(is (= v {}))
       )))
-      
 
+
+
+;; todo
+(comment (deftest validate-config-test
+  (testing "initial"
+    (let [v (common/validate-config config)]
+      ;;(is (map? v))
+      ;;(is (= v {}))
+      ))))
+   
 
 (deftest config-enabled?-test
   (testing "enabled"
