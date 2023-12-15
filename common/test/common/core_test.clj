@@ -675,9 +675,9 @@
 
 
 ;; todo
-(deftest validate-config-project-test
+(deftest validate-config-projects-test
   (testing "initial"
-    (let [v (common/validate-config-project {:config {:project {:name "top" :projects [{:name "a" :projects [{:name "a.1"}]} {:name "b" :projects [{:name "b.1"}]}]}}})]
+    (let [v (common/validate-config-projects {:config {:project {:name "top" :projects [{:name "a" :projects [{:name "a.1"}]} {:name "b" :projects [{:name "b.1"}]}]}}})]
       ;;(is (map? v))
       ;;(is (= v {}))
       )))

@@ -325,29 +325,13 @@
   (let [projects (get-in data json-path)]
     (println projects)
     (println (get-frequency-on-properties-on-array-of-objects projects [:name]))
+    (println (get-frequency-on-properties-on-array-of-objects projects [:description]))
     (println (get-frequency-on-properties-on-array-of-objects projects [:scope :scope-alias]))
     ;;
     ;;
-    ;;
-    ;; works for single path
-    ;;(println (filter some? (map (fn [[key value]] (when (>= value 2) key)) (frequencies (map (fn [project] (get-in project [:name])) projects)))))
-    ;;
-    ;; works for multiple paths
-    ;;(println (apply concat (map (fn [path] (map (fn [project] (get-in project [path])) projects)) [:scope :scope-alias])))
+    ;; 
     (println "******************************************************")
     ))
-
-
-;; todo NEXT
-;;    - function to validate basic stuff
-;;    - function to validate sub-projects
-;;       - if any
-;;       - names don't conflict
-;;       - scopes/alias don't conflict
-;;       - RETURN:
-;;          - succes = true/false
-;;          - reason = if err
-;;          - has-subprojects = true/false
 
 
 ;; todo
@@ -359,7 +343,7 @@
 ;; Pre-conditions:
 ;;   - Data is a valid config with the config at [:config]
 ;;   - The top-level project at [:config :project] exists and is a map, as validated by validate-config-for-root-project
-(defn validate-config-project
+(defn validate-config-projects
   [data]
   (loop [parent-scope-path []
          queue [[:config :project]]]
@@ -375,8 +359,18 @@
         (println "Start parent scope path:" parent-scope-path)
         (println "Start queue:" queue)
         ;;
-        ;; validate-config-project-node
-        ;; validate-config-project-node-subproject-lookahead
+        ;; CREATE:
+        ;; validate-config-project-artifact (= scope or scope target?)
+        ;; validate-config-artifact-specific
+        ;; validate-config-project-specific
+        ;; validate artifacts (do as part of project specific?)... re-use lookahead?
+        ;; validate-config-subprojects-artifacts-lookahead
+        ;;
+        ;; CALL:
+        ;; validate-config-project-artifact
+        ;; validate-config-project(-specific)
+        ;;      artifacts here
+        ;; validate-config-subprojects-artifacts-lookahead
         ;;
         ;; prepare to recur
         (if (validate-config-param-array data (conj json-path :projects) false map?)
@@ -400,7 +394,7 @@
                     (do-on-success validate-config-msg-enforcement)
                     (do-on-success validate-config-length)
                     (do-on-success validate-config-for-root-project)
-                    (do-on-success validate-config-project))]
+                    (do-on-success validate-config-projects))]
     result))
 
 
