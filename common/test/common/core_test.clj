@@ -36,13 +36,43 @@
 
 
 (deftest do-on-success-test
-  (testing "success"
+  (testing "one arg: success"
     (let [v (common/do-on-success #(update % :val inc) {:success true :val 1})]
       (is (map? v))
       (is (true? (:success v)))
       (is (= 2 (:val v)))))
-  (testing "fail"
+  (testing "one arg: fail"
     (let [v (common/do-on-success #(update % :val inc) {:success false :val 1})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= 1 (:val v)))))
+  (testing "two args: success"
+    (let [v (common/do-on-success #(assoc %2 :val (+ (:val %2) %1)) 5 {:success true :val 1})]
+      (is (map? v))
+      (is (true? (:success v)))
+      (is (= 6 (:val v)))))
+  (testing "two args: fail"
+    (let [v (common/do-on-success #(assoc %2 :val (+ (:val %2) %1)) 5 {:success false :val 1})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= 1 (:val v)))))
+  (testing "three args: success"
+    (let [v (common/do-on-success #(assoc %3 :val (+ (:val %3) %1 %2)) 2 5 {:success true :val 1})]
+      (is (map? v))
+      (is (true? (:success v)))
+      (is (= 8 (:val v)))))
+  (testing "three args: fail"
+    (let [v (common/do-on-success #(assoc %3 :val (+ (:val %3) %1 %2)) 2 5 {:success false :val 1})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= 1 (:val v)))))
+  (testing "four args: success"
+    (let [v (common/do-on-success #(assoc %4 :val (+ (:val %4) %1 %2 %3)) 1 2 5 {:success true :val 1})]
+      (is (map? v))
+      (is (true? (:success v)))
+      (is (= 9 (:val v)))))
+  (testing "four args: fail"
+    (let [v (common/do-on-success #(assoc %4 :val (+ (:val %4) %1 %2 %3)) 1 2 5 {:success false :val 1})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= 1 (:val v))))))
@@ -1037,13 +1067,131 @@
       (is (true? (:success v))))))
 
 
+;; todo
+;; a full config to use for more comprehensive tests
+(def config
+  {:config {:commit-msg-enforcement {:enabled true}
+            :commit-msg {:length {:title-line {:min 3
+                                               :max 20}
+                                  :body-line {:min 2
+                                              :max 10}}}
+            :project {:name "Root Project"
+                      :description "The Root Project"
+                      :scope "proj"
+                      :scope-alias "p"
+                      :artifacts [{:name "Root Project Artifact 1"
+                                   :description "The Root Project Artifact 1"
+                                   :scope "root-a1"
+                                   :scope-alias "ra1"
+                                   :types ["feat", "chore", "refactor"]}
+                                  {:name "Root Project Artifact 2"
+                                   :description "The Root Project Artifact 2"
+                                   :scope "root-a2"
+                                   :scope-alias "ra2"
+                                   :types ["feat", "chore", "refactor"]}
+                                  {:name "Root Project Artifact 3"
+                                   :description "The Root Project Artifact 3"
+                                   :scope "root-a3"
+                                   :scope-alias "ra3"
+                                   :types ["feat", "chore", "refactor"]}]
+                      :projects [{:name "Alpha Project"
+                                  :description "The Alpha Project"
+                                  :scope "alpha-p"
+                                  :scope-alias "a"
+                                  :types ["feat", "chore", "refactor"]
+                                  :artifacts [{:name "Alpha Artifact1"
+                                               :description "The Alpha Artifact1"
+                                               :scope "alpha-art1"
+                                               :scope-alias "a-a1"
+                                               :types ["feat", "chore", "refactor"]}
+                                              {:name "Alpha Artifact2"
+                                               :description "The Alpha Artifact2"
+                                               :scope "alpha-art2"
+                                               :scope-alias "a-a2"
+                                               :types ["feat", "chore", "refactor"]}
+                                              {:name "Alpha Artifact3"
+                                               :description "The Alpha Artifact3"
+                                               :scope "alpha-art3"
+                                               :scope-alias "a-a3"
+                                               :types ["feat", "chore", "refactor"]}]
+                                  :projects [{:name "Alpha Subproject1"
+                                              :description "The Alpha Subproject1"
+                                              :scope "alpha-subp1"
+                                              :scope-alias "as1"
+                                              :types ["feat", "chore", "refactor"]
+                                              :artifacts [{:name "Alpha Sub Artifact1-1"
+                                                           :description "The Alpha Sub Artifact1-1"
+                                                           :scope "alpha-sart1-1"
+                                                           :scope-alias "a-sa1-1"
+                                                           :types ["feat", "chore", "refactor"]}
+                                                          {:name "Alpha Sub Artifact1-2"
+                                                           :description "The Alpha Sub Artifact1-2"
+                                                           :scope "alpha-sart1-2"
+                                                           :scope-alias "a-sa1-2"
+                                                           :types ["feat", "chore", "refactor"]}
+                                                          {:name "Alpha Sub Artifact1-3"
+                                                           :description "The Alpha Sub Artifact1-3"
+                                                           :scope "alpha-sart1-3"
+                                                           :scope-alias "a-sa1-3"
+                                                           :types ["feat", "chore", "refactor"]}]}
+                                             {:name "Alpha Subproject2"
+                                              :description "The Alpha Subproject2"
+                                              :scope "alpha-subp2"
+                                              :scope-alias "as2"
+                                              :types ["feat", "chore", "refactor"]
+                                              :artifacts [{:name "Alpha Sub Artifact2-1"
+                                                           :description "The Alpha Sub Artifact2-1"
+                                                           :scope "alpha-sart2-1"
+                                                           :scope-alias "a-sa2-1"
+                                                           :types ["feat", "chore", "refactor"]}
+                                                          {:name "Alpha Sub Artifact2-2"
+                                                           :description "The Alpha Sub Artifact2-2"
+                                                           :scope "alpha-sart2-2"
+                                                           :scope-alias "a-sa2-2"
+                                                           :types ["feat", "chore", "refactor"]}
+                                                          {:name "Alpha Sub Artifact2-3"
+                                                           :description "The Alpha Sub Artifact2-3"
+                                                           :scope "alpha-sart2-3"
+                                                           :scope-alias "a-sa1-3"
+                                                           :types ["feat", "chore", "refactor"]}]}
+                                             {:name "Alpha Subproject3"
+                                              :description "The Alpha Subproject3"
+                                              :scope "alpha-subp3"
+                                              :scope-alias "as3"
+                                              :types ["feat", "chore", "refactor"]
+                                              :artifacts [{:name "Alpha Sub Artifact3-1"
+                                                           :description "The Alpha Sub Artifact3-1"
+                                                           :scope "alpha-sart3-1"
+                                                           :scope-alias "a-sa3-1"
+                                                           :types ["feat", "chore", "refactor"]}
+                                                          {:name "Alpha Sub Artifact3-2"
+                                                           :description "The Alpha Sub Artifact3-2"
+                                                           :scope "alpha-sart3-2"
+                                                           :scope-alias "a-sa3-2"
+                                                           :types ["feat", "chore", "refactor"]}
+                                                          {:name "Alpha Sub Artifact3-3"
+                                                           :description "The Alpha Sub Artifact3-3"
+                                                           :scope "alpha-sart3-3"
+                                                           :scope-alias "a-sa3-3"
+                                                           :types ["feat", "chore", "refactor"]}]}]}]}}})
+
+
+;;todo
+(comment {:name ""
+ :description "x"
+ :scope "x"
+ :scope-alias "x"
+ :projects [{}]
+ :artifacts [{}]})
+
 
 ;; todo
 (deftest validate-config-projects-test
   (testing "initial"
-    (let [v (common/validate-config-projects {:config {:project {:name "top" :projects [{:name "a" :projects [{:name "a.1"}]} {:name "b" :projects [{:name "b.1"}]}]}}})])))
+    (let [v (common/validate-config-projects config)]
       ;;(is (map? v))
       ;;(is (= v {}))
+      )))
       
 
 

@@ -40,10 +40,23 @@
 
 
 (defn do-on-success
-  [fn data]
-  (if (:success data)
-    (fn data)
-    data))
+  "Perfroms the function 'fn' if the last argument is a map with key 'success' set to 'true', otherwise returns the last argument."
+  ([fn arg]
+   (if (:success arg)
+     (fn arg)
+     arg))
+  ([fn arg1 arg2]
+   (if (:success arg2)
+     (fn arg1 arg2)
+     arg2))
+  ([fn arg1 arg2 arg3]
+   (if (:success arg3)
+     (fn arg1 arg2 arg3)
+     arg3))
+  ([fn arg1 arg2 arg3 arg4]
+   (if (:success arg4)
+     (fn arg1 arg2 arg3 arg4)
+     arg4)))
 
 
 (defn ^:impure exit
@@ -387,14 +400,18 @@
         (println "-------------------------------------------------------------------------------")
         (println "Start project node name:" name)
         (println "Start parent scope path:" parent-scope-path)
+        (println "Start json path:" json-path)
+        (println "")
         (println "Start queue:" queue)
+        (println "")
         ;;
         ;; todo
-        (comment (let [result (->> data
+        (let [result (->> (assoc data :success true)
                           (do-on-success validate-config-project-artifact-common :project json-path)
                           (do-on-success validate-config-project-specific json-path)
                           (do-on-success validate-config-project-artifact-lookahead :artifact (conj json-path :artifacts))
-                          (do-on-success validate-config-project-artifact-lookahead :project (conj json-path :projects)))]))
+                          (do-on-success validate-config-project-artifact-lookahead :project (conj json-path :projects)))]
+          (println "Result:" result))
         
         ;;
         ;; todo: if successful, then recur
