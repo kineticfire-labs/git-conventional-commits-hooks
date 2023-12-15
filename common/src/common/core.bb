@@ -337,16 +337,14 @@
       (validate-config-fail (str "Project optional property 'projects' at name " name " and path " json-path " must be an array of objects.") data))))
 
 
-
-
 (defn get-frequency-on-properties-on-array-of-objects
   "Returns a map with the key as the element, found in the `target` sequence with objects for `properties`, and value as the number of occurances of that element if the occurances are two or greater."
   [target properties]
   (filter some? (map (fn [[key value]] (when (>= value 2) key)) (frequencies (apply concat (map (fn [path] (map (fn [project] (get-in project [path])) target)) properties))))))
 
 
-;; todo tests
 (defn validate-config-project-artifact-lookahead
+  "Validates the array of nodes (projects or artifacts) at the `json-path` in `data` and returns a map with key 'true' if valid and 'false' otherwise with key 'reason'.  Error messages include the `node-type`, set with either ':project' or ':artifact'.  Returns successful if no nodes found."
   [node-type json-path data]
   (let [nodes (get-in data json-path)
         node-descr (if (= :project node-type)
@@ -360,9 +358,9 @@
               (let [scope-resp (get-frequency-on-properties-on-array-of-objects nodes [:scope :scope-alias])]
                 (if (empty? scope-resp)
                   (assoc data :success true)
-                  (validate-config-fail (str node-descr " has duplicate for required property 'scope' / optional property 'scope-alias' " name-resp " at path " json-path ".") data)))
-              (validate-config-fail (str node-descr " has duplicate for optional property 'description' " descr-resp " at path " json-path ".") data)))
-          (validate-config-fail (str node-descr " has duplicate for required property 'name' " name-resp " at path " json-path ".") data)))
+                  (validate-config-fail (str node-descr " has duplicate for required property 'scope' / optional property 'scope-alias' " (apply str scope-resp) " at path " json-path ".") data)))
+              (validate-config-fail (str node-descr " has duplicate for optional property 'description' " (apply str descr-resp) " at path " json-path ".") data)))
+          (validate-config-fail (str node-descr " has duplicate for required property 'name' " (apply str name-resp) " at path " json-path ".") data)))
       (assoc data :success true))))
 
 
@@ -399,17 +397,12 @@
                           (do-on-success validate-config-project-artifact-lookahead :project (conj json-path :projects)))]))
         
         ;;
-        ;; todo:
-        ;; artifacts???
-        ;; validate-config-subprojects-artifacts-lookahead
+        ;; todo: if successful, then recur
         ;;
         ;; prepare to recur
-        (if (validate-config-param-array data (conj json-path :projects) false map?)
-          (if (nil? (get-in data (conj json-path :projects)))
-            (recur (conj parent-scope-path name) (vec (rest queue)))
-            (recur (conj parent-scope-path name) (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))
-          (validate-config-fail (str "Value of property 'projects' must be an array of objects at project name" name "and path" parent-scope-path) data))
-        ))))
+        (if (nil? (get-in data (conj json-path :projects)))
+          (recur (conj parent-scope-path name) (vec (rest queue)))
+          (recur (conj parent-scope-path name) (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))))))
 
 
 
