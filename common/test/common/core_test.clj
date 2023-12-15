@@ -258,7 +258,7 @@
     (let [v (common/validate-map-value {:a {:b 2}} [:a :b] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
       (is (boolean? (:success v)))
       (is (true? (:success v)))
-      (is (false? (contains? v :reason )))
+      (is (false? (contains? v :reason)))
       (is (= 2 (get-in v [:a :b]))))))
 
 
@@ -320,8 +320,8 @@
       (is (true? (= (:reason v) "Maximum length of title line (length.title-line.max) must be defined.")))))
   (testing "body-line.min is not defined"
     (let [v (common/validate-config-length {:config {:commit-msg {:length {:title-line {:min 12
-                                                                           :max 20}
-                                                              :body-line {:max 10}}}}})]
+                                                                                        :max 20}
+                                                                           :body-line {:max 10}}}}})]
       (is (= "class clojure.lang.PersistentArrayMap" (str (type v))))
       (is (= "class java.lang.Boolean" (str (type (:success v)))))
       (is (false? (:success v)))
@@ -472,135 +472,302 @@
       (is (= (:reason v) "Property 'project' must be a map.")))))
 
 
-(deftest validate-config-project-node-test
+(deftest validate-config-project-artifact-common-test
   (testing "valid config with all optional properties"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description "The top project"
-                                                                     :scope "proj"
-                                                                     :scope-alias "p"
-                                                                     :types ["feat", "chore", "refactor"]
-                                                                     :projects [
-                                                                                {:name "Subproject A"
-                                                                                 :description "The subproject A"
-                                                                                 :scope "proja"
-                                                                                 :scope-alias "a"
-                                                                                 :types ["feat", "chore", "refactor"]}
-                                                                                {:name "Subproject B"
-                                                                                 :description "The subproject B"
-                                                                                 :scope "projb"
-                                                                                 :scope-alias "b"
-                                                                                 :types ["feat", "chore", "refactor"]}]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"
+                                                                                                            :types ["feat", "chore", "refactor"]
+                                                                                                            :projects [{:name "Subproject A"
+                                                                                                                        :description "The subproject A"
+                                                                                                                        :scope "proja"
+                                                                                                                        :scope-alias "a"
+                                                                                                                        :types ["feat", "chore", "refactor"]}
+                                                                                                                       {:name "Subproject B"
+                                                                                                                        :description "The subproject B"
+                                                                                                                        :scope "projb"
+                                                                                                                        :scope-alias "b"
+                                                                                                                        :types ["feat", "chore", "refactor"]}]
+                                                                                                            :artifacts [{:name "Artifact Y"
+                                                                                                                         :description "The artifact Y"
+                                                                                                                         :scope "arty"
+                                                                                                                         :scope-alias "y"
+                                                                                                                         :types ["feat", "chore", "refactor"]}
+                                                                                                                        {:name "Artifact Z"
+                                                                                                                         :description "The artifact Z"
+                                                                                                                         :scope "artz"
+                                                                                                                         :scope-alias "z"
+                                                                                                                         :types ["feat", "chore", "refactor"]}]}}})]
       (is (map? v))
       (is (true? (:success v)))))
-  (testing "valid config without optional properties but with 'projects'"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :scope "proj"
-                                                                     :types ["feat", "chore", "refactor"]
-                                                                     :projects [{:name "Subproject A"
-                                                                                 :scope "proja"
-                                                                                 :types ["feat", "chore", "refactor"]}
-                                                                                {:name "Subproject B"
-                                                                                 :scope "projb"
-                                                                                 :types ["feat", "chore", "refactor"]}]}}}
-                                                 [:config :project])]
+  (testing "valid config without optional properties but with 'projects' and 'artifacts"
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :scope "proj"
+                                                                                                            :types ["feat", "chore", "refactor"]
+                                                                                                            :projects [{:name "Subproject A"
+                                                                                                                        :scope "proja"
+                                                                                                                        :types ["feat", "chore", "refactor"]}
+                                                                                                                       {:name "Subproject B"
+                                                                                                                        :scope "projb"
+                                                                                                                        :types ["feat", "chore", "refactor"]}]
+                                                                                                            :artifacts [{:name "Artifact Y"
+                                                                                                                         :scope "arty"
+                                                                                                                         :types ["feat", "chore", "refactor"]}
+                                                                                                                        {:name "Artifact Z"
+                                                                                                                         :scope "artz"
+                                                                                                                         :types ["feat", "chore", "refactor"]}]}}})]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "valid config without optional properties and without 'projects'; use 'artifact' node-type"
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :scope "proj"
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (true? (:success v)))))
   (testing "valid config without optional properties and without 'projects'"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :scope "proj"
-                                                                     :types ["feat", "chore", "refactor"]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :scope "proj"
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (true? (:success v)))))
+  (testing "invalid config: name not defined; use 'artifact' node-type"
+    (let [v (common/validate-config-project-artifact-common :artifact [:config :project] {:config {:project {:description "The top project"
+                                                                                                             :scope "proj"
+                                                                                                             :scope-alias "p"
+                                                                                                             :types ["feat", "chore", "refactor"]}}})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Artifact required property 'name' at path [:config :project] must be a string."))))
   (testing "invalid config: name not defined"
-    (let [v (common/validate-config-project-node {:config {:project {:description "The top project"
-                                                                     :scope "proj"
-                                                                     :scope-alias "p"
-                                                                     :types ["feat", "chore", "refactor"]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project required property 'name' at path [:config :project] must be a string."))))
   (testing "invalid config: name not a string"
-    (let [v (common/validate-config-project-node {:config {:project {:name 5
-                                                                     :description "The top project"
-                                                                     :scope "proj"
-                                                                     :scope-alias "p"
-                                                                     :types ["feat", "chore", "refactor"]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name 5
+                                                                                                            :description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project required property 'name' at path [:config :project] must be a string."))))
   (testing "invalid config: description not a string"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description 5
-                                                                     :scope "proj"
-                                                                     :scope-alias "p"
-                                                                     :types ["feat", "chore", "refactor"]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description 5
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project optional property 'description' at name Top Project and path [:config :project] must be a string."))))
   (testing "invalid config: scope not defined"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description "The top project"
-                                                                     :scope-alias "p"
-                                                                     :types ["feat", "chore", "refactor"]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope-alias "p"
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project required property 'scope' at name Top Project and path [:config :project] must be a string."))))
   (testing "invalid config: scope not a string"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description "The top project"
-                                                                     :scope 5
-                                                                     :scope-alias "p"
-                                                                     :types ["feat", "chore", "refactor"]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope 5
+                                                                                                            :scope-alias "p"
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project required property 'scope' at name Top Project and path [:config :project] must be a string."))))
   (testing "invalid config: scope-alias not a string"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description "The top project"
-                                                                     :scope "proj"
-                                                                     :scope-alias 5
-                                                                     :types ["feat", "chore", "refactor"]}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias 5
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project optional property 'scope-alias' at name Top Project and path [:config :project] must be a string."))))
   (testing "invalid config: types not defined"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description "The top project"
-                                                                     :scope "proj"
-                                                                     :scope-alias "p"}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project required property 'types' at name Top Project and path [:config :project] must be an array of strings."))))
   (testing "invalid config: types not an array"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description "The top project"
-                                                                     :scope "proj"
-                                                                     :scope-alias "p"
-                                                                     :types {:object-invalid 5}}}}
-                                                 [:config :project])]
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"
+                                                                                                            :types {:object-invalid 5}}}})]
       (is (map? v))
       (is (false? (:success v)))
       (is (= (:reason v) "Project required property 'types' at name Top Project and path [:config :project] must be an array of strings."))))
-  (testing "invalid config: projects not an array of objects"
-    (let [v (common/validate-config-project-node {:config {:project {:name "Top Project"
-                                                                     :description "The top project"
-                                                                     :scope "proj"
-                                                                     :scope-alias "p"
-                                                                     :types ["feat", "chore", "refactor"]
-                                                                     :projects [1 2 3]}}}
-                                                 [:config :project])]
+  (testing "invalid config: can't define property 'project' on non-root project"
+    (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"
+                                                                                                            :project {:name "Invalid Project"}
+                                                                                                            :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project optional property 'projects' at name Top Project and path [:config :project] must be an array of objects.")))))
+      (is (= (:reason v) "Project cannot have property 'project' at name Top Project and path [:config :project].")))))
+
+
+(deftest validate-config-artifact-specific-test
+  (testing "valid config with all optional properties"
+    (let [v (common/validate-config-artifact-specific [:config :project :artifacts 0] {:config {:project {:name "Top Project"
+                                                                                                            :description "The top project"
+                                                                                                            :scope "proj"
+                                                                                                            :scope-alias "p"
+                                                                                                            :types ["feat", "chore", "refactor"]
+                                                                                                            :projects [{:name "Subproject A"
+                                                                                                                        :description "The subproject A"
+                                                                                                                        :scope "proja"
+                                                                                                                        :scope-alias "a"
+                                                                                                                        :types ["feat", "chore", "refactor"]}
+                                                                                                                       {:name "Subproject B"
+                                                                                                                        :description "The subproject B"
+                                                                                                                        :scope "projb"
+                                                                                                                        :scope-alias "b"
+                                                                                                                        :types ["feat", "chore", "refactor"]}]
+                                                                                                            :artifacts [{:name "Artifact Y"
+                                                                                                                         :description "The artifact Y"
+                                                                                                                         :scope "arty"
+                                                                                                                         :scope-alias "y"
+                                                                                                                         :types ["feat", "chore", "refactor"]}
+                                                                                                                        {:name "Artifact Z"
+                                                                                                                         :description "The artifact Z"
+                                                                                                                         :scope "artz"
+                                                                                                                         :scope-alias "z"
+                                                                                                                         :types ["feat", "chore", "refactor"]}]}}})]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "valid config without optional properties but with 'projects' and 'artifacts"
+    (let [v (common/validate-config-artifact-specific [:config :project :artifacts 0] {:config {:project {:name "Top Project"
+                                                                                                          :scope "proj"
+                                                                                                          :types ["feat", "chore", "refactor"]
+                                                                                                          :projects [{:name "Subproject A"
+                                                                                                                      :scope "proja"
+                                                                                                                      :types ["feat", "chore", "refactor"]}
+                                                                                                                     {:name "Subproject B"
+                                                                                                                      :scope "projb"
+                                                                                                                      :types ["feat", "chore", "refactor"]}]
+                                                                                                          :artifacts [{:name "Artifact Y"
+                                                                                                                       :scope "arty"
+                                                                                                                       :types ["feat", "chore", "refactor"]}
+                                                                                                                      {:name "Artifact Z"
+                                                                                                                       :scope "artz"
+                                                                                                                       :types ["feat", "chore", "refactor"]}]}}})]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "invalid config: artifact can't define 'projects'"
+    (let [v (common/validate-config-artifact-specific [:config :project :artifacts 0] {:config {:project {:name "Top Project"
+                                                                                                          :scope "proj"
+                                                                                                          :types ["feat", "chore", "refactor"]
+                                                                                                          :projects [{:name "Subproject A"
+                                                                                                                      :scope "proja"
+                                                                                                                      :types ["feat", "chore", "refactor"]}
+                                                                                                                     {:name "Subproject B"
+                                                                                                                      :scope "projb"
+                                                                                                                      :types ["feat", "chore", "refactor"]}]
+                                                                                                          :artifacts [{:name "Artifact Y"
+                                                                                                                       :scope "arty"
+                                                                                                                       :types ["feat", "chore", "refactor"]
+                                                                                                                       :projects [{:name "a"}]}
+                                                                                                                      {:name "Artifact Z"
+                                                                                                                       :scope "artz"
+                                                                                                                       :types ["feat", "chore", "refactor"]}]}}})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Artifact cannot have property 'projects' at name Artifact Y and path [:config :project :artifacts 0]."))))
+  (testing "invalid config: artifact can't define 'artifacts'"
+    (let [v (common/validate-config-artifact-specific [:config :project :artifacts 0] {:config {:project {:name "Top Project"
+                                                                                                          :scope "proj"
+                                                                                                          :types ["feat", "chore", "refactor"]
+                                                                                                          :projects [{:name "Subproject A"
+                                                                                                                      :scope "proja"
+                                                                                                                      :types ["feat", "chore", "refactor"]}
+                                                                                                                     {:name "Subproject B"
+                                                                                                                      :scope "projb"
+                                                                                                                      :types ["feat", "chore", "refactor"]}]
+                                                                                                          :artifacts [{:name "Artifact Y"
+                                                                                                                       :scope "arty"
+                                                                                                                       :types ["feat", "chore", "refactor"]
+                                                                                                                       :artifacts [{:name "a"}]}
+                                                                                                                      {:name "Artifact Z"
+                                                                                                                       :scope "artz"
+                                                                                                                       :types ["feat", "chore", "refactor"]}]}}})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Artifact cannot have property 'artifacts' at name Artifact Y and path [:config :project :artifacts 0].")))))
+
+
+
+
+;;todo
+(deftest validate-config-project-specific-test
+  (testing "valid config with projects and artifacts"
+    (let [v (common/validate-config-project-specific [:config :project] {:config {:project {:name "Top Project"
+                                                                                            :scope "proj"
+                                                                                            :types ["feat", "chore", "refactor"]
+                                                                                            :projects [{:name "Subproject A"
+                                                                                                        :scope "proja"
+                                                                                                        :types ["feat", "chore", "refactor"]}
+                                                                                                       {:name "Subproject B"
+                                                                                                        :scope "projb"
+                                                                                                        :types ["feat", "chore", "refactor"]}]
+                                                                                            :artifacts [{:name "Artifact Y"
+                                                                                                         :scope "arty"
+                                                                                                         :types ["feat", "chore", "refactor"]}
+                                                                                                        {:name "Artifact Z"
+                                                                                                         :scope "artz"
+                                                                                                         :types ["feat", "chore", "refactor"]}]}}})]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "valid config without projects and artifacts"
+    (let [v (common/validate-config-project-specific [:config :project] {:config {:project {:name "Top Project"
+                                                                                            :scope "proj"
+                                                                                            :types ["feat", "chore", "refactor"]}}})]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "invalid config: projects is not an array of objects"
+    (let [v (common/validate-config-project-specific [:config :project] {:config {:project {:name "Top Project"
+                                                                                            :scope "proj"
+                                                                                            :types ["feat", "chore", "refactor"]
+                                                                                            :projects [1 2 3]
+                                                                                            :artifacts [{:name "Artifact Y"
+                                                                                                         :scope "arty"
+                                                                                                         :types ["feat", "chore", "refactor"]}
+                                                                                                        {:name "Artifact Z"
+                                                                                                         :scope "artz"
+                                                                                                         :types ["feat", "chore", "refactor"]}]}}})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project optional property 'projects' at name Top Project and path [:config :project] must be an array of objects."))))
+  (testing "invalid config: projects is not an array of objects"
+    (let [v (common/validate-config-project-specific [:config :project] {:config {:project {:name "Top Project"
+                                                                                            :scope "proj"
+                                                                                            :types ["feat", "chore", "refactor"]
+                                                                                            :projects [{:name "Subproject A"
+                                                                                                        :scope "proja"
+                                                                                                        :types ["feat", "chore", "refactor"]}
+                                                                                                       {:name "Subproject B"
+                                                                                                        :scope "projb"
+                                                                                                        :types ["feat", "chore", "refactor"]}]
+                                                                                            :artifacts [1 2 3]}}})]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (= (:reason v) "Project optional property 'artifacts' at name Top Project and path [:config :project] must be an array of objects.")))))
+
+
+
 
 
 (deftest get-frequency-on-properties-on-array-of-objects-test
@@ -654,33 +821,74 @@
 
 
 ;; todo
-(deftest validate-config-project-node-subproject-lookahead-test
-  (testing "initial"
-    (let [v (common/validate-config-project-node-subproject-lookahead {:config {:project {:name "top" :projects [{:name "a"
-                                                                                                                  :scope "alpha"
-                                                                                                                  :scope-alias "a"}
-                                                                                                                 {:name "b"
-                                                                                                                  :scope "bravo"
-                                                                                                                  :scope-alias "b"}
-                                                                                                                 {:name "c"
-                                                                                                                  :scope "charlie"
-                                                                                                                  :scope-alias "charlie"}
-                                                                                                                 {:name "c"
-                                                                                                                  :scope "blah"}
-                                                                                                                 {:todo-noname "d"}]}}}
-                                                                      [:config :project :projects])]
-      ;;(is (map? v))
-      ;;(is (= v {}))
-      )))
+(deftest validate-config-project-artifact-lookahead-test
+  (testing "project valid"
+    (let [v (common/validate-config-project-artifact-lookahead :project [:config :project :projects] {:config {:project {:name "top"
+                                                                                                                         :projects [{:name "a"
+                                                                                                                                     :description "Project A"
+                                                                                                                                     :scope "alpha"
+                                                                                                                                     :scope-alias "a"}
+                                                                                                                                    {:name "b"
+                                                                                                                                     :description "Project B"
+                                                                                                                                     :scope "bravo"
+                                                                                                                                     :scope-alias "b"}
+                                                                                                                                    {:name "c"
+                                                                                                                                     :description "Project C"
+                                                                                                                                     :scope "charlie"
+                                                                                                                                     :scope-alias "c"}]
+                                                                                                                         :artifacts [{:name "Artifact X"
+                                                                                                                                      :description "Artifact X"
+                                                                                                                                      :scope "artx"
+                                                                                                                                      :scope-alias "x"}
+                                                                                                                                     {:name "Artifact Y"
+                                                                                                                                      :description "Artifact Y"
+                                                                                                                                      :scope "arty"
+                                                                                                                                      :scope-alias "y"}
+                                                                                                                                     {:name "Artifact Z"
+                                                                                                                                      :description "Artifact Z"
+                                                                                                                                      :scope "artz"
+                                                                                                                                      :scope-alias "z"}]}}})]
+      (is (map? v))
+      (is (true? (:success v)))))
+  (testing "artifact valid"
+    (let [v (common/validate-config-project-artifact-lookahead :artifact [:config :project :artifacts] {:config {:project {:name "top"
+                                                                                                                           :projects [{:name "a"
+                                                                                                                                       :description "Project A"
+                                                                                                                                       :scope "alpha"
+                                                                                                                                       :scope-alias "a"}
+                                                                                                                                      {:name "b"
+                                                                                                                                       :description "Project B"
+                                                                                                                                       :scope "bravo"
+                                                                                                                                       :scope-alias "b"}
+                                                                                                                                      {:name "c"
+                                                                                                                                       :description "Project C"
+                                                                                                                                       :scope "charlie"
+                                                                                                                                       :scope-alias "c"}]
+                                                                                                                           :artifacts [{:name "Artifact X"
+                                                                                                                                        :description "Artifact X"
+                                                                                                                                        :scope "artx"
+                                                                                                                                        :scope-alias "x"}
+                                                                                                                                       {:name "Artifact Y"
+                                                                                                                                        :description "Artifact Y"
+                                                                                                                                        :scope "arty"
+                                                                                                                                        :scope-alias "y"}
+                                                                                                                                       {:name "Artifact Z"
+                                                                                                                                        :description "Artifact Z"
+                                                                                                                                        :scope "artz"
+                                                                                                                                        :scope-alias "z"}]}}})]
+      (is (map? v))
+      (is (true? (:success v))))))
+     
+
 
 
 ;; todo
 (deftest validate-config-projects-test
   (testing "initial"
-    (let [v (common/validate-config-projects {:config {:project {:name "top" :projects [{:name "a" :projects [{:name "a.1"}]} {:name "b" :projects [{:name "b.1"}]}]}}})]
+    (let [v (common/validate-config-projects {:config {:project {:name "top" :projects [{:name "a" :projects [{:name "a.1"}]} {:name "b" :projects [{:name "b.1"}]}]}}})])))
       ;;(is (map? v))
       ;;(is (= v {}))
-      )))
+      
 
 
 (deftest config-enabled?-test
@@ -833,7 +1041,7 @@
 
 
 (def long-commit-msg
-"
+ "
    feat  (  client  )  !  :      add super neat feature   
 Support new data with addition of super neat feature
 
@@ -883,7 +1091,7 @@ breaking change    :    a big change
 
 
 (def long-commit-msg-expected
-"feat(client)!: add super neat feature
+ "feat(client)!: add super neat feature
 
 Support new data with addition of super neat feature
 
@@ -1421,6 +1629,6 @@ BREAKING CHANGE: a big change")
         (is (= "class java.lang.Boolean" (str (type (:breaking v)))))
         (is (true? (:breaking v)))
         (is (= "class java.lang.String" (str (type (:title-descr v)))))
-        (is (= (:title-descr v) "add cool new feature"))))
+        (is (= (:title-descr v) "add cool new feature"))))))
     ;; todo add tests for new checks
-    ))
+    
