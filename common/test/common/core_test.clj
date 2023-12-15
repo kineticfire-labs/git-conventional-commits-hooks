@@ -568,7 +568,7 @@
                                                                                                              :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Artifact required property 'name' at path [:config :project] must be a string."))))
+      (is (= (:reason v) "Artifact required property 'name' at path '[:config :project]' must be a string."))))
   (testing "invalid config: name not defined"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:description "The top project"
                                                                                                             :scope "proj"
@@ -576,7 +576,7 @@
                                                                                                             :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project required property 'name' at path [:config :project] must be a string."))))
+      (is (= (:reason v) "Project required property 'name' at path '[:config :project]' must be a string."))))
   (testing "invalid config: name not a string"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name 5
                                                                                                             :description "The top project"
@@ -585,7 +585,7 @@
                                                                                                             :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project required property 'name' at path [:config :project] must be a string."))))
+      (is (= (:reason v) "Project required property 'name' at path '[:config :project]' must be a string."))))
   (testing "invalid config: description not a string"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
                                                                                                             :description 5
@@ -594,7 +594,7 @@
                                                                                                             :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project optional property 'description' at name Top Project and path [:config :project] must be a string."))))
+      (is (= (:reason v) "Project optional property 'description' at property 'name' of 'Top Project' and path '[:config :project]' must be a string."))))
   (testing "invalid config: scope not defined"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
                                                                                                             :description "The top project"
@@ -602,7 +602,7 @@
                                                                                                             :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project required property 'scope' at name Top Project and path [:config :project] must be a string."))))
+      (is (= (:reason v) "Project required property 'scope' at property 'name' of 'Top Project' and path '[:config :project]' must be a string."))))
   (testing "invalid config: scope not a string"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
                                                                                                             :description "The top project"
@@ -611,7 +611,7 @@
                                                                                                             :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project required property 'scope' at name Top Project and path [:config :project] must be a string."))))
+      (is (= (:reason v) "Project required property 'scope' at property 'name' of 'Top Project' and path '[:config :project]' must be a string."))))
   (testing "invalid config: scope-alias not a string"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
                                                                                                             :description "The top project"
@@ -620,7 +620,7 @@
                                                                                                             :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project optional property 'scope-alias' at name Top Project and path [:config :project] must be a string."))))
+      (is (= (:reason v) "Project optional property 'scope-alias' at property 'name' of 'Top Project' and path '[:config :project]' must be a string."))))
   (testing "invalid config: types not defined"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
                                                                                                             :description "The top project"
@@ -628,7 +628,7 @@
                                                                                                             :scope-alias "p"}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project required property 'types' at name Top Project and path [:config :project] must be an array of strings."))))
+      (is (= (:reason v) "Project required property 'types' at property 'name' of 'Top Project' and path '[:config :project]' must be an array of strings."))))
   (testing "invalid config: types not an array"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
                                                                                                             :description "The top project"
@@ -637,7 +637,7 @@
                                                                                                             :types {:object-invalid 5}}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project required property 'types' at name Top Project and path [:config :project] must be an array of strings."))))
+      (is (= (:reason v) "Project required property 'types' at property 'name' of 'Top Project' and path '[:config :project]' must be an array of strings."))))
   (testing "invalid config: can't define property 'project' on non-root project"
     (let [v (common/validate-config-project-artifact-common :project [:config :project] {:config {:project {:name "Top Project"
                                                                                                             :description "The top project"
@@ -647,7 +647,7 @@
                                                                                                             :types ["feat", "chore", "refactor"]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project cannot have property 'project' at name Top Project and path [:config :project].")))))
+      (is (= (:reason v) "Project cannot have property 'project' at property 'name' of 'Top Project' and path '[:config :project]'.")))))
 
 
 (deftest validate-config-artifact-specific-test
@@ -716,7 +716,7 @@
                                                                                                                        :types ["feat", "chore", "refactor"]}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Artifact cannot have property 'projects' at name Artifact Y and path [:config :project :artifacts 0]."))))
+      (is (= (:reason v) "Artifact cannot have property 'projects' at property 'name' of 'Artifact Y' and path '[:config :project :artifacts 0]'."))))
   (testing "invalid config: artifact can't define 'artifacts'"
     (let [v (common/validate-config-artifact-specific [:config :project :artifacts 0] {:config {:project {:name "Top Project"
                                                                                                           :scope "proj"
@@ -736,7 +736,7 @@
                                                                                                                        :types ["feat", "chore", "refactor"]}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Artifact cannot have property 'artifacts' at name Artifact Y and path [:config :project :artifacts 0].")))))
+      (is (= (:reason v) "Artifact cannot have property 'artifacts' at property 'name' of 'Artifact Y' and path '[:config :project :artifacts 0]'.")))))
 
 
 (deftest validate-config-project-specific-test
@@ -777,7 +777,7 @@
                                                                                                          :types ["feat", "chore", "refactor"]}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project optional property 'projects' at name Top Project and path [:config :project] must be an array of objects."))))
+      (is (= (:reason v) "Project optional property 'projects' at property 'name' of 'Top Project' and path '[:config :project]' must be an array of objects."))))
   (testing "invalid config: projects is not an array of objects"
     (let [v (common/validate-config-project-specific [:config :project] {:config {:project {:name "Top Project"
                                                                                             :scope "proj"
@@ -791,10 +791,7 @@
                                                                                             :artifacts [1 2 3]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= (:reason v) "Project optional property 'artifacts' at name Top Project and path [:config :project] must be an array of objects.")))))
-
-
-
+      (is (= (:reason v) "Project optional property 'artifacts' at property 'name' of 'Top Project' and path '[:config :project]' must be an array of objects.")))))
 
 
 (deftest get-frequency-on-properties-on-array-of-objects-test
@@ -920,7 +917,7 @@
                                                                                                                                       :scope-alias "z"}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= "Project has duplicate for required property 'name' a at path [:config :project :projects]." (:reason v)))))
+      (is (= "Project has duplicate value 'a' for required property 'name' at path '[:config :project :projects]'." (:reason v)))))
   (testing "project invalid: duplicate description"
     (let [v (common/validate-config-project-artifact-lookahead :project [:config :project :projects] {:config {:project {:name "top"
                                                                                                                          :projects [{:name "a"
@@ -949,7 +946,7 @@
                                                                                                                                       :scope-alias "z"}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= "Project has duplicate for optional property 'description' Project A at path [:config :project :projects]." (:reason v)))))
+      (is (= "Project has duplicate value 'Project A' for optional property 'description' at path '[:config :project :projects]'." (:reason v)))))
   (testing "project invalid: duplicate scope"
     (let [v (common/validate-config-project-artifact-lookahead :project [:config :project :projects] {:config {:project {:name "top"
                                                                                                                          :projects [{:name "a"
@@ -978,7 +975,7 @@
                                                                                                                                       :scope-alias "z"}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= "Project has duplicate for required property 'scope' / optional property 'scope-alias' alpha at path [:config :project :projects]." (:reason v)))))
+      (is (= "Project has duplicate value 'alpha' for required property 'scope' / optional property 'scope-alias' at path '[:config :project :projects]'." (:reason v)))))
   (testing "project invalid: duplicate scope-alias"
     (let [v (common/validate-config-project-artifact-lookahead :project [:config :project :projects] {:config {:project {:name "top"
                                                                                                                          :projects [{:name "a"
@@ -1007,7 +1004,7 @@
                                                                                                                                       :scope-alias "z"}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= "Project has duplicate for required property 'scope' / optional property 'scope-alias' a at path [:config :project :projects]." (:reason v)))))
+      (is (= "Project has duplicate value 'a' for required property 'scope' / optional property 'scope-alias' at path '[:config :project :projects]'." (:reason v)))))
   (testing "project invalid: duplicate scope and scope-alias"
     (let [v (common/validate-config-project-artifact-lookahead :project [:config :project :projects] {:config {:project {:name "top"
                                                                                                                          :projects [{:name "a"
@@ -1036,7 +1033,7 @@
                                                                                                                                       :scope-alias "z"}]}}})]
       (is (map? v))
       (is (false? (:success v)))
-      (is (= "Project has duplicate for required property 'scope' / optional property 'scope-alias' alpha at path [:config :project :projects]." (:reason v)))))
+      (is (= "Project has duplicate value 'alpha' for required property 'scope' / optional property 'scope-alias' at path '[:config :project :projects]'." (:reason v)))))
   (testing "artifact valid"
     (let [v (common/validate-config-project-artifact-lookahead :artifact [:config :project :artifacts] {:config {:project {:name "top"
                                                                                                                            :projects [{:name "a"
@@ -1064,7 +1061,209 @@
                                                                                                                                         :scope "artz"
                                                                                                                                         :scope-alias "z"}]}}})]
       (is (map? v))
-      (is (true? (:success v))))))
+      (is (true? (:success v)))))
+      (testing "both project/artifact valid"
+        (let [v (common/validate-config-project-artifact-lookahead :both [[:config :project :artifacts] [:config :project :projects]] {:config {:project {:name "top"
+                                                                                                                                                          :projects [{:name "a"
+                                                                                                                                                                      :description "Project A"
+                                                                                                                                                                      :scope "alpha"
+                                                                                                                                                                      :scope-alias "a"}
+                                                                                                                                                                     {:name "b"
+                                                                                                                                                                      :description "Project B"
+                                                                                                                                                                      :scope "bravo"
+                                                                                                                                                                      :scope-alias "b"}
+                                                                                                                                                                     {:name "c"
+                                                                                                                                                                      :description "Project C"
+                                                                                                                                                                      :scope "charlie"
+                                                                                                                                                                      :scope-alias "c"}]
+                                                                                                                                                          :artifacts [{:name "Artifact X"
+                                                                                                                                                                       :description "Artifact X"
+                                                                                                                                                                       :scope "artx"
+                                                                                                                                                                       :scope-alias "x"}
+                                                                                                                                                                      {:name "Artifact Y"
+                                                                                                                                                                       :description "Artifact Y"
+                                                                                                                                                                       :scope "arty"
+                                                                                                                                                                       :scope-alias "y"}
+                                                                                                                                                                      {:name "Artifact Z"
+                                                                                                                                                                       :description "Artifact Z"
+                                                                                                                                                                       :scope "artz"
+                                                                                                                                                                       :scope-alias "z"}]}}})]
+          (is (map? v))
+          (is (true? (:success v)))))
+          (testing "both project/artifact invalid: same name"
+            (let [v (common/validate-config-project-artifact-lookahead :both [[:config :project :artifacts] [:config :project :projects]] {:config {:project {:name "top"
+                                                                                                                                                              :projects [{:name "a"
+                                                                                                                                                                          :description "Project A"
+                                                                                                                                                                          :scope "alpha"
+                                                                                                                                                                          :scope-alias "a"}
+                                                                                                                                                                         {:name "b"
+                                                                                                                                                                          :description "Project B"
+                                                                                                                                                                          :scope "bravo"
+                                                                                                                                                                          :scope-alias "b"}
+                                                                                                                                                                         {:name "c"
+                                                                                                                                                                          :description "Project C"
+                                                                                                                                                                          :scope "charlie"
+                                                                                                                                                                          :scope-alias "c"}]
+                                                                                                                                                              :artifacts [{:name "Artifact X"
+                                                                                                                                                                           :description "Artifact X"
+                                                                                                                                                                           :scope "artx"
+                                                                                                                                                                           :scope-alias "x"}
+                                                                                                                                                                          {:name "a"
+                                                                                                                                                                           :description "Artifact Y"
+                                                                                                                                                                           :scope "arty"
+                                                                                                                                                                           :scope-alias "y"}
+                                                                                                                                                                          {:name "Artifact Z"
+                                                                                                                                                                           :description "Artifact Z"
+                                                                                                                                                                           :scope "artz"
+                                                                                                                                                                           :scope-alias "z"}]}}})]
+              (is (map? v))
+              (is (false? (:success v)))
+              (is (= "Project/Artifact has duplicate value 'a' for required property 'name' at path '[[:config :project :artifacts] [:config :project :projects]]'." (:reason v)))))
+              (testing "both project/artifact invalid: same description"
+                (let [v (common/validate-config-project-artifact-lookahead :both [[:config :project :artifacts] [:config :project :projects]] {:config {:project {:name "top"
+                                                                                                                                                                  :projects [{:name "a"
+                                                                                                                                                                              :description "Project A"
+                                                                                                                                                                              :scope "alpha"
+                                                                                                                                                                              :scope-alias "a"}
+                                                                                                                                                                             {:name "b"
+                                                                                                                                                                              :description "Project B"
+                                                                                                                                                                              :scope "bravo"
+                                                                                                                                                                              :scope-alias "b"}
+                                                                                                                                                                             {:name "c"
+                                                                                                                                                                              :description "Project C"
+                                                                                                                                                                              :scope "charlie"
+                                                                                                                                                                              :scope-alias "c"}]
+                                                                                                                                                                  :artifacts [{:name "Artifact X"
+                                                                                                                                                                               :description "Artifact X"
+                                                                                                                                                                               :scope "artx"
+                                                                                                                                                                               :scope-alias "x"}
+                                                                                                                                                                              {:name "Artifact Y"
+                                                                                                                                                                               :description "Project B"
+                                                                                                                                                                               :scope "arty"
+                                                                                                                                                                               :scope-alias "y"}
+                                                                                                                                                                              {:name "Artifact Z"
+                                                                                                                                                                               :description "Artifact Z"
+                                                                                                                                                                               :scope "artz"
+                                                                                                                                                                               :scope-alias "z"}]}}})]
+                  (is (map? v))
+                  (is (false? (:success v)))
+                  (is (= "Project/Artifact has duplicate value 'Project B' for optional property 'description' at path '[[:config :project :artifacts] [:config :project :projects]]'." (:reason v)))))
+                  (testing "both project/artifact invalid: same scope"
+                    (let [v (common/validate-config-project-artifact-lookahead :both [[:config :project :artifacts] [:config :project :projects]] {:config {:project {:name "top"
+                                                                                                                                                                      :projects [{:name "a"
+                                                                                                                                                                                  :description "Project A"
+                                                                                                                                                                                  :scope "alpha"
+                                                                                                                                                                                  :scope-alias "a"}
+                                                                                                                                                                                 {:name "b"
+                                                                                                                                                                                  :description "Project B"
+                                                                                                                                                                                  :scope "bravo"
+                                                                                                                                                                                  :scope-alias "b"}
+                                                                                                                                                                                 {:name "c"
+                                                                                                                                                                                  :description "Project C"
+                                                                                                                                                                                  :scope "charlie"
+                                                                                                                                                                                  :scope-alias "c"}]
+                                                                                                                                                                      :artifacts [{:name "Artifact X"
+                                                                                                                                                                                   :description "Artifact X"
+                                                                                                                                                                                   :scope "artx"
+                                                                                                                                                                                   :scope-alias "x"}
+                                                                                                                                                                                  {:name "Artifact Y"
+                                                                                                                                                                                   :description "Artifact Y"
+                                                                                                                                                                                   :scope "alpha"
+                                                                                                                                                                                   :scope-alias "y"}
+                                                                                                                                                                                  {:name "Artifact Z"
+                                                                                                                                                                                   :description "Artifact Z"
+                                                                                                                                                                                   :scope "artz"
+                                                                                                                                                                                   :scope-alias "z"}]}}})]
+                      (is (map? v))
+                      (is (false? (:success v)))
+                      (is (= "Project/Artifact has duplicate value 'alpha' for required property 'scope' / optional property 'scope-alias' at path '[[:config :project :artifacts] [:config :project :projects]]'." (:reason v)))))
+                      (testing "both project/artifact invalid: same scope-alias"
+                        (let [v (common/validate-config-project-artifact-lookahead :both [[:config :project :artifacts] [:config :project :projects]] {:config {:project {:name "top"
+                                                                                                                                                                          :projects [{:name "a"
+                                                                                                                                                                                      :description "Project A"
+                                                                                                                                                                                      :scope "alpha"
+                                                                                                                                                                                      :scope-alias "a"}
+                                                                                                                                                                                     {:name "b"
+                                                                                                                                                                                      :description "Project B"
+                                                                                                                                                                                      :scope "bravo"
+                                                                                                                                                                                      :scope-alias "b"}
+                                                                                                                                                                                     {:name "c"
+                                                                                                                                                                                      :description "Project C"
+                                                                                                                                                                                      :scope "charlie"
+                                                                                                                                                                                      :scope-alias "c"}]
+                                                                                                                                                                          :artifacts [{:name "Artifact X"
+                                                                                                                                                                                       :description "Artifact X"
+                                                                                                                                                                                       :scope "artx"
+                                                                                                                                                                                       :scope-alias "x"}
+                                                                                                                                                                                      {:name "Artifact Y"
+                                                                                                                                                                                       :description "Artifact Y"
+                                                                                                                                                                                       :scope "arty"
+                                                                                                                                                                                       :scope-alias "a"}
+                                                                                                                                                                                      {:name "Artifact Z"
+                                                                                                                                                                                       :description "Artifact Z"
+                                                                                                                                                                                       :scope "artz"
+                                                                                                                                                                                       :scope-alias "z"}]}}})]
+                          (is (map? v))
+                          (is (false? (:success v)))
+                          (is (= "Project/Artifact has duplicate value 'a' for required property 'scope' / optional property 'scope-alias' at path '[[:config :project :artifacts] [:config :project :projects]]'." (:reason v)))))
+                          (testing "both project/artifact invalid: same project scope and artifact scope-alias"
+                            (let [v (common/validate-config-project-artifact-lookahead :both [[:config :project :artifacts] [:config :project :projects]] {:config {:project {:name "top"
+                                                                                                                                                                              :projects [{:name "a"
+                                                                                                                                                                                          :description "Project A"
+                                                                                                                                                                                          :scope "alpha"
+                                                                                                                                                                                          :scope-alias "a"}
+                                                                                                                                                                                         {:name "b"
+                                                                                                                                                                                          :description "Project B"
+                                                                                                                                                                                          :scope "bravo"
+                                                                                                                                                                                          :scope-alias "b"}
+                                                                                                                                                                                         {:name "c"
+                                                                                                                                                                                          :description "Project C"
+                                                                                                                                                                                          :scope "charlie"
+                                                                                                                                                                                          :scope-alias "c"}]
+                                                                                                                                                                              :artifacts [{:name "Artifact X"
+                                                                                                                                                                                           :description "Artifact X"
+                                                                                                                                                                                           :scope "artx"
+                                                                                                                                                                                           :scope-alias "x"}
+                                                                                                                                                                                          {:name "Artifact Y"
+                                                                                                                                                                                           :description "Artifact Y"
+                                                                                                                                                                                           :scope "arty"
+                                                                                                                                                                                           :scope-alias "alpha"}
+                                                                                                                                                                                          {:name "Artifact Z"
+                                                                                                                                                                                           :description "Artifact Z"
+                                                                                                                                                                                           :scope "artz"
+                                                                                                                                                                                           :scope-alias "z"}]}}})]
+                              (is (map? v))
+                              (is (false? (:success v)))
+                              (is (= "Project/Artifact has duplicate value 'alpha' for required property 'scope' / optional property 'scope-alias' at path '[[:config :project :artifacts] [:config :project :projects]]'." (:reason v)))))
+                              (testing "both project/artifact invalid: same project scope-alias and artifact scope"
+                                (let [v (common/validate-config-project-artifact-lookahead :both [[:config :project :artifacts] [:config :project :projects]] {:config {:project {:name "top"
+                                                                                                                                                                                  :projects [{:name "a"
+                                                                                                                                                                                              :description "Project A"
+                                                                                                                                                                                              :scope "arty"
+                                                                                                                                                                                              :scope-alias "a"}
+                                                                                                                                                                                             {:name "b"
+                                                                                                                                                                                              :description "Project B"
+                                                                                                                                                                                              :scope "bravo"
+                                                                                                                                                                                              :scope-alias "b"}
+                                                                                                                                                                                             {:name "c"
+                                                                                                                                                                                              :description "Project C"
+                                                                                                                                                                                              :scope "charlie"
+                                                                                                                                                                                              :scope-alias "c"}]
+                                                                                                                                                                                  :artifacts [{:name "Artifact X"
+                                                                                                                                                                                               :description "Artifact X"
+                                                                                                                                                                                               :scope "artx"
+                                                                                                                                                                                               :scope-alias "x"}
+                                                                                                                                                                                              {:name "Artifact Y"
+                                                                                                                                                                                               :description "Artifact Y"
+                                                                                                                                                                                               :scope "arty"
+                                                                                                                                                                                               :scope-alias "y"}
+                                                                                                                                                                                              {:name "Artifact Z"
+                                                                                                                                                                                               :description "Artifact Z"
+                                                                                                                                                                                               :scope "artz"
+                                                                                                                                                                                               :scope-alias "z"}]}}})]
+                                  (is (map? v))
+                                  (is (false? (:success v)))
+                                  (is (= "Project/Artifact has duplicate value 'arty' for required property 'scope' / optional property 'scope-alias' at path '[[:config :project :artifacts] [:config :project :projects]]'." (:reason v))))))
 
 
 ;; a full config to use for more comprehensive tests
@@ -1280,11 +1479,11 @@
   (testing "enabled"
     (let [v (common/config-enabled? {:commit-msg-enforcement {:enabled true}})]
       (is (true? v))
-      (is (= "class java.lang.Boolean" (str (type v))))))
+      (is (boolean? v))))
   (testing "disabled"
     (let [v (common/config-enabled? {:commit-msg-enforcement {:enabled false}})]
       (is (false? v))
-      (is (= "class java.lang.Boolean" (str (type v)))))))
+      (is (boolean? v)))))
 
 
 (deftest read-file-test
