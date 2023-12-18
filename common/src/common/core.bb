@@ -326,6 +326,18 @@
       (validate-config-fail (str node-descr " required property 'name' at path '" json-path "' must be a string.") data))))
 
 
+(defn validate-config-project-specific
+  "Validates the project located at `json-path` in the map `data` for project-specific properties, returning the `data` with key 'success' set to 'true' on success and otherwise 'false' with 'reason' reason.  The 'name' in the target `json-path` path in `data` must be validated.  Does NOT validate the individual artifacts, if any."
+  [json-path data]
+  (let [node (get-in data json-path)
+        name (:name node)]
+    (if (validate-config-param-array node [:projects] false map?)
+      (if (validate-config-param-array node [:artifacts] false map?)
+        (assoc data :success true)
+        (validate-config-fail (str "Project optional property 'artifacts' at property 'name' of '" name "' and path '" json-path "' must be an array of objects.") data))
+      (validate-config-fail (str "Project optional property 'projects' at property 'name' of '" name "' and path '" json-path "' must be an array of objects.") data))))
+
+
 (defn validate-config-artifact-specific
   "Validates the artifact located at `json-path` in the map `data` for artifact-specific properties, returning the `data` with key 'success' set to 'true' on success and otherwise 'false' with 'reason' reason.  The 'name' in the target `json-path` path in `data` must be validated."
   [json-path data]
@@ -338,16 +350,20 @@
       (validate-config-fail (str "Artifact cannot have property 'projects' at property 'name' of '" name "' and path '" json-path "'.") data))))
 
 
-(defn validate-config-project-specific
-  "Validates the project located at `json-path` in the map `data` for project-specific properties, returning the `data` with key 'success' set to 'true' on success and otherwise 'false' with 'reason' reason.  The 'name' in the target `json-path` path in `data` must be validated."
+(defn validate-config-artifacts
+  "Validates the artifacts, if any defined, located at '`json-path` :artifacts' in the map `data` , returning the `data` with key 'success' set to 'true' on success and otherwise 'false' with 'reason' reason."
   [json-path data]
-  (let [node (get-in data json-path)
-        name (:name node)]
-    (if (validate-config-param-array node [:projects] false map?)
-      (if (validate-config-param-array node [:artifacts] false map?)
-        (assoc data :success true)
-        (validate-config-fail (str "Project optional property 'artifacts' at property 'name' of '" name "' and path '" json-path "' must be an array of objects.") data))
-      (validate-config-fail (str "Project optional property 'projects' at property 'name' of '" name "' and path '" json-path "' must be an array of objects.") data))))
+  (let [json-path-artifacts (conj json-path :artifacts)
+        artifacts (get-in data json-path-artifacts)]
+    (if (empty? artifacts)
+      (assoc data :success true)
+      (let [results-common (filter (fn[v] (false? (:success v))) (map-indexed (fn[idx _] (validate-config-project-artifact-common :artifact (conj json-path-artifacts idx) data)) artifacts))]
+        (if (empty? results-common)
+          (let [results-specific (filter (fn [v] (false? (:success v))) (map-indexed (fn [idx _] (validate-config-artifact-specific (conj json-path-artifacts idx) data)) artifacts))]
+            (if (empty? results-specific)
+              (assoc data :success true)
+              (first results-specific)))
+          (first results-common))))))
 
 
 (defn get-frequency-on-properties-on-array-of-objects
@@ -395,37 +411,20 @@
   (loop [queue [[:config :project]]]
     (if (empty? queue)
       (assoc data :success true)
-      (let [json-path (first queue)
-            node (get-in data json-path)
-            name (:name node)] ;;todo 'name' for testing
-        ;;
-        ;;
-        (comment (println "-------------------------------------------------------------------------------")
-        (println "Start project node name:" name)
-        (println "Start json path:" json-path)
-        (println "")
-        (println "Start queue:" queue)
-        (println ""))
-        ;;
-        ;; todo
+      (let [json-path (first queue)]
         (let [result (->> (assoc data :success true)
                           (do-on-success validate-config-project-artifact-common :project json-path)
                           (do-on-success validate-config-project-specific json-path)
+                          (do-on-success validate-config-artifacts json-path)
                           (do-on-success validate-config-project-artifact-lookahead :artifact (conj json-path :artifacts))
                           (do-on-success validate-config-project-artifact-lookahead :project (conj json-path :projects))
                           (do-on-success validate-config-project-artifact-lookahead :both [(conj json-path :artifacts) (conj json-path :projects)]))]
-
-          (println "Result:" (:success result))
-          (when (some? (:reason result))
-            (println "Reason: " (:reason result))))
-        
-        ;;
-        ;; todo: if successful, then recur
-        ;;
-        ;; prepare to recur
-        (if (nil? (get-in data (conj json-path :projects)))
-          (recur (vec (rest queue)))
-          (recur (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))))))
+          
+          (if (:success result)
+            (if (nil? (get-in data (conj json-path :projects)))
+              (recur (vec (rest queue)))
+              (recur (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))
+            result))))))
 
 
 
