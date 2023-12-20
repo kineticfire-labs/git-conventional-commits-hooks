@@ -397,42 +397,31 @@
       (assoc data :success true))))
 
 
-;; todo
-;; todo: tests
-;;
-;; notes
-;;   - using breadth-first traversal because easier to check for name/scope/alias conflict at same level of tree.  noting this is AG... implicit D.
-;;   - ignore properties not used by this tool to allow other systems to re-use the same project definition
-;; Pre-conditions:
-;;   - Data is a valid config with the config at [:config]
-;;   - The top-level project at [:config :project] exists and is a map, as validated by validate-config-for-root-project
+;; Uses breadth-first traversal because easier to check for name/scope/alias conflict at same level of tree.  Due to JSOn structure of the config file, the config is acyclic.
 (defn validate-config-projects
+  "Validates the projects in the config at [:config :project :projects] in `data` returning a map result which is the original `data` with key 'success' to 'true' if valid else set to 'false' with 'reason' set to the reason for the failure.  Does not validate the top-level project."
   [data]
   (loop [queue [[:config :project]]]
     (if (empty? queue)
       (assoc data :success true)
-      (let [json-path (first queue)]
-        (let [result (->> (assoc data :success true)
-                          (do-on-success validate-config-project-artifact-common :project json-path)
-                          (do-on-success validate-config-project-specific json-path)
-                          (do-on-success validate-config-artifacts json-path)
-                          (do-on-success validate-config-project-artifact-lookahead :artifact (conj json-path :artifacts))
-                          (do-on-success validate-config-project-artifact-lookahead :project (conj json-path :projects))
-                          (do-on-success validate-config-project-artifact-lookahead :both [(conj json-path :artifacts) (conj json-path :projects)]))]
-          
-          (if (:success result)
-            (if (nil? (get-in data (conj json-path :projects)))
-              (recur (vec (rest queue)))
-              (recur (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))
-            result))))))
+      (let [json-path (first queue)
+            result (->> (assoc data :success true)
+                        (do-on-success validate-config-project-artifact-common :project json-path)
+                        (do-on-success validate-config-project-specific json-path)
+                        (do-on-success validate-config-artifacts json-path)
+                        (do-on-success validate-config-project-artifact-lookahead :artifact (conj json-path :artifacts))
+                        (do-on-success validate-config-project-artifact-lookahead :project (conj json-path :projects))
+                        (do-on-success validate-config-project-artifact-lookahead :both [(conj json-path :artifacts) (conj json-path :projects)]))]
+        (if (:success result)
+          (if (nil? (get-in data (conj json-path :projects)))
+            (recur (vec (rest queue)))
+            (recur (into (vec (rest queue)) (map (fn [itm] (conj json-path :projects itm)) (range (count (get-in data (conj json-path :projects))))))))
+          result)))))
 
 
-
-;; todo
-;; todo: what needs returned with validate-config?
-;; todo: tests
+;; Ignores properties not used by this tool to allow other systems to re-use the same project definition
 (defn validate-config
-  "Performs validation of the config file 'config'.  Returns a map result with key ':success' of 'true' if valid and 'false' otherwise.  If invalid, then returns a key ':reason' with string reason why the validation failed."
+  "Performs validation of the config file 'config'.  Returns a map result with key ':success' of 'true' if valid and 'false' otherwise.  If invalid, then returns a key ':reason' with string reason why the validation failed.  Ignores properties not used by this tool to allow other systems to use the same project definition config."
   [config]
   (let [data {:config config :success true}
         result (->> data
@@ -578,7 +567,7 @@
 
 
 (defn validate-commit-msg-title-scope-type
-  "Validates the commit message title line (as a string) for type, scope, and description but does NOT check type/scope against the config.  Returns a map result of bool 'success' true with string 'type', string 'scope', bool 'breaking' if breaking change or not, and string 'title-descr'.  Else returns bool 'success' false with string 'reason'."
+  "Validates the commit message title line (as a string) for type, scope, and description but does NOT check type/scope against the config.  Returns a map result of key 'success' set to bool 'true' with string 'type', string 'scope', bool 'breaking' if breaking change or not, and string 'title-descr'.  Else returns key 'success' set to bool 'false' with string 'reason'."
   [title]
   (let [matcher (re-matcher #"^(?<type>[a-z]+)\((?<scope>([a-zA-Z0-9]+))\)(?<breaking>!)?:(?<descr>.*)" title)]
     (if (.matches matcher)
@@ -626,6 +615,7 @@
   ;; - title-line
   ;;    - format
   ;;    - get type, scope, descr, breaking change
+  ;;               * TODO todo add a test with sub-scopes e.g. proj.a.b.c
   ;; * check scope/type are valid based on those defined in config
   ;; * get if breaking change in body, if not in title
   ;;
