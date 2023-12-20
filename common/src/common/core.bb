@@ -569,7 +569,7 @@
 (defn validate-commit-msg-title-scope-type
   "Validates the commit message title line (as a string) for type, scope, and description but does NOT check type/scope against the config.  Returns a map result of key 'success' set to bool 'true' with string 'type', string 'scope', bool 'breaking' if breaking change or not, and string 'title-descr'.  Else returns key 'success' set to bool 'false' with string 'reason'."
   [title]
-  (let [matcher (re-matcher #"^(?<type>[a-z]+)\((?<scope>([a-zA-Z0-9]+))\)(?<breaking>!)?:(?<descr>.*)" title)]
+  (let [matcher (re-matcher #"^(?<type>[a-z]+)\((?<scope>([a-zA-Z0-9]+(.[a-zA-Z0-9]+)*))\)(?<breaking>!)?:(?<descr>.*)" title)]
     (if (.matches matcher)
       (let [match {:type (.group matcher "type")
                    :scope (.group matcher "scope")
@@ -587,16 +587,18 @@
       (create-validate-commit-msg-err "Bad form on title.  Could not identify type, scope, or description." (lazy-seq [0])))))
 
 
-
+;; todo: tests
+;;
 ;; todo
   ;; input:
   ;;   - string commit msg (already formatted)
-  ;;   - valid types/scopes (from config, validated so no errs)
-  ;;   - min/max line lengths (from config, validated so no errs)
+  ;;   - config
+  ;;      - valid types/scopes (from config, validated so no errs)
+  ;;      - min/max line lengths (from config, validated so no errs)
   ;; return:
   ;;   - yes/no valid
   ;;   - if valid
-  ;;      - scope path... name not alias
+  ;;      - scope path... not alias
   ;;      - type
   ;;      - yes/no breaking change
   ;;   - if invalid
@@ -615,7 +617,6 @@
   ;; - title-line
   ;;    - format
   ;;    - get type, scope, descr, breaking change
-  ;;               * TODO todo add a test with sub-scopes e.g. proj.a.b.c
   ;; * check scope/type are valid based on those defined in config
   ;; * get if breaking change in body, if not in title
   ;;
@@ -639,7 +640,11 @@
                 (if (nil? err-body)
                   (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title)]
                     (if (:success scope-type-response)
-                      (assoc response :success true) ;; todo: apply check of valid scopes/types from config
+                      (do
+                        (println "Scope:" (:scope scope-type-response))
+                        (println "Type:" (:type scope-type-response))
+                        (println "Breaking:" (:breaking scope-type-response))
+                        (assoc response :success true)) ;; todo: apply check of valid scopes/types from config
                       scope-type-response))
                   err-body))
               err-title))

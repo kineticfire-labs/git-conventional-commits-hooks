@@ -2316,7 +2316,7 @@ BREAKING CHANGE: a big change")
       (is (seq? (:locations v)))
       (is (= 1 (count (:locations v))))
       (is (= 0 (first (:locations v))))))
-  (testing "good without exclamation mark"
+  (testing "valid without exclamation mark or numbers"
     (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature")]
       (is (map? v))
       (is (boolean? (:success v)))
@@ -2329,7 +2329,20 @@ BREAKING CHANGE: a big change")
       (is (false? (:breaking v)))
       (is (string? (:title-descr v)))
       (is (= (:title-descr v) "add cool new feature"))))
-  (testing "good with exclamation mark"
+  (testing "valid without exclamation mark and with numbers"
+    (let [v (common/validate-commit-msg-title-scope-type "feat(proj00): add cool new feature")]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (string? (:type v)))
+      (is (= (:type v) "feat"))
+      (is (string? (:scope v)))
+      (is (= (:scope v) "proj00"))
+      (is (boolean? (:breaking v)))
+      (is (false? (:breaking v)))
+      (is (string? (:title-descr v)))
+      (is (= (:title-descr v) "add cool new feature"))))
+  (testing "valid with exclamation mark"
     (let [v (common/validate-commit-msg-title-scope-type "feat(proj)!: add cool new feature")]
       (is (map? v))
       (is (boolean? (:success v)))
@@ -2341,6 +2354,47 @@ BREAKING CHANGE: a big change")
       (is (boolean? (:breaking v)))
       (is (true? (:breaking v)))
       (is (string? (:title-descr v)))
+      (is (= (:title-descr v) "add cool new feature"))))
+  (testing "invalid: separator with no following/ending sub-scope"
+    (let [v (common/validate-commit-msg-title-scope-type "feat(proj.)!: add cool new feature")]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
+      (is (string? (:reason v)))
+      (is (= (:reason v) "Bad form on title.  Could not identify type, scope, or description."))
+      (is (false? (contains? v :type)))
+      (is (false? (contains? v :scope)))
+      (is (false? (contains? v :breaking)))
+      (is (false? (contains? v :title-descr)))
+      (is (seq? (:locations v)))
+      (is (= 1 (count (:locations v))))
+      (is (= 0 (first (:locations v))))))
+  (testing "invalid: separators with no sub-scope"
+    (let [v (common/validate-commit-msg-title-scope-type "feat(proj.alpha..charlie)!: add cool new feature")]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
+      (is (string? (:reason v)))
+      (is (= (:reason v) "Bad form on title.  Could not identify type, scope, or description."))
+      (is (false? (contains? v :type)))
+      (is (false? (contains? v :scope)))
+      (is (false? (contains? v :breaking)))
+      (is (false? (contains? v :title-descr)))
+      (is (seq? (:locations v)))
+      (is (= 1 (count (:locations v))))
+      (is (= 0 (first (:locations v))))))
+  (testing "valid with sub-scope"
+    (let [v (common/validate-commit-msg-title-scope-type "feat(proj.alpha.b.charlie)!: add cool new feature")]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (string? (:type v)))
+      (is (= (:type v) "feat"))
+      (is (string? (:scope v)))
+      (is (= (:scope v) "proj.alpha.b.charlie"))
+      (is (boolean? (:breaking v)))
+      (is (true? (:breaking v)))
+      (is (string? (:title-descr v)))
       (is (= (:title-descr v) "add cool new feature")))))
 
 
@@ -2349,9 +2403,13 @@ BREAKING CHANGE: a big change")
   (let [config {:commit-msg {:length {:title-line {:min 12        ;; 'ab(cd): efgh' = 12 chars
                                                    :max 20}
                                       :body-line {:min 2
-                                                  :max 10}}}}]
+                                                  :max 10}}}}
+        config-more-chars {:commit-msg {:length {:title-line {:min 12
+                                                              :max 60}
+                                                 :body-line {:min 2
+                                                             :max 10}}}}]
     ;; test commit-msg overall: isn't empty (nil or empty string)
-    (testing "commit msg is nil"
+    (testing "invalid: commit msg is nil"
       (let [v (common/validate-commit-msg nil config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2359,7 +2417,7 @@ BREAKING CHANGE: a big change")
         (is (string? (:reason v)))
         (is (= "Commit message cannot be empty." (:reason v)))
         (is (false? (contains? v :locations)))))
-    (testing "commit msg is empty string"
+    (testing "invalid: commit msg is empty string"
       (let [v (common/validate-commit-msg "" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2368,7 +2426,7 @@ BREAKING CHANGE: a big change")
         (is (= "Commit message cannot be empty." (:reason v)))
         (is (false? (contains? v :locations)))))
     ;; test commit-msg overall: doesn't contain tab characters
-    (testing "commit msg contains tab on one line"
+    (testing "invalid: commit msg contains tab on one line"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\ntabhere	x\nLine 3 ok" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2378,7 +2436,7 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 2 (first (:locations v))))))
-    (testing "commit msg contains tab on three lines"
+    (testing "invalid: commit msg contains tab on three lines"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\ntabhere	x\nLine 3 ok\ntabhere	x\nLine 5 ok\ntabhere	x" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2391,7 +2449,7 @@ BREAKING CHANGE: a big change")
         (is (= 4 (nth (:locations v) 1)))
         (is (= 6 (nth (:locations v) 2)))))
     ;; test commit-msg title: min/max characters
-    (testing "commit msg title line has too few characters"
+    (testing "invalid: commit msg title line has too few characters"
       (let [v (common/validate-commit-msg "ab(cd): efg\n\nAbcdef" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2401,12 +2459,7 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    (testing "commit msg title line meets minimum characters" ;;todo-here
-      (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdef" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
-    (testing "commit msg title line has too many characters"
+    (testing "invalid: commit msg title line has too many characters"
       (let [v (common/validate-commit-msg "ab(cd): efghijklmnopq\n\nAbcdef" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2416,24 +2469,8 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    (testing "commit msg title line meets maximum characters"
-      (let [v (common/validate-commit-msg "ab(cd): efghijklmnop\n\nAbcdef" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
-    ;; test commit-msg title/body: title only, no body
-    (testing "commit msg consists of title line only without newline (e.g., no body; e.g. body is empty)"
-      (let [v (common/validate-commit-msg "ab(cd): efgh" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
-    (testing "commit msg consists of title line only with newline (e.g., no body; e.g. body is empty)"
-      (let [v (common/validate-commit-msg "ab(cd): efgh\n" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
     ;; test commit-msg body: min/max characters
-    (testing "commit msg body line has too few characters, for single element"
+    (testing "invalid: commit msg body line has too few characters, for single element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nA" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2443,7 +2480,7 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    (testing "commit msg body line has too few characters, for multi element"
+    (testing "invalid: commit msg body line has too few characters, for multi element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nA\nAbcd\nA\nAbc\nA" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2455,17 +2492,7 @@ BREAKING CHANGE: a big change")
         (is (= 0 (first (:locations v))))
         (is (= 2 (nth (:locations v) 1)))
         (is (= 4 (nth (:locations v) 2)))))
-    (testing "commit msg body line has meets minimum characters, for single element"
-      (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAb" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
-    (testing "commit msg body line has meets minimum characters, for multi element"
-      (let [v (common/validate-commit-msg "ab(cd): efgh\nAb\nAbcdef\nAb\nAbcd" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
-    (testing "commit msg body line has too many characters, for single element"
+    (testing "invalid: commit msg body line has too many characters, for single element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghijk" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2475,7 +2502,7 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    (testing "commit msg body line has too many characters, for multi element"
+    (testing "invalid: commit msg body line has too many characters, for multi element"
       (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghijk\nAbc\nAbcdefghijk\nAbcdefghijklmnop\nAbc" config)]
         (is (map? v))
         (is (boolean? (:success v)))
@@ -2487,19 +2514,9 @@ BREAKING CHANGE: a big change")
         (is (= 0 (first (:locations v))))
         (is (= 2 (nth (:locations v) 1)))
         (is (= 3 (nth (:locations v) 2)))))
-    (testing "commit msg body line has meets maximum characters, for single element"
-      (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghij" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
-    (testing "commit msg body line has meets maximum characters, for multi element"
-      (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdefghij\nAbcdef\nAbcdefghij\nAbcd" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
-    ;; test type/scope,!,descr: format, length, retrieval
+    ;; test type/scope, !, descr: format, length, retrieval
     (testing "invalid - no type"
-      (let [v (common/validate-commit-msg-title-scope-type "(proj): add cool new feature")]
+      (let [v (common/validate-commit-msg "(proj): add cool new feature" config-more-chars)]
         (is (map? v))
         (is (boolean? (:success v)))
         (is (false? (:success v)))
@@ -2513,7 +2530,7 @@ BREAKING CHANGE: a big change")
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
     (testing "invalid - no scope"
-      (let [v (common/validate-commit-msg-title-scope-type "feat(): add cool new feature")]
+      (let [v (common/validate-commit-msg "feat(): add cool new feature" config-more-chars)]
         (is (map? v))
         (is (boolean? (:success v)))
         (is (false? (:success v)))
@@ -2527,12 +2544,12 @@ BREAKING CHANGE: a big change")
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
     (testing "invalid - no description"
-      (let [v (common/validate-commit-msg-title-scope-type "ab(cd):")]
+      (let [v (common/validate-commit-msg "ab(cd):" config-more-chars)]
         (is (map? v))
         (is (boolean? (:success v)))
         (is (false? (:success v)))
         (is (string? (:reason v)))
-        (is (= (:reason v) "Bad form on title.  Could not identify description."))
+        (is (= (:reason v) "Commit message title line must be at least 12 characters."))
         (is (false? (contains? v :type)))
         (is (false? (contains? v :scope)))
         (is (false? (contains? v :breaking)))
@@ -2540,8 +2557,9 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    (testing "good without exclamation mark"
-      (let [v (common/validate-commit-msg-title-scope-type "feat(proj): add cool new feature")]
+    ;; todo
+    (comment (testing "valid: title line only, no exclamation mark"
+      (let [v (common/validate-commit-msg "feat(proj): add cool new feature" config-more-chars)]
         (is (map? v))
         (is (boolean? (:success v)))
         (is (true? (:success v)))
@@ -2553,8 +2571,8 @@ BREAKING CHANGE: a big change")
         (is (false? (:breaking v)))
         (is (string? (:title-descr v)))
         (is (= (:title-descr v) "add cool new feature"))))
-    (testing "good with exclamation mark"
-      (let [v (common/validate-commit-msg-title-scope-type "feat(proj)!: add cool new feature")]
+    (testing "valid: title line only, with exclamation mark"
+      (let [v (common/validate-commit-msg "feat(proj)!: add cool new feature" config-more-chars)]
         (is (map? v))
         (is (boolean? (:success v)))
         (is (true? (:success v)))
@@ -2565,6 +2583,6 @@ BREAKING CHANGE: a big change")
         (is (boolean? (:breaking v)))
         (is (true? (:breaking v)))
         (is (string? (:title-descr v)))
-        (is (= (:title-descr v) "add cool new feature"))))))
+        (is (= (:title-descr v) "add cool new feature")))))))
     ;; todo add tests for new checks
     

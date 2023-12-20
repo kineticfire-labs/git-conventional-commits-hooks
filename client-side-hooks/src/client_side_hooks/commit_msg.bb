@@ -83,13 +83,14 @@
   (if (= (count args) 1)
     (let [config-parse-response (common/parse-json-file config-file)]
       (if (:success config-parse-response)
-        (let [config-validate-response (common/validate-config (:result config-parse-response))]
+        (let [config (:result config-parse-response)
+              config-validate-response (common/validate-config config)]
           (if (:success config-validate-response)
-            (if (common/config-enabled? (:result config-parse-response))
+            (if (common/config-enabled? config)
               (let [commit-msg-read-response (common/read-file (first args))]
                 (if (:success commit-msg-read-response)
-                  (let [commit-msg-format-response (common/format-commit-msg (:result commit-msg-read-response))
-                        commit-msg-validate-response (common/validate-commit-msg commit-msg-format-response (:result config-parse-response))]
+                  (let [commit-msg-formatted (common/format-commit-msg (:result commit-msg-read-response))
+                        commit-msg-validate-response (common/validate-commit-msg commit-msg-formatted config)]
                     (if (:success commit-msg-validate-response)
                       (println "commit msg valid!")
                       (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)))))
@@ -98,7 +99,6 @@
             (common/handle-err-exit title (str "Error validating config file at " config-file "." (:reason config-validate-response)))))
         (common/handle-err-exit title (str "Error reading config file. " (:reason config-parse-response)))))
     (common/handle-err-exit title "Exactly one argument required.  Usage:  commit-msg <path to git edit message>")))
-
 
 
 (when (= *file* (System/getProperty "babashka.file"))
