@@ -587,6 +587,43 @@
       (create-validate-commit-msg-err "Bad form on title.  Could not identify type, scope, or description." (lazy-seq [0])))))
 
 
+(defn get-scope
+  "Returns the scope as a string if either scope or scope-alias in `node` match the `scope-query` else nil.  The `node` and `scope-query` must be valid."
+  [scope-query node]
+  (let [scope (:scope node)]
+    (if (= scope scope-query)
+      scope
+      (let [scope-alias (:scope-alias node)]
+        (if (= scope-alias scope-query)
+          scope
+          nil)))))
+
+
+;; todo
+;; todo: tests
+;; assumptions:
+;; - config valid
+;; - query-path valid format
+;; query-path can be scope or scope-alias, dot separated
+(defn find-scope-path
+  [query-path config]
+  (let [query-path-vec-top (str/split query-path #"\.")
+        scope-top (first query-path-vec-top)
+        node-top (get-in config [:project])
+        root-project-scope (get-scope scope-top node-top)]  ;; check top-level project outside of loop, since it's json path is ':project' singluar vs ':projects' plural for artifacts/sub-projects
+    (if (nil? root-project-scope)
+      (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope-top "' at scope path of '" scope-top "' not found in config.") (lazy-seq [0]))
+      nil))) 
+      
+
+;;todo
+  ;;
+  ;;
+  ;;(comment (loop [query-path-vec (rest query-path-vec-top)
+    ;;              scope-path []
+      ;;            node node-top]))
+
+
 ;; todo: tests
 ;;
 ;; todo
@@ -641,9 +678,9 @@
                   (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title)]
                     (if (:success scope-type-response)
                       (do
-                        (println "Scope:" (:scope scope-type-response))
+                        (comment (println "Scope:" (:scope scope-type-response))
                         (println "Type:" (:type scope-type-response))
-                        (println "Breaking:" (:breaking scope-type-response))
+                        (println "Breaking:" (:breaking scope-type-response)))
                         (assoc response :success true)) ;; todo: apply check of valid scopes/types from config
                       scope-type-response))
                   err-body))

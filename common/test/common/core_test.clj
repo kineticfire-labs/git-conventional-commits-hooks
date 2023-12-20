@@ -2398,6 +2398,29 @@ BREAKING CHANGE: a big change")
       (is (= (:title-descr v) "add cool new feature")))))
 
 
+(deftest get-scope-test
+  (testing "scope not found and no scope-alias defined"
+    (is (= (common/get-scope "alpha" {:scope "bravo"}) nil)))
+  (testing "scope not found and scope-alias defined"
+    (is (= (common/get-scope "alpha" {:scope "bravo" :scope-alias "charlie"}) nil)))
+  (testing "scope found and no scope-alias defined"
+    (is (= (common/get-scope "alpha" {:scope "alpha"}) "alpha")))
+  (testing "scope found and scope-alias defined"
+    (is (= (common/get-scope "alpha" {:scope "alpha" :scope-alias "bravo"}) "alpha")))
+  (testing "scope-alias found"
+    (is (= (common/get-scope "bravo" {:scope "alpha" :scope-alias "bravo"}) "alpha"))))
+
+
+;; todo
+(deftest find-scope-path-test
+  (testing "todo"
+    (let [v (common/find-scope-path "zulu" {:project {:scope "alpha" 
+                                                      :scope-alias "a"}})]
+      (is (map? v))
+      ;; todo: add in other checks
+      (is (false? (:success v)))
+      (is (= (:reason v) "Definition for scope or scope-alias in title line of 'zulu' at scope path of 'zulu' not found in config.")))))
+
 
 (deftest validate-commit-msg-test
   (let [config {:commit-msg {:length {:title-line {:min 12        ;; 'ab(cd): efgh' = 12 chars
