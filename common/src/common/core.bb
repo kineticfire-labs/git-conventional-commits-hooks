@@ -588,7 +588,7 @@
 
 
 (defn get-scope
-  "Returns the scope as a string if either scope or scope-alias in `node` match the `scope-query` else nil.  The `node` and `scope-query` must be valid."
+  "Returns the scope as a string if either scope or scope-alias in `node` match the `scope-query` else nil.  The `node` and `scope-query` must be valid.  The `node` can be a project or artifact."
   [scope-query node]
   (let [scope (:scope node)]
     (if (= scope scope-query)
@@ -597,6 +597,22 @@
         (if (= scope-alias scope-query)
           scope
           nil)))))
+
+
+(defn get-scope-in-col
+  "Searches for the `scope-query` in the collection `col` of maps, where the query could be found in ':scope' or ':scope-alias'.  Returns a map on success with key 'success' set to 'true', 'scope' set to the scope found even if the match was to a scope-alias, and 'index' as the zero-based index of the match in the collection.  Returns 'nil' if a match is not found."
+  [scope-query col]
+  (let [result (keep-indexed (fn [idx itm]
+                               (let [result (get-scope scope-query itm)]
+                                 (if (nil? result)
+                                   nil
+                                   {:success true
+                                    :scope result
+                                    :index idx}))) col)]
+    (if (empty? result)
+      {:success false}
+      (first result))))
+
 
 
 ;; todo
@@ -612,9 +628,28 @@
         node-top (get-in config [:project])
         root-project-scope (get-scope scope-top node-top)]  ;; check top-level project outside of loop, since it's json path is ':project' singluar vs ':projects' plural for artifacts/sub-projects
     (if (nil? root-project-scope)
-      (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope-top "' at scope path of '" scope-top "' not found in config.") (lazy-seq [0]))
-      nil))) 
+      (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope-top "' at query path of '[:project]' not found in config.") (lazy-seq [0]))
+      (loop [scope-path [root-project-scope]           ;; the scope path that has been found thus far
+             json-path [:project]                      ;; the path to the current node, which consists of map keys and/or array indicies
+             query-path-vec (rest query-path-vec-top)  ;; the query path of scopes/scope-aliases that need to resolved
+             node node-top]                            ;; the current node on which to find the next scope, from 'artifacts' or 'projects'
+        (if (= 0 (count query-path-vec))
+          {:success true
+           :scope-path scope-path
+           :json-path json-path}
+          (let [artifact-result (get-scope-in-col (first query-path-vec) (:artifacts node))]
+            (if (:success artifact-result)
+              {:success true
+               :scope-path (conj scope-path (:scope artifact-result))
+               :json-path (conj json-path :artifacts (:index artifact-result))}
+              (let [project-result (get-scope-in-col (first query-path-vec) (:projects node))]
+                (if (not (:success project-result))
+                  (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope-top "' at query path of '" json-path "' not found in config.") (lazy-seq [0])) ;; todo what err path output to show?
+                  "todo recur")))))))))
       
+;; (recur (conj scope-path (:scope artifact-result)) (conj json-path :artifacts (:index artifact-result)) (rest query-path-vec) )
+
+
 
 ;;todo
   ;;

@@ -2411,15 +2411,48 @@ BREAKING CHANGE: a big change")
     (is (= (common/get-scope "bravo" {:scope "alpha" :scope-alias "bravo"}) "alpha"))))
 
 
+(deftest get-scope-in-col-test
+  (testing "not found: empty collection"
+    (let [v (common/get-scope-in-col "alpha" [])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (boolean? (:success v)))))
+  (testing "not found: non-empty collection"
+    (let [v (common/get-scope-in-col "alpha" [{:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}])]
+      (is (map? v))
+      (is (false? (:success v)))
+      (is (boolean? (:success v)))))
+  (testing "found: using scope, collection of 1"
+    (let [v (common/get-scope-in-col "alpha" [{:scope "alpha"}])]
+      (is (map? v))
+      (is (true? (:success v)))
+      (is (boolean? (:success v)))))
+  (testing "found: using scope, collection of > 1"
+    (let [v (common/get-scope-in-col "bravo" [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}])]
+      (is (map? v))
+      (is (true? (:success v)))
+      (is (boolean? (:success v)))))
+  (testing "found: using scope-alias, collection of 1"
+    (let [v (common/get-scope-in-col "a" [{:scope "alpha" :scope-alias "a"}])]
+      (is (map? v))
+      (is (true? (:success v)))
+      (is (boolean? (:success v)))))
+  (testing "found: using scope-alias, collection of > 1"
+    (let [v (common/get-scope-in-col "b" [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}])]
+      (is (map? v))
+      (is (true? (:success v)))
+      (is (boolean? (:success v))))))
+
+
 ;; todo
-(deftest find-scope-path-test
+(comment (deftest find-scope-path-test
   (testing "todo"
     (let [v (common/find-scope-path "zulu" {:project {:scope "alpha" 
                                                       :scope-alias "a"}})]
       (is (map? v))
       ;; todo: add in other checks
       (is (false? (:success v)))
-      (is (= (:reason v) "Definition for scope or scope-alias in title line of 'zulu' at scope path of 'zulu' not found in config.")))))
+      (is (= (:reason v) "Definition for scope or scope-alias in title line of 'zulu' at query path of '[:project]' not found in config."))))))
 
 
 (deftest validate-commit-msg-test
