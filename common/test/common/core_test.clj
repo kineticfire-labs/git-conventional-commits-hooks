@@ -2444,15 +2444,275 @@ BREAKING CHANGE: a big change")
       (is (boolean? (:success v))))))
 
 
-;; todo
-(comment (deftest find-scope-path-test
-  (testing "todo"
-    (let [v (common/find-scope-path "zulu" {:project {:scope "alpha" 
-                                                      :scope-alias "a"}})]
+(deftest get-scope-in-artifacts-or-projects-test
+  (testing "not found: no artifacts or projects"
+    (let [v (common/get-scope-in-artifacts-or-projects "alpha" {})]
       (is (map? v))
-      ;; todo: add in other checks
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))))
+  (testing "not found: empty artifacts"
+    (let [v (common/get-scope-in-artifacts-or-projects "alpha" {:artifacts []})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))))
+  (testing "not found: empty projects"
+    (let [v (common/get-scope-in-artifacts-or-projects "alpha" {:projects []})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))))
+  (testing "not found: non-empty collection"
+    (let [v (common/get-scope-in-artifacts-or-projects "zulu" {:artifacts [{:scope "alpha"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))))
+  (testing "found: in artifacts using scope, collection of 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "alpha" {:artifacts [{:scope "alpha" :scope-alias "a"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :artifacts (:property v)))
+      (is (= 0 (:index v)))))
+  (testing "found: in artifacts using scope, collection of > 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "alpha" {:artifacts [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :artifacts (:property v)))
+      (is (= 0 (:index v)))))
+  (testing "found: in artifacts using scope-alias, collection of 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "a" {:artifacts [{:scope "alpha" :scope-alias "a"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :artifacts (:property v)))
+      (is (= 0 (:index v)))))
+  (testing "found: in artifacts using scope-alias, collection of > 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "a" {:artifacts [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :artifacts (:property v)))
+      (is (= 0 (:index v))))) 
+  (testing "found: in projects using scope, collection of 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "alpha" {:projects [{:scope "alpha" :scope-alias "a"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :projects (:property v)))
+      (is (= 0 (:index v)))))
+  (testing "found: in projects using scope, collection of > 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "alpha" {:projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :projects (:property v)))
+      (is (= 0 (:index v)))))
+  (testing "found: in projects using scope-alias, collection of 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "a" {:projects [{:scope "alpha" :scope-alias "a"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :projects (:property v)))
+      (is (= 0 (:index v)))))
+  (testing "found: in projects using scope-alias, collection of > 1"
+    (let [v (common/get-scope-in-artifacts-or-projects "a" {:projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= "alpha" (:scope v)))
+      (is (= :projects (:property v)))
+      (is (= 0 (:index v))))))
+
+
+(deftest find-scope-path-test
+  (testing "not found: project root"
+    (let [v (common/find-scope-path "zulu" {:project {:scope "top"
+                                                      :scope-alias "t"}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
       (is (false? (:success v)))
-      (is (= (:reason v) "Definition for scope or scope-alias in title line of 'zulu' at query path of '[:project]' not found in config."))))))
+      (is (= "Definition for scope or scope-alias in title line of 'zulu' at query path of '[:project]' not found in config." (:reason v)))))
+  (testing "found: project root as scope"
+    (let [v (common/find-scope-path "top" {:project {:scope "top"
+                                                     :scope-alias "t"}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 1 (count (:scope-path v))))
+      (is (= "top" (first (:scope-path v))))
+      (is (= 1 (count (:json-path v))))
+      (is (= :project (first (:json-path v))))))
+  (testing "found: project root as scope alias"
+    (let [v (common/find-scope-path "t" {:project {:scope "top"
+                                                   :scope-alias "t"}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 1 (count (:scope-path v))))
+      (is (= "top" (first (:scope-path v))))
+      (is (= 1 (count (:json-path v))))
+      (is (= :project (first (:json-path v))))))
+  (testing "not found: 2nd level node"
+    (let [v (common/find-scope-path "top.zulu" {:project {:scope "top"
+                                                          :scope-alias "t"
+                                                          :artifacts [{:scope "art1" :scope-alias "a1"} {:scope "art2" :scope-alias "a2"} {:scope "art3" :scope-alias "a3"} {:scope "art4" :scope-alias "a4"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (false? (:success v)))
+      (is (= "Definition for scope or scope-alias in title line of 'top' at query path of '[:project [:artifacts :projects]]' not found in config." (:reason v)))))
+  (testing "found: root artifact as scope at first index"
+    (let [v (common/find-scope-path "top.art1" {:project {:scope "top"
+                                                          :scope-alias "t"
+                                                          :artifacts [{:scope "art1" :scope-alias "a1"} {:scope "art2" :scope-alias "a2"} {:scope "art3" :scope-alias "a3"} {:scope "art4" :scope-alias "a4"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "art1" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :artifacts (nth (:json-path v) 1)))
+      (is (= 0 (nth (:json-path v) 2)))))
+  (testing "found: root artifact as scope at second index"
+    (let [v (common/find-scope-path "top.art2" {:project {:scope "top"
+                                                          :scope-alias "t"
+                                                          :artifacts [{:scope "art1" :scope-alias "a1"} {:scope "art2" :scope-alias "a2"} {:scope "art3" :scope-alias "a3"} {:scope "art4" :scope-alias "a4"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "art2" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :artifacts (nth (:json-path v) 1)))
+      (is (= 1 (nth (:json-path v) 2)))))
+  (testing "found: root artifact as scope-alias at first index"
+    (let [v (common/find-scope-path "top.a1" {:project {:scope "top"
+                                                        :scope-alias "t"
+                                                        :artifacts [{:scope "art1" :scope-alias "a1"} {:scope "art2" :scope-alias "a2"} {:scope "art3" :scope-alias "a3"} {:scope "art4" :scope-alias "a4"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "art1" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :artifacts (nth (:json-path v) 1)))
+      (is (= 0 (nth (:json-path v) 2)))))
+  (testing "found: root artifact as scope-alias at second index"
+    (let [v (common/find-scope-path "top.a2" {:project {:scope "top"
+                                                        :scope-alias "t"
+                                                        :artifacts [{:scope "art1" :scope-alias "a1"} {:scope "art2" :scope-alias "a2"} {:scope "art3" :scope-alias "a3"} {:scope "art4" :scope-alias "a4"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "art2" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :artifacts (nth (:json-path v) 1)))
+      (is (= 1 (nth (:json-path v) 2))))) 
+  (testing "found: 1 sub-project as scope at first index"
+    (let [v (common/find-scope-path "top.alpha" {:project {:scope "top"
+                                                           :scope-alias "t"
+                                                           :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "alpha" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :projects (nth (:json-path v) 1)))
+      (is (= 0 (nth (:json-path v) 2)))))
+  (testing "found: 1 sub-project as scope at second index"
+    (let [v (common/find-scope-path "top.bravo" {:project {:scope "top"
+                                                           :scope-alias "t"
+                                                           :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "bravo" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :projects (nth (:json-path v) 1)))
+      (is (= 1 (nth (:json-path v) 2)))))
+  (testing "found: 1 sub-project as scope-alias at first index"
+    (let [v (common/find-scope-path "top.a" {:project {:scope "top"
+                                                       :scope-alias "t"
+                                                       :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "alpha" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :projects (nth (:json-path v) 1)))
+      (is (= 0 (nth (:json-path v) 2)))))
+  (testing "found: 1 sub-project as scope-alias at second index"
+    (let [v (common/find-scope-path "top.b" {:project {:scope "top"
+                                                       :scope-alias "t"
+                                                       :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b"} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 2 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "bravo" (nth (:scope-path v) 1)))
+      (is (= 3 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :projects (nth (:json-path v) 1)))
+      (is (= 1 (nth (:json-path v) 2)))))
+  (testing "found: 2 sub-projects as alternating scope/scope-alias at second index"
+    (let [v (common/find-scope-path "top.b.sub" {:project {:scope "top"
+                                                           :scope-alias "t"
+                                                           :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b" :projects [{:scope "sub"}]} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 3 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "bravo" (nth (:scope-path v) 1)))
+      (is (= "sub" (nth (:scope-path v) 2)))
+      (is (= 5 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :projects (nth (:json-path v) 1)))
+      (is (= 1 (nth (:json-path v) 2)))
+      (is (= :projects (nth (:json-path v) 3)))
+      (is (= 0 (nth (:json-path v) 4)))))
+  (testing "found: 1 sub-project and 1 artifact as alternating scope/scope-alias at second index"
+    (let [v (common/find-scope-path "top.b.sub" {:project {:scope "top"
+                                                           :scope-alias "t"
+                                                           :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b" :artifacts [{:scope "sub"}]} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}})]
+      (is (map? v))
+      (is (boolean? (:success v)))
+      (is (true? (:success v)))
+      (is (= 3 (count (:scope-path v))))
+      (is (= "top" (nth (:scope-path v) 0)))
+      (is (= "bravo" (nth (:scope-path v) 1)))
+      (is (= "sub" (nth (:scope-path v) 2)))
+      (is (= 5 (count (:json-path v))))
+      (is (= :project (nth (:json-path v) 0)))
+      (is (= :projects (nth (:json-path v) 1)))
+      (is (= 1 (nth (:json-path v) 2)))
+      (is (= :artifacts (nth (:json-path v) 3)))
+      (is (= 0 (nth (:json-path v) 4))))))
 
 
 (deftest validate-commit-msg-test

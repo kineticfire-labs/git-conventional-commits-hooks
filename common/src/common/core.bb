@@ -614,14 +614,26 @@
       (first result))))
 
 
+(defn get-scope-in-artifacts-or-projects
+  "Finds the string `scope`, which can be a scope or scope alias, in the `node` ':artifacts' or ':projects' and returns a map result.  If found, returns key 'success' to boolean 'true', 'scope' to the string scope (even if the input scope was a scope alias), the `property` where the scope was found as either keyword ':artifacts' or ':projects', and `index` to the zero-based index in the sequence.  Otherwise returns boolean 'false'.  The `scope` and `node` must be valid."
+  [scope node]
+  (let [artifact-result (get-scope-in-col scope (:artifacts node))]
+    (if (:success artifact-result)
+      {:success true
+       :scope (:scope artifact-result)
+       :property :artifacts
+       :index (:index artifact-result)}
+      (let [project-result (get-scope-in-col scope (:projects node))]
+        (if (:success project-result)
+          {:success true
+           :scope (:scope project-result)
+           :property :projects
+           :index (:index project-result)}
+          {:success false})))))
 
-;; todo
-;; todo: tests
-;; assumptions:
-;; - config valid
-;; - query-path valid format
-;; query-path can be scope or scope-alias, dot separated
+
 (defn find-scope-path
+  "Finds the scope and json paths for the string `query-path`, which can be a dot-separated path of scope and/or scope-aliases, using the `config` returning a map result.  If found, returns key 'success' to boolean 'true', 'scope-path' as a vector of strings of scopes (even if the `query-path` contained scope aliases), and the 'json-path' as a vector of the json path (using keywords and integer indicies) through the config.  The `config` must be valid."
   [query-path config]
   (let [query-path-vec-top (str/split query-path #"\.")
         scope-top (first query-path-vec-top)
@@ -637,26 +649,12 @@
           {:success true
            :scope-path scope-path
            :json-path json-path}
-          (let [artifact-result (get-scope-in-col (first query-path-vec) (:artifacts node))]
-            (if (:success artifact-result)
-              {:success true
-               :scope-path (conj scope-path (:scope artifact-result))
-               :json-path (conj json-path :artifacts (:index artifact-result))}
-              (let [project-result (get-scope-in-col (first query-path-vec) (:projects node))]
-                (if (not (:success project-result))
-                  (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope-top "' at query path of '" json-path "' not found in config.") (lazy-seq [0])) ;; todo what err path output to show?
-                  "todo recur")))))))))
-      
-;; (recur (conj scope-path (:scope artifact-result)) (conj json-path :artifacts (:index artifact-result)) (rest query-path-vec) )
-
-
-
-;;todo
-  ;;
-  ;;
-  ;;(comment (loop [query-path-vec (rest query-path-vec-top)
-    ;;              scope-path []
-      ;;            node node-top]))
+          (let [scope (first query-path-vec)
+                result (get-scope-in-artifacts-or-projects scope node)]
+            (if (:success result)
+              (let [next-json-path (conj json-path (:property result) (:index result))]
+                (recur (conj scope-path (:scope result)) next-json-path (rest query-path-vec) (get-in config next-json-path)))
+              (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope-top "' at query path of '" (conj json-path [:artifacts :projects]) "' not found in config.") (lazy-seq [0])))))))))
 
 
 ;; todo: tests
