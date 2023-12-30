@@ -654,7 +654,7 @@
             (if (:success result)
               (let [next-json-path (conj json-path (:property result) (:index result))]
                 (recur (conj scope-path (:scope result)) next-json-path (rest query-path-vec) (get-in config next-json-path)))
-              (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope-top "' at query path of '" (conj json-path [:artifacts :projects]) "' not found in config.") (lazy-seq [0])))))))))
+              (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope "' at query path of '" (conj json-path [:artifacts :projects]) "' not found in config.") (lazy-seq [0])))))))))
 
 
 ;; todo: tests
@@ -710,11 +710,10 @@
                 (if (nil? err-body)
                   (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title)]
                     (if (:success scope-type-response)
-                      (do
-                        (comment (println "Scope:" (:scope scope-type-response))
-                        (println "Type:" (:type scope-type-response))
-                        (println "Breaking:" (:breaking scope-type-response)))
-                        (assoc response :success true)) ;; todo: apply check of valid scopes/types from config
+                      (let [scope-path-response (find-scope-path (:scope scope-type-response) config)]
+                        (if (:success scope-path-response)
+                          {:blah 7}
+                          scope-path-response))
                       scope-type-response))
                   err-body))
               err-title))

@@ -2142,13 +2142,13 @@ BREAKING CHANGE: a big change")
       (is (= 9 (nth (:locations v) 2))))))
 
 
-(deftest validate-commit-msg-title-test
+(deftest validate-commit-msg-title-len-test
   (let [config {:commit-msg {:length {:title-line {:min 12    ;; 'ab(cd): efgh' = 12 chars
                                                    :max 20}
                                       :body-line {:min 2
                                                   :max 10}}}}]
     (testing "commit msg title line has too few characters"
-      (let [v (common/validate-commit-msg "ab(cd): efg\n\nAbcdef" config)]
+      (let [v (common/validate-commit-msg-title-len "ab(cd): efg" config)]
         (is (map? v))
         (is (boolean? (:success v)))
         (is (false? (:success v)))
@@ -2157,13 +2157,11 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    (testing "commit msg title line has meets minimum characters"
-      (let [v (common/validate-commit-msg "ab(cd): efgh\n\nAbcdef" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))
+    (testing "commit msg title line meets minimum characters"
+      (let [v (common/validate-commit-msg-title-len "ab(cd): efgh" config)]
+        (is (nil? v))))
     (testing "commit msg title line has too many characters"
-      (let [v (common/validate-commit-msg "ab(cd): efghijklmnopq\n\nAbcdef" config)]
+      (let [v (common/validate-commit-msg-title-len "ab(cd): efghijklmnopq" config)]
         (is (map? v))
         (is (boolean? (:success v)))
         (is (false? (:success v)))
@@ -2172,11 +2170,9 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    (testing "commit msg title line has meets maximum characters"
-      (let [v (common/validate-commit-msg "ab(cd): efghijklmnop\n\nAbcdef" config)]
-        (is (map? v))
-        (is (boolean? (:success v)))
-        (is (true? (:success v)))))))
+    (testing "commit msg title line meets maximum characters"
+      (let [v (common/validate-commit-msg-title-len "ab(cd): efghijklmnop" config)]
+        (is (nil? v))))))
 
 
 (deftest validate-commit-msg-body-len-test
@@ -2566,7 +2562,7 @@ BREAKING CHANGE: a big change")
       (is (map? v))
       (is (boolean? (:success v)))
       (is (false? (:success v)))
-      (is (= "Definition for scope or scope-alias in title line of 'top' at query path of '[:project [:artifacts :projects]]' not found in config." (:reason v)))))
+      (is (= "Definition for scope or scope-alias in title line of 'zulu' at query path of '[:project [:artifacts :projects]]' not found in config." (:reason v)))))
   (testing "found: root artifact as scope at first index"
     (let [v (common/find-scope-path "top.art1" {:project {:scope "top"
                                                           :scope-alias "t"
@@ -2723,7 +2719,10 @@ BREAKING CHANGE: a big change")
         config-more-chars {:commit-msg {:length {:title-line {:min 12
                                                               :max 60}
                                                  :body-line {:min 2
-                                                             :max 10}}}}]
+                                                             :max 10}}}
+                           :project {:scope "top"
+                                     :scope-alias "t"
+                                     :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b" :artifacts [{:scope "sub"}]} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}}]
     ;; test commit-msg overall: isn't empty (nil or empty string)
     (testing "invalid: commit msg is nil"
       (let [v (common/validate-commit-msg nil config)]
@@ -2873,32 +2872,36 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    ;; todo
-    (comment (testing "valid: title line only, no exclamation mark"
-      (let [v (common/validate-commit-msg "feat(proj): add cool new feature" config-more-chars)]
+    ;; scope path found vs. not found in config
+    (testing "invalid - top-level scope not found in config"
+      (let [v (common/validate-commit-msg "ab(zulu): a new feature" config-more-chars)]
+        (println v)
         (is (map? v))
         (is (boolean? (:success v)))
-        (is (true? (:success v)))
-        (is (string? (:type v)))
-        (is (= (:type v) "feat"))
-        (is (string? (:scope v)))
-        (is (= (:scope v) "proj"))
-        (is (boolean? (:breaking v)))
-        (is (false? (:breaking v)))
-        (is (string? (:title-descr v)))
-        (is (= (:title-descr v) "add cool new feature"))))
-    (testing "valid: title line only, with exclamation mark"
-      (let [v (common/validate-commit-msg "feat(proj)!: add cool new feature" config-more-chars)]
+        (is (false? (:success v)))
+        (is (string? (:reason v)))
+        (is (= (:reason v) "Definition for scope or scope-alias in title line of 'zulu' at query path of '[:project]' not found in config."))
+        (is (false? (contains? v :type)))
+        (is (false? (contains? v :scope)))
+        (is (false? (contains? v :breaking)))
+        (is (false? (contains? v :title-descr)))
+        (is (seq? (:locations v)))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "invalid - second-level scope not found in config"
+      (let [v (common/validate-commit-msg "ab(top.zulu): a new feature" config-more-chars)]
+        (println v)
         (is (map? v))
         (is (boolean? (:success v)))
-        (is (true? (:success v)))
-        (is (string? (:type v)))
-        (is (= (:type v) "feat"))
-        (is (string? (:scope v)))
-        (is (= (:scope v) "proj"))
-        (is (boolean? (:breaking v)))
-        (is (true? (:breaking v)))
-        (is (string? (:title-descr v)))
-        (is (= (:title-descr v) "add cool new feature")))))))
+        (is (false? (:success v)))
+        (is (string? (:reason v)))
+        (is (= (:reason v) "Definition for scope or scope-alias in title line of 'zulu' at query path of '[:project [:artifacts :projects]]' not found in config."))
+        (is (false? (contains? v :type)))
+        (is (false? (contains? v :scope)))
+        (is (false? (contains? v :breaking)))
+        (is (false? (contains? v :title-descr)))
+        (is (seq? (:locations v)))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
     ;; todo add tests for new checks
-    
+    ))
