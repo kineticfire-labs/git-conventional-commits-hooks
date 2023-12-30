@@ -93,7 +93,7 @@
                         commit-msg-validate-response (common/validate-commit-msg commit-msg-formatted config)]
                     (if (:success commit-msg-validate-response)
                       (println "commit msg valid!")
-                      (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)))))
+                      (common/handle-err-exit title (str "Commit message invalid '" (first args) "'. " (:reason commit-msg-validate-response)) commit-msg-formatted 0)))  ;; (:locations commit-msg-validate-response)
                   (common/handle-err-exit title (str "Error reading git commit edit message file '" (first args) "'. " (:reason commit-msg-read-response)))))
               (common/handle-warn-proceed title "Commit message enforcement disabled."))
             (common/handle-err-exit title (str "Error validating config file at " config-file "." (:reason config-validate-response)))))

@@ -141,9 +141,11 @@
    (run-shell-command (generate-commit-msg commit-msg))
    (exit 1))
   ([title err-msg commit-msg line-num]
-   (run-shell-command (generate-commit-err-msg title err-msg))
-   (run-shell-command (generate-commit-msg commit-msg line-num))
-   (exit 1)))
+   (if (integer? line-num)
+     (do (run-shell-command (generate-commit-err-msg title err-msg))
+         (run-shell-command (generate-commit-msg commit-msg line-num))
+         (exit 1))
+     (handle-err-exit title err-msg commit-msg))))
 
 
 (defn generate-commit-warn-msg
@@ -657,65 +659,36 @@
               (create-validate-commit-msg-err (str "Definition for scope or scope-alias in title line of '" scope "' at query path of '" (conj json-path [:artifacts :projects]) "' not found in config.") (lazy-seq [0])))))))))
 
 
-;; todo: tests
-;;
-;; todo
-  ;; input:
-  ;;   - string commit msg (already formatted)
-  ;;   - config
-  ;;      - valid types/scopes (from config, validated so no errs)
-  ;;      - min/max line lengths (from config, validated so no errs)
-  ;; return:
-  ;;   - yes/no valid
-  ;;   - if valid
-  ;;      - scope path... not alias
-  ;;      - type
-  ;;      - yes/no breaking change
-  ;;   - if invalid
-  ;;      - reason
-  ;;      - lazyseq where errs were found, only if they correspond to line #s!
-  ;;
-  ;; assumptions:
-  ;; - config validated
-  ;; - commit edit message formatted
-  ;;
-  ;; checking:
-  ;; - msg can't be empty string or nil
-  ;; - msg can't contain tabs
-  ;; - title min/max chars 
-  ;; - body min/max chars 
-  ;; - title-line
-  ;;    - format
-  ;;    - get type, scope, descr, breaking change
-  ;; * check scope/type are valid based on those defined in config
-  ;; * get if breaking change in body, if not in title
-  ;;
-  ;; Notes:
-  ;; - not checking tokens in footer
-  ;;
 (defn validate-commit-msg
-  "Accepts the commit message as a string... todo"
+  "Valides the `commit-msg` using definitions in `config` and returns a map result.  If valid, returns key 'success' to boolean 'true', 'scope-path' as a vector of one or more string scopes, 'json-path' as a vector of one or more keywords or integer indicies through the config, 'type' as the string type of change, and 'breaking' as a boolean 'true' if a breaking chagne and 'false' otherwise.  Else returns 'success' as boolean 'false', a string 'reason' for the error, and a lazy sequence 'locations' indicating the line number where the error occurred if applicable.  Valid if the `commit-msg` is not nil or empty, does not contain tabs, the title line and body lines are within the min/max character range per `config`, the title line meets the format for the type/scope/description and breaking change, and type/scope combination is defined in `config`; does not check footer tokens.  The `commit-msg` must be formatted and the `config` must be valid." 
   [commit-msg config]
-  (let [response {:success false}]
-    (if (empty? commit-msg)
-      (create-validate-commit-msg-err "Commit message cannot be empty.")
-      (let [commit-msg-all-col (split-lines commit-msg)
-            commit-msg-title (first commit-msg-all-col)
-            commit-msg-body-col (rest (rest commit-msg-all-col))  ;; the two 'rest' operations get the body collection without the empty string created by the two newlines separating the title from the body, if there is a body
-            err-tab-seq (index-matches commit-msg-all-col #"	")]
-        (if (= 0 (count err-tab-seq))
-          (let [err-title (validate-commit-msg-title-len commit-msg-title config)]
-            (if (nil? err-title)
-              (let [err-body (validate-commit-msg-body-len commit-msg-body-col config)]
-                (if (nil? err-body)
-                  (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title)]
-                    (if (:success scope-type-response)
-                      (let [scope-path-response (find-scope-path (:scope scope-type-response) config)]
-                        (if (:success scope-path-response)
-                          {:blah 7}
-                          scope-path-response))
-                      scope-type-response))
-                  err-body))
-              err-title))
-          (create-validate-commit-msg-err "Commit message cannot contain tab characters." err-tab-seq))))))
-
+  (if (empty? commit-msg)
+    (create-validate-commit-msg-err "Commit message cannot be empty.")
+    (let [commit-msg-all-col (split-lines commit-msg)
+          commit-msg-title (first commit-msg-all-col)
+          commit-msg-body-col (rest (rest commit-msg-all-col))  ;; the two 'rest' operations get the body collection without the empty string created by the two newlines separating the title from the body, if there is a body
+          err-tab-seq (index-matches commit-msg-all-col #"	")]
+      (if (= 0 (count err-tab-seq))
+        (let [err-title (validate-commit-msg-title-len commit-msg-title config)]
+          (if (nil? err-title)
+            (let [err-body (validate-commit-msg-body-len commit-msg-body-col config)]
+              (if (nil? err-body)
+                (let [scope-type-response (validate-commit-msg-title-scope-type commit-msg-title)]
+                  (if (:success scope-type-response)
+                    (let [scope-path-response (find-scope-path (:scope scope-type-response) config)]
+                      (if (:success scope-path-response)
+                        (let [types (get-in config (conj (:json-path scope-path-response) :types))]
+                          (if (some (fn [itm] (= (:type scope-type-response) itm)) types)
+                            {:success true
+                             :scope-path (:scope-path scope-path-response)
+                             :json-path (:json-path scope-path-response)
+                             :type (:type scope-type-response)
+                             :breaking (or (:breaking scope-type-response) (if (> (count (index-matches commit-msg-all-col #"BREAKING CHANGE:")) 0)
+                                                                             true
+                                                                             false))}
+                            (create-validate-commit-msg-err (str "Definition in title line of type '" (:type scope-type-response) "' for scope '" (:scope scope-type-response) "' at query path of '" (:json-path scope-path-response) "' not found in config.") (lazy-seq [0]))))
+                        scope-path-response))
+                    scope-type-response))
+                err-body))
+            err-title))
+        (create-validate-commit-msg-err "Commit message cannot contain tab characters." err-tab-seq)))))

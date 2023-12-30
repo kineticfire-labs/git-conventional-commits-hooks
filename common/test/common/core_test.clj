@@ -2722,7 +2722,8 @@ BREAKING CHANGE: a big change")
                                                              :max 10}}}
                            :project {:scope "top"
                                      :scope-alias "t"
-                                     :projects [{:scope "alpha" :scope-alias "a"} {:scope "bravo" :scope-alias "b" :artifacts [{:scope "sub"}]} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}}]
+                                     :types ["ci"]
+                                     :projects [{:scope "alpha" :scope-alias "a" :types ["feat"]} {:scope "bravo" :scope-alias "b" :artifacts [{:scope "sub"}]} {:scope "charlie" :scope-alias "c"} {:scope "delta" :scope-alias "d"}]}}]
     ;; test commit-msg overall: isn't empty (nil or empty string)
     (testing "invalid: commit msg is nil"
       (let [v (common/validate-commit-msg nil config)]
@@ -2872,10 +2873,9 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
-    ;; scope path found vs. not found in config
+    ;; scope path not found
     (testing "invalid - top-level scope not found in config"
       (let [v (common/validate-commit-msg "ab(zulu): a new feature" config-more-chars)]
-        (println v)
         (is (map? v))
         (is (boolean? (:success v)))
         (is (false? (:success v)))
@@ -2890,7 +2890,6 @@ BREAKING CHANGE: a big change")
         (is (= 0 (first (:locations v))))))
     (testing "invalid - second-level scope not found in config"
       (let [v (common/validate-commit-msg "ab(top.zulu): a new feature" config-more-chars)]
-        (println v)
         (is (map? v))
         (is (boolean? (:success v)))
         (is (false? (:success v)))
@@ -2903,5 +2902,128 @@ BREAKING CHANGE: a big change")
         (is (seq? (:locations v)))
         (is (= 1 (count (:locations v))))
         (is (= 0 (first (:locations v))))))
+    ;; type not found
+    (testing "invalid - type not found in config for top-level project"
+      (let [v (common/validate-commit-msg "ab(top): a new feature" config-more-chars)]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (false? (:success v)))
+        (is (string? (:reason v)))
+        (is (= (:reason v) "Definition in title line of type 'ab' for scope 'top' at query path of '[:project]' not found in config."))
+        (is (false? (contains? v :type)))
+        (is (false? (contains? v :scope)))
+        (is (false? (contains? v :breaking)))
+        (is (false? (contains? v :title-descr)))
+        (is (seq? (:locations v)))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    (testing "invalid - type not found in config for second-level project"
+      (let [v (common/validate-commit-msg "ab(top.alpha): a new feature" config-more-chars)]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (false? (:success v)))
+        (is (string? (:reason v)))
+        (is (= (:reason v) "Definition in title line of type 'ab' for scope 'top.alpha' at query path of '[:project :projects 0]' not found in config."))
+        (is (false? (contains? v :type)))
+        (is (false? (contains? v :scope)))
+        (is (false? (contains? v :breaking)))
+        (is (false? (contains? v :title-descr)))
+        (is (seq? (:locations v)))
+        (is (= 1 (count (:locations v))))
+        (is (= 0 (first (:locations v))))))
+    ;; valid
+    (testing "valid - top-level project, non-breaking change"
+      (let [v (common/validate-commit-msg "ci(top): a new feature" config-more-chars)]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (true? (:success v)))
+        (is (= 1 (count (:scope-path v))))
+        (is (= "top" (nth (:scope-path v) 0)))
+        (is (= 1 (count (:json-path v))))
+        (is (= :project (nth (:json-path v) 0)))
+        (is (= "ci" (:type v)))
+        (is (boolean? (:breaking v)))
+        (is (false? (:breaking v)))
+        (is (false? (contains? v :reason)))
+        (is (false? (contains? v :locations)))))
+    (testing "valid - top-level project, breaking change indicated in title"
+      (let [v (common/validate-commit-msg "ci(top)!: a new feature" config-more-chars)]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (true? (:success v)))
+        (is (= 1 (count (:scope-path v))))
+        (is (= "top" (nth (:scope-path v) 0)))
+        (is (= 1 (count (:json-path v))))
+        (is (= :project (nth (:json-path v) 0)))
+        (is (= "ci" (:type v)))
+        (is (boolean? (:breaking v)))
+        (is (true? (:breaking v)))
+        (is (false? (contains? v :reason)))
+        (is (false? (contains? v :locations)))))
+    (testing "valid - top-level project, breaking change indicated in body"
+      (let [v (common/validate-commit-msg "ci(top): a new feature\n\nMore info\nBREAKING CHANGE: this causes a breaking change." (assoc-in config-more-chars [:commit-msg :length :body-line :max] 60))]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (true? (:success v)))
+        (is (= 1 (count (:scope-path v))))
+        (is (= "top" (nth (:scope-path v) 0)))
+        (is (= 1 (count (:json-path v))))
+        (is (= :project (nth (:json-path v) 0)))
+        (is (= "ci" (:type v)))
+        (is (boolean? (:breaking v)))
+        (is (true? (:breaking v)))
+        (is (false? (contains? v :reason)))
+        (is (false? (contains? v :locations)))))
     ;; todo add tests for new checks
-    ))
+    (testing "valid - top-level project, non-breaking change"
+      (let [v (common/validate-commit-msg "feat(top.alpha): a new feature" config-more-chars)]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (true? (:success v)))
+        (is (= 2 (count (:scope-path v))))
+        (is (= "top" (nth (:scope-path v) 0)))
+        (is (= "alpha" (nth (:scope-path v) 1)))
+        (is (= 3 (count (:json-path v))))
+        (is (= :project (nth (:json-path v) 0)))
+        (is (= :projects (nth (:json-path v) 1)))
+        (is (= 0 (nth (:json-path v) 2)))
+        (is (= "feat" (:type v)))
+        (is (boolean? (:breaking v)))
+        (is (false? (:breaking v)))
+        (is (false? (contains? v :reason)))
+        (is (false? (contains? v :locations)))))
+    (testing "valid - top-level project, breaking change indicated in title"
+      (let [v (common/validate-commit-msg "feat(top.alpha)!: a new feature" config-more-chars)]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (true? (:success v)))
+        (is (= 2 (count (:scope-path v))))
+        (is (= "top" (nth (:scope-path v) 0)))
+        (is (= "alpha" (nth (:scope-path v) 1)))
+        (is (= 3 (count (:json-path v))))
+        (is (= :project (nth (:json-path v) 0)))
+        (is (= :projects (nth (:json-path v) 1)))
+        (is (= 0 (nth (:json-path v) 2)))
+        (is (= "feat" (:type v)))
+        (is (boolean? (:breaking v)))
+        (is (true? (:breaking v)))
+        (is (false? (contains? v :reason)))
+        (is (false? (contains? v :locations)))))
+    (testing "valid - top-level project, breaking change indicated in body"
+      (let [v (common/validate-commit-msg "feat(top.alpha): a new feature\n\nMore info\nBREAKING CHANGE: this causes a breaking change." (assoc-in config-more-chars [:commit-msg :length :body-line :max] 60))]
+        (is (map? v))
+        (is (boolean? (:success v)))
+        (is (true? (:success v)))
+        (is (= 2 (count (:scope-path v))))
+        (is (= "top" (nth (:scope-path v) 0)))
+        (is (= "alpha" (nth (:scope-path v) 1)))
+        (is (= 3 (count (:json-path v))))
+        (is (= :project (nth (:json-path v) 0)))
+        (is (= :projects (nth (:json-path v) 1)))
+        (is (= 0 (nth (:json-path v) 2)))
+        (is (= "feat" (:type v)))
+        (is (boolean? (:breaking v)))
+        (is (true? (:breaking v)))
+        (is (false? (contains? v :reason)))
+        (is (false? (contains? v :locations)))))))
+
