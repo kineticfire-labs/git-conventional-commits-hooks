@@ -188,24 +188,6 @@
       (assoc response :reason result))))
 
 
-;; todo: needed?  if so, tests and move under 'validate-config-fail'
-(defn is-string-min-char-compliant?
-  "Returns 'true' if 'line' has 'min-chars' characters or more and 'false' otherwise."
-  [line min-chars]
-  (if (>= (count line) min-chars)
-    true
-    false))
-
-
-;; todo: needed?  if so, tests and move under 'validate-config-fail'
-(defn is-string-max-char-compliant?
-  "Returns 'true' if string 'line' has 'max-chars' characters or fewer and 'false' otherwise."
-  [line max-chars]
-  (if (<= (count line) max-chars)
-    true
-    false))
-
-
 (defn validate-config-fail
   "Returns a map with key ':success' with value boolean 'false' and ':reason' set to string 'msg'.  If map 'data' is given, then associates the map values into 'data'."
   ([msg]
@@ -214,17 +196,6 @@
    (-> data
        (assoc :success false)
        (assoc :reason msg))))
-
-
-;; todo: not being used at this time
-(defn validate-map-value
-  [data key-path eval-fn fail-fn err-msg-nil err-msg-fail-eval]
-  (let [v (get-in data key-path)]
-    (if (nil? v)
-      (fail-fn err-msg-nil data)
-      (if (eval-fn v)
-        (assoc data :success true)
-        (fail-fn err-msg-fail-eval data)))))
 
 
 (defn validate-config-param-string
@@ -257,16 +228,6 @@
           (assoc data :success true)
           (validate-config-fail "Commit message enforcement 'enabled' (commit-msg-enforcement.enabled) must be a boolean 'true' or 'false'." data)))
       (validate-config-fail "Commit message enforcement block (commit-msg-enforcement) must be defined." data))))
-
-
-;;todo: want to re-cast checks into this form, but need variadic funct from do-on-success
-(comment (defn validate-config-length
-  [data]
-  (let [response (-> data
-                     (validate-map-value [:config :commit-msg :length :title-line :min] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg))
-                                         "Minimum length of title line (length.title-line.min) must be defined."
-                                         "Minimum length of title line (length.title-line.min) must be a positive integer."))])
-  ))
 
 
 (defn validate-config-length

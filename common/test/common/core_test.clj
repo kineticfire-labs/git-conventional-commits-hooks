@@ -329,29 +329,6 @@
       (is (= "abcd" (:other v))))))
 
 
-(deftest validate-map-value-test
-  (testing "invalid: key sequence not found"
-    (let [v (common/validate-map-value {:a {:b 2}} [:a :c] pos-int? (fn[err-msg data](assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
-      (is (boolean? (:success v)))
-      (is (false? (:success v)))
-      (is (string? (:reason v)))
-      (is (= "Was nil." (:reason v)))
-      (is (= 2 (get-in v [:a :b])))))
-  (testing "invalid: eval fails"
-    (let [v (common/validate-map-value {:a {:b -1}} [:a :b] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
-      (is (boolean? (:success v)))
-      (is (false? (:success v)))
-      (is (string? (:reason v)))
-      (is (= "Not positive int." (:reason v)))
-      (is (= -1 (get-in v [:a :b])))))
-  (testing "valid: eval passes"
-    (let [v (common/validate-map-value {:a {:b 2}} [:a :b] pos-int? (fn [err-msg data] (assoc (assoc data :success false) :reason err-msg)) "Was nil." "Not positive int.")]
-      (is (boolean? (:success v)))
-      (is (true? (:success v)))
-      (is (false? (contains? v :reason)))
-      (is (= 2 (get-in v [:a :b]))))))
-
-
 (deftest validate-config-msg-enforcement-test
   (testing "enforcement block not defined"
     (let [v (common/validate-config-msg-enforcement {:config {}})]
@@ -3014,7 +2991,6 @@ BREAKING CHANGE: a big change")
         (is (true? (:breaking v)))
         (is (false? (contains? v :reason)))
         (is (false? (contains? v :locations)))))
-    ;; todo add tests for new checks
     (testing "valid - top-level project, non-breaking change"
       (let [v (common/validate-commit-msg "feat(top.alpha): a new feature" config-more-chars)]
         (is (map? v))
