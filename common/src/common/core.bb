@@ -64,6 +64,12 @@
   (System/exit value))
 
 
+(defn split-lines
+  "Splits the string 'data' based on an optional carriage return '\r' and newline '\n' and returns the result as a vector.  Same as split-lines, but returns all newlines (including those that are newline-only)."
+  [data]
+  (clojure.string/split data #"\r?\n" -1))
+
+
 (defn ^:impure run-shell-command
   "Runs commands in 'lines', as either a string or vector of strings, by using 'shell'."
   [lines]
@@ -89,28 +95,29 @@
 
 
 (defn generate-commit-msg-offending-line-header
-  "Generates a header that indicates an offending line that was in error, if 'line-num' is integer 0 or greater; 'line-num' is indexed starting at 0.  Appends the header line to the vector of strings 'lines' and returns the result or, if no header should be generated, returns 'lines' unchanged."
-  [lines line-num]
-  (if (< line-num 0)
+  "Generates a header that indicates an offending line that was in error, if sequence 'lines-num' is non-nil and non-empty; indexes in 'lines-num' are indexed starting at 0.  Appends the header line to the vector of strings 'lines' and returns the result or, if no header should be generated, returns 'lines' unchanged."
+  [lines lines-num]
+  (if (empty? lines-num)
     lines
-    (conj lines (str "\"   (offending line # " (inc line-num) " in red) **************\""))))
+    (conj lines (str "\"   offending line(s) # " (pr-str (map inc lines-num)) " in red **************\""))))
 
 
-;; todo: change to accept line-num as list
 (defn generate-commit-msg-offending-line-msg-highlight
-  "Adds shell color-code formatting for an offending line identified by integer 'line-num' in the vector of strings 'lines'.  Argument 'line-num' is indexed starting at 0.  If 'line-num' is negative, then 'lines' is returned unchanged."
-  [lines line-num]
-  (if (< line-num 0)
+  "Adds shell color-code formatting for an offending line(s) identified in the 'lines-num' sequence to the vector of strings 'lines'.  Contents of 'lines-num' are integer indicies indexed starting at 0.  If 'lines-num' is 'nil' or empty, then 'lines' is returned unchanged."
+  [lines lines-num]
+  (if (empty? lines-num)
     lines
-    (assoc lines line-num (str shell-color-red (nth lines line-num) shell-color-reset))))
-
+    (vec (map-indexed (fn [idx line] (if (some (fn [num] (= idx num)) lines-num)
+                                       (str shell-color-red line shell-color-reset)
+                                       line)) lines))))
 
 (defn generate-commit-msg
-  "Generates a formatted commit message, vector 'msg', with optional call-out to the offending line if the optional integer 'line-num' is non-negative; 'line-num' is indexed starting at 0.  Argument vector msg may contain an empty string or be an empty vector.  Returns the result as a lazy sequence of strings, formatted for shell output with color-coding."
+  "Generates a formatted commit message, using string 'msg', with optional call-out to the offending line(s) if the 'lines-num' sequence is non-nil and non-empty; 'lines-num' is indexed starting at 0.  Returns the result as a lazy sequence of strings, formatted for shell output with color-coding."
   ([msg]
-   (generate-commit-msg msg -1))
-  ([msg line-num]
-   (let [start-lines-top
+   (generate-commit-msg msg nil))
+  ([msg lines-num]
+   (let [msg-vec (split-lines msg)
+         start-lines-top
          [(str "\"" shell-color-blue "**********************************************\"")
           "\"BEGIN - COMMIT MESSAGE ***********************\""]
          start-line-end
@@ -120,7 +127,7 @@
           "\"END - COMMIT MESSAGE *************************\""
           (str "\"**********************************************" shell-color-reset "\"")]]
      (apply-display-with-shell
-      (into (into (conj (generate-commit-msg-offending-line-header start-lines-top line-num) start-line-end) (generate-commit-msg-offending-line-msg-highlight msg line-num)) end-lines)))))
+      (into (into (conj (generate-commit-msg-offending-line-header start-lines-top lines-num) start-line-end) (generate-commit-msg-offending-line-msg-highlight msg-vec lines-num)) end-lines)))))
 
 
 (defn generate-commit-err-msg
@@ -132,7 +139,7 @@
 
 
 (defn ^:impure handle-err-exit
-  "Generates and displays to the shell an error message, including the string 'title' as part of the title and the string 'err-msg' as the reason, using color-coding from the shell.  Optionally accepts vector of strings 'commit-msg' which display the original commit message; and optionally accepts the integer 'line-num', indexed at 0, which displays a message about the offending line and highlights it in the commit message.  Exits with return code 1."
+  "Generates and displays to the shell an error message, including the string 'title' as part of the title and the string 'err-msg' as the reason, using color-coding from the shell.  Optionally accepts a string 'commit-msg' to display; and optionally accepts a sequence 'line-num' of integer line numbers, indexed at 0, which displays a message about the offending line and highlights it in the commit message or can be 'nil'.  Exits with return code 1."
   ([title err-msg]
    (run-shell-command (generate-commit-err-msg title err-msg))
    (exit 1))
@@ -141,11 +148,9 @@
    (run-shell-command (generate-commit-msg commit-msg))
    (exit 1))
   ([title err-msg commit-msg line-num]
-   (if (integer? line-num)
-     (do (run-shell-command (generate-commit-err-msg title err-msg))
-         (run-shell-command (generate-commit-msg commit-msg line-num))
-         (exit 1))
-     (handle-err-exit title err-msg commit-msg))))
+   (run-shell-command (generate-commit-err-msg title err-msg))
+   (run-shell-command (generate-commit-msg commit-msg line-num))
+   (exit 1)))
 
 
 (defn generate-commit-warn-msg
@@ -469,12 +474,6 @@
     (if (nil? result)
       (assoc response :success true)
       (assoc response :reason result))))
-
-
-(defn split-lines
-  "Splits the string 'data' based on an optional carriage return '\r' and newline '\n' and returns the result as a vector.  Same as split-lines, but returns all newlines (including those that are newline-only)."
-  [data]
-  (clojure.string/split data #"\r?\n" -1))
 
 
 (defn format-commit-msg-all

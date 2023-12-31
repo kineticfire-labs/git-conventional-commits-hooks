@@ -78,6 +78,26 @@
       (is (= 1 (:val v))))))
 
 
+(deftest split-lines-test
+  (testing "empty string"
+    (let [v (common/split-lines "")]
+      (is (= 1 (count v)))
+      (is (= "" (first v)))
+      (is (vector? v))))
+  (testing "single line"
+    (let [v (common/split-lines "One long line")]
+      (is (= 1 (count v)))
+      (is (= "One long line" (first v)))
+      (is (vector? v))))
+  (testing "multiple lines"
+    (let [v (common/split-lines "First line\nSecond line\nThird line")]
+      (is (= 3 (count v)))
+      (is (= "First line" (first v)))
+      (is (= "Second line" (nth v 1)))
+      (is (= "Third line" (nth v 2)))
+      (is (vector? v)))))
+
+
 (deftest apply-display-with-shell-test
   (testing "string input"
     (let [v (common/apply-display-with-shell "test line")]
@@ -107,105 +127,145 @@
 
 (deftest generate-commit-msg-offending-line-header-test
   (testing "lines is empty vector"
-    (let [v (common/generate-commit-msg-offending-line-header [] -1)]
+    (let [v (common/generate-commit-msg-offending-line-header [] nil)]
       (is (vector? v))
       (is (= 0 (count v)))))
   (testing "lines is empty string"
-    (let [v (common/generate-commit-msg-offending-line-header [""] -1)]
+    (let [v (common/generate-commit-msg-offending-line-header [""] nil)]
       (is (vector? v))
       (is (= 1 (count v)))
       (is (= "" (first v)))))
-  (testing "line-num < 0 (no offending line)"
-    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] -1)]
+  (testing "lines-num is nil (no offending line)"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] nil)]
       (is (vector? v))
       (is (= 2 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))))
-  (testing "line-num = 0 (first line)"
-    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 0)]
+  (testing "lines-num is empty sequence (no offending line)"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] '())]
+      (is (vector? v))
+      (is (= 2 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "Line 2" (nth v 1)))))
+  (testing "lines-num indicates first line"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] '(0))]
       (is (vector? v))
       (is (= 3 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))
-      (is (= "\"   (offending line # 1 in red) **************\"" (nth v 2)))))
-  (testing "line-num = 1 (second line)"
-    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] 1)]
+      (is (= "\"   offending line(s) # (1) in red **************\"" (nth v 2)))))
+  (testing "lines-num indicates second line"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2"] '(1))]
       (is (vector? v))
       (is (= 3 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))
-      (is (= "\"   (offending line # 2 in red) **************\"" (nth v 2))))))
+      (is (= "\"   offending line(s) # (2) in red **************\"" (nth v 2)))))
+  (testing "lines-num indicates first and third lines, but not second line"
+    (let [v (common/generate-commit-msg-offending-line-header ["Line 1" "Line 2" "Line 3"] '(0 2))]
+      (is (vector? v))
+      (is (= 4 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "Line 2" (nth v 1)))
+      (is (= "Line 3" (nth v 2)))
+      (is (= "\"   offending line(s) # (1 3) in red **************\"" (nth v 3))))))
 
 
 (deftest generate-commit-msg-offending-line-msg-highlight-test
   (testing "lines is empty vector"
-    (let [v (common/generate-commit-msg-offending-line-msg-highlight [] -1)]
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight [] nil)]
       (is (vector? v))
       (is (= 0 (count v)))))
   (testing "lines is empty string"
-    (let [v (common/generate-commit-msg-offending-line-msg-highlight [""] -1)]
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight [""] nil)]
       (is (vector? v))
       (is (= 1 (count v)))
       (is (= "" (first v)))))
-  (testing "line-num < 0 (no offending line)"
-    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] -1)]
+  (testing "lines-num is nil (no offending line)"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] nil)]
       (is (vector? v))
       (is (= 2 (count v)))
       (is (= "Line 1" (first v)))
       (is (= "Line 2" (nth v 1)))))
-  (testing "line-num = 0 (first line)"
-    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] 0)]
+  (testing "lines-num is empty (no offending line)"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] '())]
+      (is (vector? v))
+      (is (= 2 (count v)))
+      (is (= "Line 1" (first v)))
+      (is (= "Line 2" (nth v 1)))))
+  (testing "lines-num indicates first line"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] '(0))]
       (is (vector? v))
       (is (= 2 (count v)))
       (is (= "\\e[1m\\e[31mLine 1\\033[0m\\e[0m" (first v)))
       (is (= "Line 2" (nth v 1)))))
-  (testing "line-num = 1 (second line)"
-    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] 1)]
+  (testing "lines-num indicates second line"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2"] '(1))]
       (is (vector? v))
       (is (= 2 (count v)))
       (is (= "Line 1" (first v)))
-      (is (= "\\e[1m\\e[31mLine 2\\033[0m\\e[0m" (nth v 1))))))
+      (is (= "\\e[1m\\e[31mLine 2\\033[0m\\e[0m" (nth v 1)))))
+  (testing "lines-num indicates first and third lines"
+    (let [v (common/generate-commit-msg-offending-line-msg-highlight ["Line 1" "Line 2" "Line 3"] '(0 2))]
+      (is (vector? v))
+      (is (= 3 (count v)))
+      (is (= "\\e[1m\\e[31mLine 1\\033[0m\\e[0m" (nth v 0)))
+      (is (= "Line 2" (nth v 1)))
+      (is (= "\\e[1m\\e[31mLine 3\\033[0m\\e[0m" (nth v 2))))))
 
 
 (deftest generate-commit-msg-test
-  (testing "lines is empty vector"
-    (let [v (common/generate-commit-msg [] -1)]
-      (is (seq? v))
-      (is (true? (str/includes? (nth v 3) "*************************")))
-      (is (= 6 (count v)))))
   (testing "lines is empty string"
-    (let [v (common/generate-commit-msg [""] -1)]
+    (let [v (common/generate-commit-msg "")]
       (is (seq? v))
       (is (= 7 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
       (is (= "echo -e " (nth v 3)))
       (is (true? (str/includes? (nth v 5) "echo -e \"END - COMMIT MESSAGE")))))
-  (testing "line-num < 0 (no offending line)"
-    (let [v (common/generate-commit-msg ["Line 1" "Line 2"] -1)]
+  (testing "line-num is nil (no offending line)"
+    (let [v (common/generate-commit-msg "Line 1\nLine 2" nil)]
       (is (seq? v))
       (is (= 8 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
       (is (= "echo -e Line 1" (nth v 3)))
       (is (= "echo -e Line 2" (nth v 4)))
       (is (true? (str/includes? (nth v 6) "echo -e \"END - COMMIT MESSAGE")))))
-  (testing "line-num = 0 (first line)"
-    (let [v (common/generate-commit-msg ["Line 1" "Line 2"] 0)]
+  (testing "line-num is empty (no offending line)"
+    (let [v (common/generate-commit-msg "Line 1\nLine 2" '())]
+      (is (seq? v))
+      (is (= 8 (count v)))
+      (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
+      (is (= "echo -e Line 1" (nth v 3)))
+      (is (= "echo -e Line 2" (nth v 4)))
+      (is (true? (str/includes? (nth v 6) "echo -e \"END - COMMIT MESSAGE")))))
+  (testing "line-num indicates first line"
+    (let [v (common/generate-commit-msg "Line 1\nLine 2" '(0))]
       (is (seq? v))
       (is (= 9 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
-      (is (true? (str/includes? (nth v 2) "echo -e \"   (offending line # 1 in red)")))
+      (is (true? (str/includes? (nth v 2) "echo -e \"   offending line(s) # (1) in red")))
       (is (= "echo -e \\e[1m\\e[31mLine 1\\033[0m\\e[0m" (nth v 4))) 
       (is (= "echo -e Line 2" (nth v 5)))
       (is (true? (str/includes? (nth v 7) "echo -e \"END - COMMIT MESSAGE")))))
-  (testing "line-num = 1 (second line)"
-    (let [v (common/generate-commit-msg ["Line 1" "Line 2"] 1)]
+  (testing "line-num indicates second line"
+    (let [v (common/generate-commit-msg "Line 1\nLine 2" '(1))]
       (is (seq? v))
       (is (= 9 (count v)))
       (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
-      (is (true? (str/includes? (nth v 2) "echo -e \"   (offending line # 2 in red)")))
+      (is (true? (str/includes? (nth v 2) "echo -e \"   offending line(s) # (2) in red")))
       (is (= "echo -e Line 1" (nth v 4)))
       (is (= "echo -e \\e[1m\\e[31mLine 2\\033[0m\\e[0m" (nth v 5)))
-      (is (true? (str/includes? (nth v 7) "echo -e \"END - COMMIT MESSAGE"))))))
+      (is (true? (str/includes? (nth v 7) "echo -e \"END - COMMIT MESSAGE")))))
+  (testing "line-num indicates first and third lines"
+    (let [v (common/generate-commit-msg "Line 1\nLine 2\nLine 3" '(0 2))]
+      (is (seq? v))
+      (is (= 10 (count v)))
+      (is (true? (str/includes? (nth v 1) "echo -e \"BEGIN - COMMIT MESSAGE")))
+      (is (true? (str/includes? (nth v 2) "echo -e \"   offending line(s) # (1 3) in red")))
+      (is (= "echo -e \\e[1m\\e[31mLine 1\\033[0m\\e[0m" (nth v 4)))
+      (is (= "echo -e Line 2" (nth v 5)))
+      (is (= "echo -e \\e[1m\\e[31mLine 3\\033[0m\\e[0m" (nth v 6)))
+      (is (true? (str/includes? (nth v 8) "echo -e \"END - COMMIT MESSAGE"))))))
 
 
 (deftest generate-commit-err-msg-test
@@ -1872,26 +1932,6 @@
         (is (boolean? (:success v)))
         (is (true? (:success v)))
         (is (= content (slurp out-file)))))))
-
-
-(deftest split-lines-test
-  (testing "empty string"
-    (let [v (common/split-lines "")]
-      (is (= 1 (count v)))
-      (is (= "" (first v)))
-      (is (vector? v))))
-  (testing "single line"
-    (let [v (common/split-lines "One long line")]
-      (is (= 1 (count v)))
-      (is (= "One long line" (first v)))
-      (is (vector? v))))
-  (testing "multiple lines"
-    (let [v (common/split-lines "First line\nSecond line\nThird line")]
-      (is (= 3 (count v)))
-      (is (= "First line" (first v)))
-      (is (= "Second line" (nth v 1)))
-      (is (= "Third line" (nth v 2)))
-      (is (vector? v)))))
 
 
 (deftest format-commit-msg-all-test
